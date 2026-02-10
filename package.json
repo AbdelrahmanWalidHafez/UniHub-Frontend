@@ -8,8 +8,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "country-state-city": "^3.2.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-international-phone": "^4.7.0",
+    "react-phone-input-2": "^2.15.1",
+    "react-select": "^5.10.2",
+    "react-select-country-list": "^2.2.3",
+    "world-countries": "^5.1.0"
   },
   "devDependencies": {
     "vite": "^5.0.0"

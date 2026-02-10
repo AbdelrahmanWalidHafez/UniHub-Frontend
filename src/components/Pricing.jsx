@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { get } from '../utils/api'
 import { MOUNT_ANIMATION_DELAY } from '../utils/config'
 
-export default function Pricing() {
+export default function Pricing({ onSelectPlan }) {
 	const [plans, setPlans] = useState([])
 	const [currentPage, setCurrentPage] = useState(1)
 	const [loading, setLoading] = useState(true)
@@ -110,7 +110,13 @@ export default function Pricing() {
 									</div>
 
 									<div className="card-actions">
-										<button className="buy-pill">Buy</button>
+										<button
+											className="buy-pill"
+											type="button"
+											onClick={() => onSelectPlan && onSelectPlan(plan)}
+										>
+											Buy
+										</button>
 									</div>
 								</article>
 							))}

@@ -30,8 +30,6 @@ export default function MapView({ lat = 31.23052, lng = 29.952007500000004, zoom
         L.marker([lat, lng]).addTo(mapRef.current)
       } catch (e) {
         // fail silently
-        // eslint-disable-next-line no-console
-        console.error('Leaflet init error', e)
       }
     }
 
