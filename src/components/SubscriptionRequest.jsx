@@ -270,7 +270,9 @@ export default function SubscriptionRequest({ selectedPlan, onBackToLogin }) {
 		try {
 			errorData = await response.json()
 		} catch (e) {
-			// Ignore JSON parse errors
+			console.error('Failed to parse error response JSON', e)
+			setErrors({ submit: ERROR_MESSAGES.DEFAULT })
+			return
 		}
 
 		const snakeToCamel = (s) => s.replace(/_([a-z])/g, (_, c) => c.toUpperCase())

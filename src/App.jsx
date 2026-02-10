@@ -184,7 +184,12 @@ export default function App() {
         setAuthenticated(false)
         window.history.pushState({ showLogin: false, showSubscriptionRequest: false, selectedPlan: null }, '', '/')
       } catch (err) {
-        // Logout already clears auth in finally block
+        console.error('Logout failed', err)
+        try {
+          window.alert('Logout failed. Please try again.')
+        } catch (e) {
+          // ignore alert failures
+        }
       }
     } else {
       setShowLogin(true)
