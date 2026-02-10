@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>unihub</title>
+  </head>
+  <body>
+    <div id="splash" class="splash" aria-hidden="true">
+      <div class="splash-inner">
+        <img src="/logo.png" alt="unihub" class="splash-logo" />
+      </div>
+    </div>
+    <script>
+      (function(){
+        const splash = document.getElementById('splash')
+        if (!splash) return
+        // prevent scroll while splash is visible
+        const prevOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+        function hide() {
+          if (!splash) return
+          splash.classList.add('splash--hide')
+          // restore scrolling after fade
+          setTimeout(() => { try { splash.remove() } catch(e){}; document.body.style.overflow = prevOverflow }, 600)
+        }
+        if (document.readyState === 'complete') hide()
+        else window.addEventListener('load', hide)
+        // safety: hide after 4s even if load didn't fire
+        setTimeout(hide, 4000)
+      })()
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
