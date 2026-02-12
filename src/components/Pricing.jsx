@@ -9,6 +9,7 @@ export default function Pricing({
 	sectionId = 'pricing',
 	hideHeader = false
 }) {
+export default function Pricing({ onSelectPlan }) {
 	const [plans, setPlans] = useState([])
 	const [currentPage, setCurrentPage] = useState(1)
 	const [loading, setLoading] = useState(true)
@@ -120,6 +121,13 @@ export default function Pricing({
 
 									<div className="card-actions">
 										<button className="buy-pill">{buyButtonText}</button>
+										<button
+											className="buy-pill"
+											type="button"
+											onClick={() => onSelectPlan && onSelectPlan(plan)}
+										>
+											Buy
+										</button>
 									</div>
 								</article>
 							))}

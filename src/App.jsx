@@ -9,6 +9,7 @@ import SuccessPartners from './components/SuccessPartners'
 import Login from './components/Login'
 import CustomerServiceLanding from './components/CustomerServiceLanding'
 import AddPlan from './components/AddPlan'
+import SubscriptionRequest from './components/SubscriptionRequest'
 import { isAuthenticated, getUser, logout } from './utils/auth'
 
 export default function App() {
@@ -149,7 +150,12 @@ export default function App() {
         setAuthenticated(false)
         navigate('/')
       } catch (err) {
-        console.error('Logout failed:', err)
+        console.error('Logout failed', err)
+        try {
+          window.alert('Logout failed. Please try again.')
+        } catch (e) {
+          // ignore alert failures
+        }
       }
     } else {
       navigate('/login')
@@ -228,3 +234,4 @@ export default function App() {
     </Routes>
   )
 }
+
