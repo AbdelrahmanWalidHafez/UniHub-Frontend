@@ -6,12 +6,51 @@ import Pricing from './components/Pricing'
 import Contact from './components/Contact'
 import SuccessPartners from './components/SuccessPartners'
 import Login from './components/Login'
+import SubscriptionRequest from './components/SubscriptionRequest'
 import { isAuthenticated, getUser, logout } from './utils/auth'
 
 export default function App() {
   const [showLogin, setShowLogin] = useState(false)
   const [user, setUser] = useState(getUser())
   const [authenticated, setAuthenticated] = useState(isAuthenticated())
+  const [showSubscriptionRequest, setShowSubscriptionRequest] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState(null)
+
+  // Initialize view based on current URL pathname
+  useEffect(() => {
+    const pathname = window.location.pathname
+    if (pathname === '/login') {
+      setShowLogin(true)
+      setShowSubscriptionRequest(false)
+    } else if (pathname === '/subscription_request' || pathname === '/subscription-request') {
+      setShowLogin(false)
+      setShowSubscriptionRequest(true)
+    } else {
+      setShowLogin(false)
+      setShowSubscriptionRequest(false)
+    }
+  }, [])
+
+  // Handle browser back button and URL changes
+  useEffect(() => {
+    const handlePopState = () => {
+      const pathname = window.location.pathname
+      if (pathname === '/login') {
+        setShowLogin(true)
+        setShowSubscriptionRequest(false)
+      } else if (pathname === '/subscription_request' || pathname === '/subscription-request') {
+        setShowLogin(false)
+        setShowSubscriptionRequest(true)
+      } else {
+        setShowLogin(false)
+        setShowSubscriptionRequest(false)
+      }
+    }
+    
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   useEffect(() => {
     const sections = Array.from(document.querySelectorAll('main > section'))
     if (!sections.length) return
@@ -143,12 +182,37 @@ export default function App() {
         await logout()
         setUser(null)
         setAuthenticated(false)
+        window.history.pushState({ showLogin: false, showSubscriptionRequest: false, selectedPlan: null }, '', '/')
       } catch (err) {
-        console.error('Logout failed:', err)
+        console.error('Logout failed', err)
+        try {
+          window.alert('Logout failed. Please try again.')
+        } catch (e) {
+          // ignore alert failures
+        }
       }
     } else {
       setShowLogin(true)
+      window.history.pushState({ showLogin: true, showSubscriptionRequest: false }, '', '/login')
     }
+  }
+
+  function handleSelectPlan(plan) {
+    setSelectedPlan(plan)
+    setShowSubscriptionRequest(true)
+    window.history.pushState({ showSubscriptionRequest: true, selectedPlan: plan, showLogin: false }, '', '/subscription_request')
+  }
+
+  function handleCartClick() {
+    setSelectedPlan(null)
+    setShowSubscriptionRequest(true)
+    window.history.pushState({ showSubscriptionRequest: true, selectedPlan: null, showLogin: false }, '', '/subscription_request')
+  }
+
+  function handleBackToLoginFromSubscription() {
+    setShowSubscriptionRequest(false)
+    setShowLogin(true)
+    window.history.pushState({ showSubscriptionRequest: false, showLogin: true, selectedPlan: null }, '', '/login')
   }
 
   return (
@@ -158,7 +222,13 @@ export default function App() {
           setUser(userData)
           setAuthenticated(true)
           setShowLogin(false)
+          window.history.pushState({ showLogin: false, showSubscriptionRequest: false, selectedPlan: null }, '', '/')
         }} />
+      ) : showSubscriptionRequest ? (
+        <SubscriptionRequest
+          selectedPlan={selectedPlan}
+          onBackToLogin={handleBackToLoginFromSubscription}
+        />
       ) : (
         <>
           <NavBar 
@@ -166,12 +236,13 @@ export default function App() {
             logoSrc="/logo.png" 
             onUserIconClick={handleUserIconClick} 
             onLogoClick={() => window.scrollTo(0, 0)}
+            onCartClick={handleCartClick}
             isAuthenticated={authenticated}
           />
           <main>
             <About />
             <Solutions />
-            <Pricing />
+            <Pricing onSelectPlan={handleSelectPlan} />
             <SuccessPartners />
             <Contact />
           </main>
@@ -180,3 +251,4 @@ export default function App() {
     </div>
   )
 }
+

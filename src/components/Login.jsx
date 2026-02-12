@@ -16,7 +16,8 @@ export default function Login({ onLoginSuccess }) {
 		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 	}
 
-	const valid = form.email && isValidEmail(form.email) && form.password.length >= 6
+	// Only require non-empty values for submission. Other format checks removed.
+	const valid = form.email && form.email.trim() !== '' && form.password && form.password.trim() !== ''
 
 	async function handleSubmit(e) {
 		e.preventDefault()
@@ -26,11 +27,9 @@ export default function Login({ onLoginSuccess }) {
 
 		try {
 			const result = await login(form.email, form.password)
-			console.log('Authentication successful', result)
 			setForm({ email: '', password: '' })
 			if (onLoginSuccess) onLoginSuccess(result.user)
 		} catch (err) {
-			console.error('Login error:', err)
 			setError(err.message || 'An error occurred during login. Please try again.')
 		} finally {
 			setLoading(false)
@@ -70,10 +69,10 @@ export default function Login({ onLoginSuccess }) {
 									value={form.email}
 									onChange={handleChange}
 									placeholder="email"
-									aria-invalid={form.email && !isValidEmail(form.email)}
+									aria-invalid={form.email.trim() === ''}
 								/>
 								<div className="field-help">
-									{form.email && !isValidEmail(form.email) ? 'Enter a valid email address' : ''}
+									{form.email.trim() === '' ? 'Email is required' : ''}
 								</div>
 							</label>
 
@@ -85,10 +84,10 @@ export default function Login({ onLoginSuccess }) {
 									value={form.password}
 									onChange={handleChange}
 									placeholder="password"
-									aria-invalid={form.password && form.password.length < 6}
+									aria-invalid={form.password.trim() === ''}
 								/>
 								<div className="field-help">
-									{form.password && form.password.length < 6 ? 'Password must be at least 6 characters' : ''}
+									{form.password.trim() === '' ? 'Password is required' : ''}
 								</div>
 							</label>
 
