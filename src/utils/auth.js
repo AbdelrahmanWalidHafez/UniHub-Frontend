@@ -1,5 +1,16 @@
 import { AUTH_API_BASE_URL, AUTH_REQUEST_TIMEOUT, LOGOUT_TIMEOUT, TOKEN_REFRESH_BUFFER_MS, ENABLE_LOGGING } from './config'
 
+/**
+ * Auth module: login, refresh, logout, and token/user storage.
+ *
+ * Storage: Access token, refresh token, and user object are stored in localStorage.
+ * - Pros: Simple, works across tabs, survives refresh.
+ * - Security: localStorage is readable by any script on the same origin (XSS). Mitigate by:
+ *   (1) Sanitizing inputs and using CSP, (2) Short-lived access tokens and refresh rotation,
+ *   (3) Backend enforcing auth on every request (never trust the client).
+ * For higher security, consider httpOnly cookies for tokens (requires backend support).
+ */
+
 let refreshPromise = null
 let isRefreshing = false
 
@@ -8,8 +19,8 @@ export function setTokens(accessToken, refreshToken) {
 		if (!accessToken || !refreshToken) {
 			throw new Error('Tokens cannot be null or undefined')
 		}
-	localStorage.setItem('accessToken', accessToken)
-	localStorage.setItem('refreshToken', refreshToken)
+		localStorage.setItem('accessToken', accessToken)
+		localStorage.setItem('refreshToken', refreshToken)
 	} catch (error) {
 		if (ENABLE_LOGGING) {
 			console.error('Failed to store tokens:', error)
@@ -20,7 +31,7 @@ export function setTokens(accessToken, refreshToken) {
 
 export function getAccessToken() {
 	try {
-	return localStorage.getItem('accessToken')
+		return localStorage.getItem('accessToken')
 	} catch (error) {
 		if (ENABLE_LOGGING) {
 			console.error('Failed to get access token:', error)
@@ -31,7 +42,7 @@ export function getAccessToken() {
 
 export function getRefreshToken() {
 	try {
-	return localStorage.getItem('refreshToken')
+		return localStorage.getItem('refreshToken')
 	} catch (error) {
 		if (ENABLE_LOGGING) {
 			console.error('Failed to get refresh token:', error)
@@ -42,9 +53,10 @@ export function getRefreshToken() {
 
 export function clearAuth() {
 	try {
-	localStorage.removeItem('accessToken')
-	localStorage.removeItem('refreshToken')
-	localStorage.removeItem('user')
+		localStorage.removeItem('accessToken')
+		localStorage.removeItem('refreshToken')
+		localStorage.removeItem('user')
+		localStorage.removeItem('userInfo')
 	} catch (error) {
 		if (ENABLE_LOGGING) {
 			console.error('Failed to clear auth data:', error)
@@ -55,8 +67,8 @@ export function clearAuth() {
 export function setUser(user) {
 	try {
 		if (user) {
-	localStorage.setItem('user', JSON.stringify(user))
-}
+			localStorage.setItem('user', JSON.stringify(user))
+		}
 	} catch (error) {
 		if (ENABLE_LOGGING) {
 			console.error('Failed to store user:', error)
@@ -66,8 +78,8 @@ export function setUser(user) {
 
 export function getUser() {
 	try {
-	const user = localStorage.getItem('user')
-	return user ? JSON.parse(user) : null
+		const user = localStorage.getItem('user')
+		return user ? JSON.parse(user) : null
 	} catch (error) {
 		if (ENABLE_LOGGING) {
 			console.error('Failed to get user:', error)
@@ -123,20 +135,20 @@ export async function login(email, password) {
 		const timeoutId = setTimeout(() => controller.abort(), AUTH_REQUEST_TIMEOUT)
 
 		const response = await fetch(loginUrl, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify({
-			email,
-			password,
-		}),
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				email,
+				password,
+			}),
 			signal: controller.signal,
-	})
+		})
 
 		clearTimeout(timeoutId)
 
-	if (!response.ok) {
+		if (!response.ok) {
 			let errorData
 			try {
 				errorData = await response.json()
@@ -144,29 +156,28 @@ export async function login(email, password) {
 				errorData = { message: `HTTP ${response.status}: ${response.statusText}` }
 			}
 			throw new Error(errorData.message || errorData.error || 'Login failed')
-	}
+		}
 
 		const data = await response.json()
+		const accessToken = extractToken(data.access_token)
+		const refreshToken = extractToken(data.refresh_token)
 
-	const accessToken = extractToken(data.access_token)
-	const refreshToken = extractToken(data.refresh_token)
+		if (!accessToken || !refreshToken) {
+			throw new Error('Invalid token response from server')
+		}
 
-	if (!accessToken || !refreshToken) {
-		throw new Error('Invalid token response from server')
-	}
+		setTokens(accessToken, refreshToken)
+		if (data.user) {
+			setUser(data.user)
+		}
 
-	setTokens(accessToken, refreshToken)
-	if (data.user) {
-		setUser(data.user)
-	}
-
-	return {
-		tokens: {
-			accessToken,
-			refreshToken,
-		},
-		user: data.user,
-	}
+		return {
+			tokens: {
+				accessToken,
+				refreshToken,
+			},
+			user: data.user,
+		}
 	} catch (error) {
 		if (error.name === 'AbortError') {
 			throw new Error('Request timeout. Please check your connection.')
@@ -178,6 +189,11 @@ export async function login(email, password) {
 	}
 }
 
+/**
+ * Refresh flow: Uses refresh_token to get new access + refresh tokens.
+ * Deduplicates concurrent calls (multiple 401s or shouldRefreshToken) so only one refresh runs.
+ * On success: stores new tokens (and user if returned). On failure: clears auth and throws.
+ */
 export async function refreshTokens() {
 	if (isRefreshing && refreshPromise) {
 		return refreshPromise
@@ -186,63 +202,60 @@ export async function refreshTokens() {
 	isRefreshing = true
 	refreshPromise = (async () => {
 		try {
-	const refreshToken = getRefreshToken()
-
-	if (!refreshToken) {
-		throw new Error('No refresh token available')
-	}
+			const refreshToken = getRefreshToken()
+			if (!refreshToken) {
+				throw new Error('No refresh token available')
+			}
 
 			const refreshUrl = `${AUTH_API_BASE_URL}/refresh`
-
 			const controller = new AbortController()
 			const timeoutId = setTimeout(() => controller.abort(), AUTH_REQUEST_TIMEOUT)
 
 			const response = await fetch(refreshUrl, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify({
-			refresh_token: refreshToken,
-		}),
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					refresh_token: refreshToken,
+				}),
 				signal: controller.signal,
-	})
+			})
 
 			clearTimeout(timeoutId)
 
-	if (!response.ok) {
+			if (!response.ok) {
 				let errorData
 				try {
 					errorData = await response.json()
 				} catch {
 					errorData = { message: `HTTP ${response.status}: ${response.statusText}` }
 				}
-		clearAuth()
+				clearAuth()
 				throw new Error(errorData.message || errorData.error || 'Token refresh failed')
-	}
+			}
 
 			const data = await response.json()
+			const newAccessToken = extractToken(data.access_token)
+			const newRefreshToken = extractToken(data.refresh_token)
 
-	const newAccessToken = extractToken(data.access_token)
-	const newRefreshToken = extractToken(data.refresh_token)
+			if (!newAccessToken || !newRefreshToken) {
+				clearAuth()
+				throw new Error('Invalid token response from server')
+			}
 
-	if (!newAccessToken || !newRefreshToken) {
-		clearAuth()
-		throw new Error('Invalid token response from server')
-	}
+			setTokens(newAccessToken, newRefreshToken)
+			if (data.user) {
+				setUser(data.user)
+			}
 
-	setTokens(newAccessToken, newRefreshToken)
-	if (data.user) {
-		setUser(data.user)
-	}
-
-	return {
-		tokens: {
-			accessToken: newAccessToken,
-			refreshToken: newRefreshToken,
-		},
-		user: data.user,
-	}
+			return {
+				tokens: {
+					accessToken: newAccessToken,
+					refreshToken: newRefreshToken,
+				},
+				user: data.user,
+			}
 		} finally {
 			isRefreshing = false
 			refreshPromise = null
@@ -286,7 +299,7 @@ export async function logout() {
 		clearTimeout(timeoutId)
 	} catch (err) {
 		if (ENABLE_LOGGING) {
-		console.error('Logout error:', err)
+			console.error('Logout error:', err)
 		}
 	} finally {
 		clearAuth()
@@ -320,17 +333,17 @@ export async function getUserInfo() {
 
 		const currentToken = getAccessToken()
 		const response = await fetch(userInfoUrl, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
 				'Authorization': `Bearer ${currentToken}`,
-		},
+			},
 			signal: controller.signal,
-	})
+		})
 
 		clearTimeout(timeoutId)
 
-	if (!response.ok) {
+		if (!response.ok) {
 			let errorData
 			try {
 				errorData = await response.json()
@@ -338,11 +351,11 @@ export async function getUserInfo() {
 				errorData = { message: `HTTP ${response.status}: ${response.statusText}` }
 			}
 			throw new Error(errorData.message || errorData.error || 'Failed to fetch user info')
-	}
+		}
 
 		const data = await response.json()
-	setUser(data)
-	return data
+		setUser(data)
+		return data
 	} catch (error) {
 		if (error.name === 'AbortError') {
 			throw new Error('Request timeout. Please check your connection.')

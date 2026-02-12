@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { get } from '../utils/api'
 import { MOUNT_ANIMATION_DELAY } from '../utils/config'
-// no navigation or auth redirect here; buy flow handled elsewhere
 
 export default function Pricing({ 
 	buyButtonText = 'Buy',
@@ -9,9 +8,8 @@ export default function Pricing({
 	showAddPlanButton = false,
 	sectionId = 'pricing',
 	hideHeader = false,
-	onSelectPlan = null,
+	onSelectPlan = null
 }) {
-	// buy action should not redirect to login here; other branches handle flows
 	const [plans, setPlans] = useState([])
 	const [currentPage, setCurrentPage] = useState(1)
 	const [loading, setLoading] = useState(true)
@@ -31,15 +29,14 @@ export default function Pricing({
 		setLoading(true)
 		setError('')
 		try {
-			// Full URL: http://localhost:8082/unihub/subscription/subscription-plans/all?page_num=1
 			const data = await get(`subscription/api/v1/subscription-plans/all?page_num=${pageNum}`)
 			const plansData = data['subscription-plans'] || []
-			
+
 			if (plansData.length === 0 && pageNum > 1) {
 				setCurrentPage(pageNum - 1)
 				return
 			}
-			
+
 			setPlans(plansData)
 		} catch (err) {
 			const errorMessage = err.message || 'Failed to load subscription plans. Please try again later.'
@@ -50,15 +47,11 @@ export default function Pricing({
 	}
 
 	function prev() {
-		if (currentPage > 1) {
-			setCurrentPage(currentPage - 1)
-		}
+		if (currentPage > 1) setCurrentPage(currentPage - 1)
 	}
 
 	function next() {
-		if (plans.length > 0) {
-			setCurrentPage(currentPage + 1)
-		}
+		if (plans.length > 0) setCurrentPage(currentPage + 1)
 	}
 
 	const canGoPrev = currentPage > 1
@@ -80,23 +73,23 @@ export default function Pricing({
 					</div>
 				)}
 
-			{plans.length === 0 && !loading ? (
-				<div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
-					No subscription plans available at the moment.
-				</div>
-			) : (
-				<div className={`pricing-row ${mounted ? 'enter' : ''}`} style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 0.3s ease' }}>
-					<button
-						className="pricing-nav left"
-						onClick={prev}
-						disabled={!canGoPrev || loading}
-						aria-label="Previous plan"
-						style={{ opacity: (canGoPrev && !loading) ? 1 : 0.5, cursor: (canGoPrev && !loading) ? 'pointer' : 'not-allowed' }}
-					>
-						‹
-					</button>
+				{plans.length === 0 && !loading ? (
+					<div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+						No subscription plans available at the moment.
+					</div>
+				) : (
+					<div className={`pricing-row ${mounted ? 'enter' : ''}`} style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 0.3s ease' }}>
+						<button
+							className="pricing-nav left"
+							onClick={prev}
+							disabled={!canGoPrev || loading}
+							aria-label="Previous plan"
+							style={{ opacity: (canGoPrev && !loading) ? 1 : 0.5, cursor: (canGoPrev && !loading) ? 'pointer' : 'not-allowed' }}
+						>
+							‹
+						</button>
 
-					<div className="pricing-cards">
+						<div className="pricing-cards">
 							{plans.map((plan, i) => (
 								<article
 									key={plan.subscription_plan_id}
@@ -125,11 +118,7 @@ export default function Pricing({
 										<button
 											className="buy-pill"
 											type="button"
-											onClick={() => {
-												if (onSelectPlan) return onSelectPlan(plan)
-												// No redirect or action here; buy flow implemented on another branch
-												return
-											}}
+											onClick={() => onSelectPlan && onSelectPlan(plan)}
 										>
 											{buyButtonText}
 										</button>
@@ -137,7 +126,20 @@ export default function Pricing({
 								</article>
 							))}
 							{showAddPlanButton && (
-								<div className="pricing-card add-plan-card" onClick={onAddNewPlan} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px', backgroundColor: '#f5f5f5', borderRadius: '8px', border: '2px dashed #ccc' }}>
+								<div
+									className="pricing-card add-plan-card"
+									onClick={onAddNewPlan}
+									style={{
+										cursor: 'pointer',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										minHeight: '300px',
+										backgroundColor: '#f5f5f5',
+										borderRadius: '8px',
+										border: '2px dashed #ccc'
+									}}
+								>
 									<button style={{ fontSize: '3rem', background: 'none', border: 'none', cursor: 'pointer', color: '#007bff' }}>+</button>
 								</div>
 							)}

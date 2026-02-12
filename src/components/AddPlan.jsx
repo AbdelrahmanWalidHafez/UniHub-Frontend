@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import NavBar from './NavBar'
 import { logout } from '../utils/auth'
+import { ROUTES } from '../constants/routes'
+import { ENABLE_LOGGING } from '../utils/config'
 
 export default function AddPlan({ onGoBack }) {
   const navigate = useNavigate()
@@ -15,7 +17,7 @@ export default function AddPlan({ onGoBack }) {
 
   const handleLogout = async () => {
     await logout()
-    navigate('/')
+    navigate(ROUTES.HOME)
   }
 
   const handleInputChange = (e) => {
@@ -28,13 +30,15 @@ export default function AddPlan({ onGoBack }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    console.log('New plan data:', formData)
+    if (ENABLE_LOGGING) {
+      console.debug('New plan data:', formData)
+    }
     // TODO: Send to backend API
-    navigate('/customer-service')
+    navigate(ROUTES.CUSTOMER_SERVICE)
   }
 
   const handleCancel = () => {
-    navigate('/customer-service')
+    navigate(ROUTES.CUSTOMER_SERVICE)
   }
 
   return (
@@ -43,7 +47,7 @@ export default function AddPlan({ onGoBack }) {
         appName="UniHub" 
         logoSrc="/logo.png" 
         onUserIconClick={handleLogout} 
-        onLogoClick={() => navigate('/customer-service')}
+        onLogoClick={() => navigate(ROUTES.CUSTOMER_SERVICE)}
         isAuthenticated={true}
       />
 

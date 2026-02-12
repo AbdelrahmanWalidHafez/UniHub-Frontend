@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Pricing from './Pricing'
 import SubscriptionTabs from './SubscriptionTabs'
 import { logout, getUser } from '../utils/auth'
+import { ROUTES } from '../constants/routes'
 
 export default function CustomerServiceLanding({ onLogout }) {
   const user = getUser()
@@ -14,7 +15,7 @@ export default function CustomerServiceLanding({ onLogout }) {
   }
 
   const handleAddNewPlan = () => {
-    navigate('/add-plan')
+    navigate(ROUTES.ADD_PLAN)
   }
 
   return (
@@ -26,7 +27,7 @@ export default function CustomerServiceLanding({ onLogout }) {
         {/* Logo centered */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
           <button 
-            onClick={() => navigate('/customer-service')}
+            onClick={() => navigate(ROUTES.CUSTOMER_SERVICE)}
             style={{
               background: 'transparent',
               border: 'none',

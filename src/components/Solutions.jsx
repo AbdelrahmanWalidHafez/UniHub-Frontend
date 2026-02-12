@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
 
+const BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) ? import.meta.env.BASE_URL.replace(/\/$/, '') : ''
+
 const FEATURES = [
   {
     id: 'lumos',
     title: 'Lumos AI',
     subtitle: 'AI-first platform intelligence',
-    image: '/lumosAI.png',
+    image: `${BASE}/lumosAI.png`,
     description:
       'Lumos AI provides platform-wide intelligence that personalizes learning journeys, surfaces smart recommendations, and automates routine administrative workflows. It powers instant search, contextual assistants, and predictive analytics so instructors and students get the right information at the right time. Lumos also exposes careful governance controls so AI features respect institutional policies and privacy.',
   },
@@ -13,7 +15,7 @@ const FEATURES = [
     id: 'data-isolation',
     title: 'Data Isolation',
     subtitle: 'Secure multi-tenant boundaries',
-    image: '/dataIsolation.png',
+    image: `${BASE}/dataIsolation.png`,
     description:
       'Each institution runs inside a logically isolated data environment with strict tenancy boundaries — students, instructors, courses, grades, and files are partitioned so no cross-tenant access occurs. Isolation is enforced at the storage, API, and application layer, enabling per-tenant encryption, compliance reporting, and safe customizations without risking data leakage. These controls make UniHub suitable for large consortia, federated deployments, and regulated environments.',
   },
@@ -21,7 +23,7 @@ const FEATURES = [
     id: 'admin',
     title: 'System Administration',
     subtitle: 'Manage institutions, users, and integrations',
-    image: '/systemAdmin.png',
+    image: `${BASE}/systemAdmin.png`,
     description:
       'Centralized administration tools let platform operators add and remove institutions, manage users and roles, and configure integrations such as SIS, LMS, and payment gateways. Admins can create fine-grained permission sets, audit activity, and roll out feature flags or subscription controls per institution. Built-in monitoring and health dashboards simplify maintenance and day-to-day operations at scale.',
   },
@@ -29,7 +31,7 @@ const FEATURES = [
     id: 'community',
     title: 'Community Management',
     subtitle: 'Forums, posts and discussions',
-    image: '/announcments.png',
+    image: `${BASE}/announcments.png`,
     description:
       'Community tools let users create posts, start discussions, comment, like, and follow topics, bringing social learning into the platform. Spaces and groups are scoped per institution (or course) so discussions remain relevant and private where required, while moderators and reporting workflows help maintain healthy discourse. Community analytics highlight active topics and influential contributors to help instructors and admins foster engagement.',
   },
@@ -37,7 +39,7 @@ const FEATURES = [
     id: 'classroom',
     title: 'Classroom',
     subtitle: 'Course materials and interactions',
-    image: '/classroom.png',
+    image: `${BASE}/classroom.png`,
     description:
       'Classroom features provide course pages, assignment workflows, gradebooks, and resource management for instructors and students. Teachers can publish materials, create scalable assessments, give feedback inline, and use integrated communication channels to interact with students in context. Robust enrollment and roster sync keep course membership accurate across institutional systems.',
   },
@@ -45,7 +47,7 @@ const FEATURES = [
     id: 'collaboration',
     title: 'Collaboration',
     subtitle: 'Chat, meetings and teamwork',
-    image: '/collaboration.png',
+    image: `${BASE}/collaboration.png`,
     description:
       'Collaboration includes real-time chat, group channels, document sharing, and virtual meeting integrations so teams can work together smoothly. Granular permissions and channel controls let institutions keep conversations private or open as appropriate, while threaded discussions and activity history preserve context. Integrations with calendars and tasks connect collaboration to daily workflows.',
   },
@@ -53,7 +55,7 @@ const FEATURES = [
     id: 'calendar',
     title: 'Calendar & Tasks',
     subtitle: 'Schedule, deadlines and to-dos',
-    image: '/calendar.png',
+    image: `${BASE}/calendar.png`,
     description:
       'The unified calendar and task system aggregates course schedules, assignment deadlines, and campus events into a single, personalized timeline. Students and staff can create task lists, set reminders, and synchronize with external calendar apps so nothing slips through the gaps. Smart notifications and due-date summaries keep users focused and on track across multiple institutions and courses.',
   },
@@ -376,7 +378,7 @@ export default function Solutions() {
                   data-index={i}
                   ref={(el) => (visualRefs.current[i] = el)}
                 >
-                  <img src={f.image} alt={f.title} loading="lazy" decoding="async" />
+                  <img src={f.image} alt={f.title} decoding="async" />
                 </div>
               ))}
               </div>

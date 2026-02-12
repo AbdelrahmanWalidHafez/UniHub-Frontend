@@ -1,7 +1,8 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { getAccessToken } from '../utils/auth'
 
-export default function NavBar({ appName = 'App Name', logoSrc = '', onUserIconClick, onLogoClick, onCartClick, isAuthenticated }) {
+export default function NavBar({ appName = 'App Name', logoSrc = '', onUserIconClick, onLogoClick, onCartClick, cartTo, isAuthenticated }) {
 	const authenticated = isAuthenticated !== undefined ? isAuthenticated : !!getAccessToken()
 
 	return (
@@ -36,9 +37,15 @@ export default function NavBar({ appName = 'App Name', logoSrc = '', onUserIconC
 				</nav>
 
 				<div className="nav-icons">
-					<button aria-label="cart" className="icon-button" onClick={onCartClick}>
-						<img src="/cart.png" alt="cart" style={{ width: 20, height: 20 }} />
-					</button>
+					{cartTo ? (
+						<Link to={cartTo} aria-label="cart" className="icon-button" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+							<img src="/cart.png" alt="cart" style={{ width: 20, height: 20 }} />
+						</Link>
+					) : (
+						<button aria-label="cart" className="icon-button" onClick={onCartClick ? () => onCartClick() : undefined}>
+							<img src="/cart.png" alt="cart" style={{ width: 20, height: 20 }} />
+						</button>
+					)}
 					<button
 						aria-label={authenticated ? 'logout' : 'user'}
 						className="icon-button"

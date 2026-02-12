@@ -1,9 +1,17 @@
 import { getAccessToken, refreshTokens, clearAuth, shouldRefreshToken } from './auth'
 import { REQUEST_TIMEOUT, API_GATEWAY_BASE_URL, ENABLE_LOGGING } from './config'
 
+/**
+ * Refresh token flow in apiCall:
+ * 1. Proactive: Before each authenticated request, if shouldRefreshToken() (token near expiry),
+ *    refresh once and use the new access token.
+ * 2. Reactive: If the request returns 401, call refreshTokens(), then retry the request once
+ *    with the new token. If refresh fails or retry fails, clear auth and throw "Session expired".
+ * Concurrent requests share a single refresh (refreshTokens() is deduplicated in auth.js).
+ */
 export async function apiCall(url, options = {}) {
 	const { public: isPublic = false, ...fetchOptions } = options
-	
+
 	let fullUrl = url
 	if (!url.startsWith('http://') && !url.startsWith('https://')) {
 		const cleanPath = url.startsWith('/') ? url.slice(1) : url
@@ -17,7 +25,6 @@ export async function apiCall(url, options = {}) {
 
 	if (!isPublic) {
 		let accessToken = getAccessToken()
-		
 		if (accessToken && shouldRefreshToken()) {
 			try {
 				await refreshTokens()
@@ -28,9 +35,8 @@ export async function apiCall(url, options = {}) {
 				}
 			}
 		}
-
-	if (accessToken) {
-		defaultHeaders['Authorization'] = `Bearer ${accessToken}`
+		if (accessToken) {
+			defaultHeaders['Authorization'] = `Bearer ${accessToken}`
 		}
 	}
 
@@ -43,7 +49,7 @@ export async function apiCall(url, options = {}) {
 	}
 
 	const controller = new AbortController()
-	const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
+	let timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
 
 	try {
 		let response = await fetch(fullUrl, {
@@ -52,52 +58,51 @@ export async function apiCall(url, options = {}) {
 		})
 
 		clearTimeout(timeoutId)
+		timeoutId = null
 
 		if (response.status === 401 && !isPublic && getAccessToken()) {
-		try {
-			await refreshTokens()
-			const newAccessToken = getAccessToken()
+			try {
+				await refreshTokens()
+				const newAccessToken = getAccessToken()
 				if (newAccessToken) {
-			finalOptions.headers['Authorization'] = `Bearer ${newAccessToken}`
-					
+					finalOptions.headers['Authorization'] = `Bearer ${newAccessToken}`
 					const retryController = new AbortController()
 					const retryTimeoutId = setTimeout(() => retryController.abort(), REQUEST_TIMEOUT)
-					
-					response = await fetch(fullUrl, {
-						...finalOptions,
-						signal: retryController.signal,
-					})
-					
-					clearTimeout(retryTimeoutId)
+					try {
+						response = await fetch(fullUrl, {
+							...finalOptions,
+							signal: retryController.signal,
+						})
+					} finally {
+						clearTimeout(retryTimeoutId)
+					}
 				}
-		} catch (err) {
-			clearAuth()
-			throw new Error('Session expired. Please login again.')
+			} catch (err) {
+				clearAuth()
+				throw new Error('Session expired. Please login again.')
+			}
 		}
-	}
 
 		let data = null
 		const contentType = response.headers.get('content-type')
-		
 		if (contentType && contentType.includes('application/json')) {
-	try {
-		data = await response.json()
+			try {
+				data = await response.json()
 			} catch (parseError) {
 				if (ENABLE_LOGGING) {
 					console.error('Failed to parse JSON response:', parseError)
 				}
 			}
-	}
+		}
 
-	if (!response.ok) {
+		if (!response.ok) {
 			const errorMessage = data?.message || data?.error || `API Error: ${response.status} ${response.statusText}`
 			throw new Error(errorMessage)
-	}
+		}
 
-	return data
+		return data
 	} catch (error) {
-		clearTimeout(timeoutId)
-		
+		if (timeoutId) clearTimeout(timeoutId)
 		if (error.name === 'AbortError') {
 			throw new Error('Request timeout. Please check your connection.')
 		}
@@ -157,7 +162,7 @@ export async function subscriptionGet(endpoint, options = {}) {
 }
 
 export async function subscriptionPost(endpoint, data, options = {}) {
-	const {API_GATEWAY_BASE_URL } = await import('./config.js')
+	const { API_GATEWAY_BASE_URL } = await import('./config.js')
 	const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
 	const fullUrl = `${API_GATEWAY_BASE_URL}/${cleanPath}`
 	return apiCall(fullUrl, {

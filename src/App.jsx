@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import About from './components/About'
@@ -10,13 +10,23 @@ import Login from './components/Login'
 import CustomerServiceLanding from './components/CustomerServiceLanding'
 import AddPlan from './components/AddPlan'
 import SubscriptionRequest from './components/SubscriptionRequest'
+import ErrorBoundary from './components/ErrorBoundary'
+import ProtectedRoute from './components/ProtectedRoute'
+import { ROUTES } from './constants/routes'
+import { ROLES, getRoleName } from './constants/roles'
 import { isAuthenticated, getUser, logout } from './utils/auth'
 
 export default function App() {
   const [user, setUser] = useState(getUser())
   const [authenticated, setAuthenticated] = useState(isAuthenticated())
   const navigate = useNavigate()
-  
+
+  // Sync auth state when app loads (e.g. after refresh or tab focus)
+  useEffect(() => {
+    setUser(getUser())
+    setAuthenticated(isAuthenticated())
+  }, [])
+
   useEffect(() => {
     const sections = Array.from(document.querySelectorAll('main > section'))
     if (!sections.length) return
@@ -148,9 +158,11 @@ export default function App() {
         await logout()
         setUser(null)
         setAuthenticated(false)
-        navigate('/')
+        navigate(ROUTES.HOME)
       } catch (err) {
-        console.error('Logout failed', err)
+        if (import.meta.env.DEV) {
+          console.error('Logout failed', err)
+        }
         try {
           window.alert('Logout failed. Please try again.')
         } catch (e) {
@@ -158,38 +170,39 @@ export default function App() {
         }
       }
     } else {
-      navigate('/login')
+      navigate(ROUTES.LOGIN)
     }
   }
 
   const handleLoginSuccess = (userData) => {
     setUser(userData)
     setAuthenticated(true)
-    
-    // Debug: Log user data to check what's returned
-    console.log('User data received:', userData)
-    
-    // Extract role name from the role object
-    const roleName = userData?.role?.name || userData?.role || ''
-    console.log('Resolved role:', roleName)
-    
-    if (roleName === 'ROLE_CUSTOMER_SERVICE') {
-      navigate('/customer-service')
+    const roleName = getRoleName(userData)
+    if (roleName === ROLES.CUSTOMER_SERVICE) {
+      navigate(ROUTES.CUSTOMER_SERVICE)
     } else {
-      navigate('/dashboard')
+      navigate(ROUTES.DASHBOARD)
     }
   }
 
   const handleLogout = () => {
     setUser(null)
     setAuthenticated(false)
-    navigate('/')
+    navigate(ROUTES.HOME)
   }
+
+  const goToSubscriptionRequest = useCallback(() => {
+    navigate(ROUTES.SUBSCRIPTION_REQUEST)
+  }, [navigate])
+
+  const goToSubscriptionRequestWithPlan = useCallback((plan) => {
+    navigate(ROUTES.SUBSCRIPTION_REQUEST, { state: { selectedPlan: plan } })
+  }, [navigate])
 
   return (
     <Routes>
       <Route 
-        path="/" 
+        path={ROUTES.HOME} 
         element={
           <>
             <NavBar 
@@ -197,12 +210,16 @@ export default function App() {
               logoSrc="/logo.png" 
               onUserIconClick={handleUserIconClick} 
               onLogoClick={() => window.scrollTo(0, 0)}
+              cartTo={ROUTES.SUBSCRIPTION_REQUEST}
+              onCartClick={goToSubscriptionRequest}
               isAuthenticated={authenticated}
             />
             <main>
               <About />
               <Solutions />
-              <Pricing />
+              <Pricing 
+                onSelectPlan={goToSubscriptionRequestWithPlan}
+              />
               <SuccessPartners />
               <Contact />
             </main>
@@ -210,25 +227,43 @@ export default function App() {
         } 
       />
       <Route 
-        path="/login" 
+        path={ROUTES.SUBSCRIPTION_REQUEST} 
+        element={
+          <SubscriptionRequest 
+            onBackToLogin={() => navigate(ROUTES.HOME)} 
+          />
+        } 
+      />
+      <Route 
+        path={ROUTES.LOGIN} 
         element={<Login onLoginSuccess={handleLoginSuccess} />} 
       />
       <Route 
-        path="/customer-service" 
-        element={<CustomerServiceLanding onLogout={handleLogout} />} 
-      />
-      <Route 
-        path="/add-plan" 
-        element={<AddPlan />} 
-      />
-      <Route 
-        path="/dashboard" 
+        path={ROUTES.CUSTOMER_SERVICE} 
         element={
-          <div style={{ padding: '20px' }}>
-            <h1>Dashboard</h1>
-            <p>Welcome back, {user?.name || 'User'}!</p>
-            <button onClick={handleLogout}>Logout</button>
-          </div>
+          <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+            <CustomerServiceLanding onLogout={handleLogout} />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path={ROUTES.ADD_PLAN} 
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+            <AddPlan />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path={ROUTES.DASHBOARD} 
+        element={
+          <ProtectedRoute disallowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+            <div style={{ padding: '20px' }}>
+              <h1>Dashboard</h1>
+              <p>Welcome back, {user?.name || 'User'}!</p>
+              <button type="button" onClick={handleLogout}>Logout</button>
+            </div>
+          </ProtectedRoute>
         } 
       />
     </Routes>
