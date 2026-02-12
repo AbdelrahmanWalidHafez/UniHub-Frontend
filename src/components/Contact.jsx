@@ -74,7 +74,7 @@ export default function Contact() {
 		setFieldErrors({})
 
 		try {
-			const data = await post('subscription/api/v1/inquiries/public/create', {
+			const data = await post('subscription/request-subscription', {
 				subject: sanitizeInput(form.subject),
 				content: sanitizeInput(form.content),
 				customer_email: sanitizeInput(form.customer_email),

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { login } from '../utils/auth'
+import { authGet } from '../utils/api'
 
 export default function Login({ onLoginSuccess }) {
 	const [form, setForm] = useState({ email: '', password: '' })
@@ -18,6 +19,17 @@ export default function Login({ onLoginSuccess }) {
 
 	const valid = form.email && isValidEmail(form.email) && form.password.length >= 6
 
+	async function fetchUserInfo(accessToken) {
+		try {
+			// Use authGet which calls http://localhost:8083/api/v1/auth/user-info
+			const userInfo = await authGet('user-info')
+			return userInfo
+		} catch (err) {
+			console.error('Failed to fetch user info:', err)
+			throw err
+		}
+	}
+
 	async function handleSubmit(e) {
 		e.preventDefault()
 		if (!valid || loading) return
@@ -25,10 +37,24 @@ export default function Login({ onLoginSuccess }) {
 		setError('')
 
 		try {
+			// Step 1: Login and get JWT tokens
 			const result = await login(form.email, form.password)
-			console.log('Authentication successful', result)
+			const accessToken = result.tokens.accessToken
+			
+			console.log('Login successful, token obtained')
 			setForm({ email: '', password: '' })
-			if (onLoginSuccess) onLoginSuccess(result.user)
+
+			// Step 2: Fetch user info using the access token (now it's in localStorage via setTokens)
+			const userInfo = await fetchUserInfo(accessToken)
+			console.log('User info fetched - Full object:', JSON.stringify(userInfo, null, 2))
+			console.log('User info keys:', Object.keys(userInfo))
+
+			// Step 3: Save user info to localStorage for future use
+			localStorage.setItem('userInfo', JSON.stringify(userInfo))
+			localStorage.setItem('user', JSON.stringify(userInfo))
+
+			// Step 4: Call onLoginSuccess to handle redirect
+			if (onLoginSuccess) onLoginSuccess(userInfo)
 		} catch (err) {
 			console.error('Login error:', err)
 			setError(err.message || 'An error occurred during login. Please try again.')
@@ -113,4 +139,3 @@ export default function Login({ onLoginSuccess }) {
 		</div>
 	)
 }
-

@@ -2,7 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { get } from '../utils/api'
 import { MOUNT_ANIMATION_DELAY } from '../utils/config'
 
-export default function Pricing() {
+export default function Pricing({ 
+	buyButtonText = 'Buy',
+	onAddNewPlan = null,
+	showAddPlanButton = false,
+	sectionId = 'pricing',
+	hideHeader = false
+}) {
 	const [plans, setPlans] = useState([])
 	const [currentPage, setCurrentPage] = useState(1)
 	const [loading, setLoading] = useState(true)
@@ -22,7 +28,8 @@ export default function Pricing() {
 		setLoading(true)
 		setError('')
 		try {
-			const data = await get(`subscription/api/v1/subscription-plans/all?page_num=${pageNum}`, { public: true })
+			// Full URL: http://localhost:8082/unihub/subscription/subscription-plans/all?page_num=1
+			const data = await get(`subscription/api/v1/subscription-plans/all?page_num=${pageNum}`)
 			const plansData = data['subscription-plans'] || []
 			
 			if (plansData.length === 0 && pageNum > 1) {
@@ -55,12 +62,14 @@ export default function Pricing() {
 	const canGoNext = plans.length > 0
 
 	return (
-		<section id="pricing" className="pricing" aria-label="Pricing">
+		<section id={sectionId} className="pricing" aria-label="Pricing">
 			<div className="pricing-inner">
-				<div className="pricing-header">
-					<h3>Pricing</h3>
-					<p>Simple, predictable plans — pick what fits your institution.</p>
-				</div>
+				{!hideHeader && (
+					<div className="pricing-header">
+						<h3>Pricing</h3>
+						<p>Simple, predictable plans — pick what fits your institution.</p>
+					</div>
+				)}
 
 				{error && (
 					<div style={{ color: '#e74c3c', marginBottom: '2rem', padding: '1rem', backgroundColor: '#f8d7da', borderRadius: '4px', textAlign: 'center' }}>
@@ -110,10 +119,15 @@ export default function Pricing() {
 									</div>
 
 									<div className="card-actions">
-										<button className="buy-pill">Buy</button>
+										<button className="buy-pill">{buyButtonText}</button>
 									</div>
 								</article>
 							))}
+							{showAddPlanButton && (
+								<div className="pricing-card add-plan-card" onClick={onAddNewPlan} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px', backgroundColor: '#f5f5f5', borderRadius: '8px', border: '2px dashed #ccc' }}>
+									<button style={{ fontSize: '3rem', background: 'none', border: 'none', cursor: 'pointer', color: '#007bff' }}>+</button>
+								</div>
+							)}
 						</div>
 
 						<button

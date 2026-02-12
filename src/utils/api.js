@@ -145,3 +145,45 @@ export async function deleteRequest(url, options = {}) {
 		method: 'DELETE',
 	})
 }
+
+export async function subscriptionGet(endpoint, options = {}) {
+	const { API_GATEWAY_BASE_URL } = await import('./config.js')
+	const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+	const fullUrl = `${API_GATEWAY_BASE_URL}/${cleanPath}`
+	return apiCall(fullUrl, {
+		...options,
+		method: 'GET',
+	})
+}
+
+export async function subscriptionPost(endpoint, data, options = {}) {
+	const {API_GATEWAY_BASE_URL } = await import('./config.js')
+	const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+	const fullUrl = `${API_GATEWAY_BASE_URL}/${cleanPath}`
+	return apiCall(fullUrl, {
+		...options,
+		method: 'POST',
+		body: JSON.stringify(data),
+	})
+}
+
+export async function authGet(endpoint, options = {}) {
+	const { AUTH_API_BASE_URL } = await import('./config.js')
+	const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+	const fullUrl = `${AUTH_API_BASE_URL}/${cleanPath}`
+	return apiCall(fullUrl, {
+		...options,
+		method: 'GET',
+	})
+}
+
+export async function authPost(endpoint, data, options = {}) {
+	const { AUTH_API_BASE_URL } = await import('./config.js')
+	const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+	const fullUrl = `${AUTH_API_BASE_URL}/${cleanPath}`
+	return apiCall(fullUrl, {
+		...options,
+		method: 'POST',
+		body: JSON.stringify(data),
+	})
+}

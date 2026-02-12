@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import About from './components/About'
 import Solutions from './components/Solutions'
@@ -6,12 +7,15 @@ import Pricing from './components/Pricing'
 import Contact from './components/Contact'
 import SuccessPartners from './components/SuccessPartners'
 import Login from './components/Login'
+import CustomerServiceLanding from './components/CustomerServiceLanding'
+import AddPlan from './components/AddPlan'
 import { isAuthenticated, getUser, logout } from './utils/auth'
 
 export default function App() {
-  const [showLogin, setShowLogin] = useState(false)
   const [user, setUser] = useState(getUser())
   const [authenticated, setAuthenticated] = useState(isAuthenticated())
+  const navigate = useNavigate()
+  
   useEffect(() => {
     const sections = Array.from(document.querySelectorAll('main > section'))
     if (!sections.length) return
@@ -143,40 +147,84 @@ export default function App() {
         await logout()
         setUser(null)
         setAuthenticated(false)
+        navigate('/')
       } catch (err) {
         console.error('Logout failed:', err)
       }
     } else {
-      setShowLogin(true)
+      navigate('/login')
     }
   }
 
+  const handleLoginSuccess = (userData) => {
+    setUser(userData)
+    setAuthenticated(true)
+    
+    // Debug: Log user data to check what's returned
+    console.log('User data received:', userData)
+    
+    // Extract role name from the role object
+    const roleName = userData?.role?.name || userData?.role || ''
+    console.log('Resolved role:', roleName)
+    
+    if (roleName === 'ROLE_CUSTOMER_SERVICE') {
+      navigate('/customer-service')
+    } else {
+      navigate('/dashboard')
+    }
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    setAuthenticated(false)
+    navigate('/')
+  }
+
   return (
-    <div>
-      {showLogin ? (
-        <Login onLoginSuccess={(userData) => {
-          setUser(userData)
-          setAuthenticated(true)
-          setShowLogin(false)
-        }} />
-      ) : (
-        <>
-          <NavBar 
-            appName="unihub" 
-            logoSrc="/logo.png" 
-            onUserIconClick={handleUserIconClick} 
-            onLogoClick={() => window.scrollTo(0, 0)}
-            isAuthenticated={authenticated}
-          />
-          <main>
-            <About />
-            <Solutions />
-            <Pricing />
-            <SuccessPartners />
-            <Contact />
-          </main>
-        </>
-      )}
-    </div>
+    <Routes>
+      <Route 
+        path="/" 
+        element={
+          <>
+            <NavBar 
+              appName="unihub" 
+              logoSrc="/logo.png" 
+              onUserIconClick={handleUserIconClick} 
+              onLogoClick={() => window.scrollTo(0, 0)}
+              isAuthenticated={authenticated}
+            />
+            <main>
+              <About />
+              <Solutions />
+              <Pricing />
+              <SuccessPartners />
+              <Contact />
+            </main>
+          </>
+        } 
+      />
+      <Route 
+        path="/login" 
+        element={<Login onLoginSuccess={handleLoginSuccess} />} 
+      />
+      <Route 
+        path="/customer-service" 
+        element={<CustomerServiceLanding onLogout={handleLogout} />} 
+      />
+      <Route 
+        path="/add-plan" 
+        element={<AddPlan />} 
+      />
+      <Route 
+        path="/dashboard" 
+        element={
+          <div style={{ padding: '20px' }}>
+            <h1>Dashboard</h1>
+            <p>Welcome back, {user?.name || 'User'}!</p>
+            <button onClick={handleLogout}>Logout</button>
+          </div>
+        } 
+      />
+    </Routes>
   )
 }
