@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { get } from '../utils/api'
 import { MOUNT_ANIMATION_DELAY } from '../utils/config'
+// no navigation or auth redirect here; buy flow handled elsewhere
 
 export default function Pricing({ 
 	buyButtonText = 'Buy',
 	onAddNewPlan = null,
 	showAddPlanButton = false,
 	sectionId = 'pricing',
-	hideHeader = false
+	hideHeader = false,
+	onSelectPlan = null,
 }) {
-export default function Pricing({ onSelectPlan }) {
+	// buy action should not redirect to login here; other branches handle flows
 	const [plans, setPlans] = useState([])
 	const [currentPage, setCurrentPage] = useState(1)
 	const [loading, setLoading] = useState(true)
@@ -120,13 +122,16 @@ export default function Pricing({ onSelectPlan }) {
 									</div>
 
 									<div className="card-actions">
-										<button className="buy-pill">{buyButtonText}</button>
 										<button
 											className="buy-pill"
 											type="button"
-											onClick={() => onSelectPlan && onSelectPlan(plan)}
+											onClick={() => {
+												if (onSelectPlan) return onSelectPlan(plan)
+												// No redirect or action here; buy flow implemented on another branch
+												return
+											}}
 										>
-											Buy
+											{buyButtonText}
 										</button>
 									</div>
 								</article>
