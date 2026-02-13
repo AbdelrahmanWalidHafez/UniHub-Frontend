@@ -140,7 +140,7 @@ export default function Pricing({
 										border: '2px dashed #ccc'
 									}}
 								>
-									<button style={{ fontSize: '3rem', background: 'none', border: 'none', cursor: 'pointer', color: '#007bff' }}>+</button>
+									<button style={{ fontSize: '3rem', background: 'none', border: 'none', cursor: 'pointer', color: '#3a4a52' }}>+</button>
 								</div>
 							)}
 						</div>

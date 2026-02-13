@@ -192,3 +192,93 @@ export async function authPost(endpoint, data, options = {}) {
 		body: JSON.stringify(data),
 	})
 }
+// Add this function for file downloads as blob (for images, PDFs, etc.)
+export async function getFileAsBlob(url, options = {}) {
+  const { public: isPublic = false, ...fetchOptions } = options
+
+  let fullUrl = url
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    const cleanPath = url.startsWith('/') ? url.slice(1) : url
+    const baseUrl = API_GATEWAY_BASE_URL.endsWith('/') ? API_GATEWAY_BASE_URL.slice(0, -1) : API_GATEWAY_BASE_URL
+    fullUrl = `${baseUrl}/${cleanPath}`
+  }
+
+  const defaultHeaders = {}
+
+  if (!isPublic) {
+    let accessToken = getAccessToken()
+    if (accessToken && shouldRefreshToken()) {
+      try {
+        await refreshTokens()
+        accessToken = getAccessToken()
+      } catch (err) {
+        if (ENABLE_LOGGING) {
+          console.warn('Token refresh failed, continuing with current token:', err)
+        }
+      }
+    }
+    if (accessToken) {
+      defaultHeaders['Authorization'] = `Bearer ${accessToken}`
+    }
+  }
+
+  const finalOptions = {
+    ...fetchOptions,
+    headers: {
+      ...defaultHeaders,
+      ...fetchOptions.headers,
+    },
+  }
+
+  const controller = new AbortController()
+  let timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
+
+  try {
+    const response = await fetch(fullUrl, {
+      ...finalOptions,
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+    timeoutId = null
+
+    if (response.status === 401 && !isPublic && getAccessToken()) {
+      try {
+        await refreshTokens()
+        const newAccessToken = getAccessToken()
+        if (newAccessToken) {
+          finalOptions.headers['Authorization'] = `Bearer ${newAccessToken}`
+          const retryController = new AbortController()
+          const retryTimeoutId = setTimeout(() => retryController.abort(), REQUEST_TIMEOUT)
+          try {
+            const retryResponse = await fetch(fullUrl, {
+              ...finalOptions,
+              signal: retryController.signal,
+            })
+            return await retryResponse.blob()
+          } finally {
+            clearTimeout(retryTimeoutId)
+          }
+        }
+      } catch (err) {
+        clearAuth()
+        throw new Error('Session expired. Please login again.')
+      }
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    return await response.blob()
+  } catch (error) {
+    if (timeoutId) clearTimeout(timeoutId)
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout. Please check your connection.')
+    }
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Network error. Please check your connection.')
+    }
+    throw error
+  }
+}

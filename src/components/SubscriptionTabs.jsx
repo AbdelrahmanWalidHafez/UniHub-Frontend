@@ -23,8 +23,8 @@ export default function SubscriptionTabs() {
 							border: 'none',
 							fontSize: '16px',
 							fontWeight: activeTab === tab.id ? '600' : '400',
-							color: activeTab === tab.id ? '#007bff' : '#666',
-							borderBottom: activeTab === tab.id ? '3px solid #007bff' : 'none',
+							color: activeTab === tab.id ? '#3a4a52' : '#666',
+							borderBottom: activeTab === tab.id ? '3px solid #3a4a52' : 'none',
 							cursor: 'pointer',
 							transition: 'all 0.3s ease',
 							whiteSpace: 'nowrap'

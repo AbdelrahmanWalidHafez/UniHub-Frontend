@@ -12,6 +12,8 @@ import AddPlan from './components/AddPlan'
 import SubscriptionRequest from './components/SubscriptionRequest'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
+import RequestDetails from './components/RequestDetails'
+import SubscriptionRequests from './components/SubscriptionRequests'
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
 import { isAuthenticated, getUser, logout } from './utils/auth'
@@ -245,7 +247,24 @@ export default function App() {
             <CustomerServiceLanding onLogout={handleLogout} />
           </ProtectedRoute>
         } 
-      />
+     />
+     <Route 
+  path="/customer-service/request/:id" 
+  element={
+    <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+      <RequestDetails />
+    </ProtectedRoute>
+  } 
+/>
+
+<Route 
+  path="/customer-service/requests" 
+  element={
+    <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+      <SubscriptionRequests />
+    </ProtectedRoute>
+  } 
+/>
       <Route 
         path={ROUTES.ADD_PLAN} 
         element={

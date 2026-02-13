@@ -132,7 +132,7 @@ export default function AddPlan({ onGoBack }) {
               style={{
                 flex: 1,
                 padding: '12px',
-                backgroundColor: '#007bff',
+                backgroundColor: '#3a4a52',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
