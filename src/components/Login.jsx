@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { login } from '../utils/auth'
+import { authGet } from '../utils/api'
+import { ENABLE_LOGGING } from '../utils/config'
 
 export default function Login({ onLoginSuccess }) {
 	const [form, setForm] = useState({ email: '', password: '' })
@@ -19,6 +21,18 @@ export default function Login({ onLoginSuccess }) {
 	// Only require non-empty values for submission. Other format checks removed.
 	const valid = form.email && form.email.trim() !== '' && form.password && form.password.trim() !== ''
 
+	async function fetchUserInfo(accessToken) {
+		try {
+			const userInfo = await authGet('user-info')
+			return userInfo
+		} catch (err) {
+			if (ENABLE_LOGGING) {
+				console.error('Failed to fetch user info:', err)
+			}
+			throw err
+		}
+	}
+
 	async function handleSubmit(e) {
 		e.preventDefault()
 		if (!valid || loading) return
@@ -27,8 +41,17 @@ export default function Login({ onLoginSuccess }) {
 
 		try {
 			const result = await login(form.email, form.password)
+			const accessToken = result.tokens.accessToken
 			setForm({ email: '', password: '' })
-			if (onLoginSuccess) onLoginSuccess(result.user)
+
+			const userInfo = await fetchUserInfo(accessToken)
+			localStorage.setItem('userInfo', JSON.stringify(userInfo))
+			localStorage.setItem('user', JSON.stringify(userInfo))
+
+			if (ENABLE_LOGGING) {
+				console.debug('Login success, user:', userInfo?.email ?? userInfo?.name)
+			}
+			if (onLoginSuccess) onLoginSuccess(userInfo)
 		} catch (err) {
 			setError(err.message || 'An error occurred during login. Please try again.')
 		} finally {
@@ -112,4 +135,3 @@ export default function Login({ onLoginSuccess }) {
 		</div>
 	)
 }
-

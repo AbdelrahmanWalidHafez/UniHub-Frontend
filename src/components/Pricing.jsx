@@ -2,7 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { get } from '../utils/api'
 import { MOUNT_ANIMATION_DELAY } from '../utils/config'
 
-export default function Pricing({ onSelectPlan }) {
+export default function Pricing({ 
+	buyButtonText = 'Buy',
+	onAddNewPlan = null,
+	showAddPlanButton = false,
+	sectionId = 'pricing',
+	hideHeader = false,
+	onSelectPlan = null
+}) {
 	const [plans, setPlans] = useState([])
 	const [currentPage, setCurrentPage] = useState(1)
 	const [loading, setLoading] = useState(true)
@@ -22,14 +29,14 @@ export default function Pricing({ onSelectPlan }) {
 		setLoading(true)
 		setError('')
 		try {
-			const data = await get(`subscription/api/v1/subscription-plans/all?page_num=${pageNum}`, { public: true })
+			const data = await get(`subscription/api/v1/subscription-plans/all?page_num=${pageNum}`)
 			const plansData = data['subscription-plans'] || []
-			
+
 			if (plansData.length === 0 && pageNum > 1) {
 				setCurrentPage(pageNum - 1)
 				return
 			}
-			
+
 			setPlans(plansData)
 		} catch (err) {
 			const errorMessage = err.message || 'Failed to load subscription plans. Please try again later.'
@@ -40,27 +47,25 @@ export default function Pricing({ onSelectPlan }) {
 	}
 
 	function prev() {
-		if (currentPage > 1) {
-			setCurrentPage(currentPage - 1)
-		}
+		if (currentPage > 1) setCurrentPage(currentPage - 1)
 	}
 
 	function next() {
-		if (plans.length > 0) {
-			setCurrentPage(currentPage + 1)
-		}
+		if (plans.length > 0) setCurrentPage(currentPage + 1)
 	}
 
 	const canGoPrev = currentPage > 1
 	const canGoNext = plans.length > 0
 
 	return (
-		<section id="pricing" className="pricing" aria-label="Pricing">
+		<section id={sectionId} className="pricing" aria-label="Pricing">
 			<div className="pricing-inner">
-				<div className="pricing-header">
-					<h3>Pricing</h3>
-					<p>Simple, predictable plans — pick what fits your institution.</p>
-				</div>
+				{!hideHeader && (
+					<div className="pricing-header">
+						<h3>Pricing</h3>
+						<p>Simple, predictable plans — pick what fits your institution.</p>
+					</div>
+				)}
 
 				{error && (
 					<div style={{ color: '#e74c3c', marginBottom: '2rem', padding: '1rem', backgroundColor: '#f8d7da', borderRadius: '4px', textAlign: 'center' }}>
@@ -68,23 +73,23 @@ export default function Pricing({ onSelectPlan }) {
 					</div>
 				)}
 
-			{plans.length === 0 && !loading ? (
-				<div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
-					No subscription plans available at the moment.
-				</div>
-			) : (
-				<div className={`pricing-row ${mounted ? 'enter' : ''}`} style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 0.3s ease' }}>
-					<button
-						className="pricing-nav left"
-						onClick={prev}
-						disabled={!canGoPrev || loading}
-						aria-label="Previous plan"
-						style={{ opacity: (canGoPrev && !loading) ? 1 : 0.5, cursor: (canGoPrev && !loading) ? 'pointer' : 'not-allowed' }}
-					>
-						‹
-					</button>
+				{plans.length === 0 && !loading ? (
+					<div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+						No subscription plans available at the moment.
+					</div>
+				) : (
+					<div className={`pricing-row ${mounted ? 'enter' : ''}`} style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 0.3s ease' }}>
+						<button
+							className="pricing-nav left"
+							onClick={prev}
+							disabled={!canGoPrev || loading}
+							aria-label="Previous plan"
+							style={{ opacity: (canGoPrev && !loading) ? 1 : 0.5, cursor: (canGoPrev && !loading) ? 'pointer' : 'not-allowed' }}
+						>
+							‹
+						</button>
 
-					<div className="pricing-cards">
+						<div className="pricing-cards">
 							{plans.map((plan, i) => (
 								<article
 									key={plan.subscription_plan_id}
@@ -115,11 +120,29 @@ export default function Pricing({ onSelectPlan }) {
 											type="button"
 											onClick={() => onSelectPlan && onSelectPlan(plan)}
 										>
-											Buy
+											{buyButtonText}
 										</button>
 									</div>
 								</article>
 							))}
+							{showAddPlanButton && (
+								<div
+									className="pricing-card add-plan-card"
+									onClick={onAddNewPlan}
+									style={{
+										cursor: 'pointer',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										minHeight: '300px',
+										backgroundColor: '#f5f5f5',
+										borderRadius: '8px',
+										border: '2px dashed #ccc'
+									}}
+								>
+									<button style={{ fontSize: '3rem', background: 'none', border: 'none', cursor: 'pointer', color: '#3a4a52' }}>+</button>
+								</div>
+							)}
 						</div>
 
 						<button

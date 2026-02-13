@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
 import NavBar from './NavBar'
 import { sanitizeInput } from '../utils/xss'
 import { PhoneInput } from 'react-international-phone'
@@ -26,7 +27,10 @@ import {
  * @param {Function} props.onBackToLogin - Callback to navigate back to login
  * @returns {JSX.Element} Subscription request form page
  */
-export default function SubscriptionRequest({ selectedPlan, onBackToLogin }) {
+export default function SubscriptionRequest({ selectedPlan: selectedPlanProp, onBackToLogin }) {
+	const location = useLocation()
+	const selectedPlan = selectedPlanProp ?? location?.state?.selectedPlan
+
 	const [form, setForm] = useState(INITIAL_FORM_STATE)
 	const [errors, setErrors] = useState({})
 	const [submitting, setSubmitting] = useState(false)

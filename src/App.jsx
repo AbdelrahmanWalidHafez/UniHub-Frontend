@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import About from './components/About'
 import Solutions from './components/Solutions'
@@ -6,49 +7,26 @@ import Pricing from './components/Pricing'
 import Contact from './components/Contact'
 import SuccessPartners from './components/SuccessPartners'
 import Login from './components/Login'
+import CustomerServiceLanding from './components/CustomerServiceLanding'
+import AddPlan from './components/AddPlan'
 import SubscriptionRequest from './components/SubscriptionRequest'
+import ErrorBoundary from './components/ErrorBoundary'
+import ProtectedRoute from './components/ProtectedRoute'
+import RequestDetails from './components/RequestDetails'
+import SubscriptionRequests from './components/SubscriptionRequests'
+import { ROUTES } from './constants/routes'
+import { ROLES, getRoleName } from './constants/roles'
 import { isAuthenticated, getUser, logout } from './utils/auth'
 
 export default function App() {
-  const [showLogin, setShowLogin] = useState(false)
   const [user, setUser] = useState(getUser())
   const [authenticated, setAuthenticated] = useState(isAuthenticated())
-  const [showSubscriptionRequest, setShowSubscriptionRequest] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState(null)
+  const navigate = useNavigate()
 
-  // Initialize view based on current URL pathname
+  // Sync auth state when app loads (e.g. after refresh or tab focus)
   useEffect(() => {
-    const pathname = window.location.pathname
-    if (pathname === '/login') {
-      setShowLogin(true)
-      setShowSubscriptionRequest(false)
-    } else if (pathname === '/subscription_request' || pathname === '/subscription-request') {
-      setShowLogin(false)
-      setShowSubscriptionRequest(true)
-    } else {
-      setShowLogin(false)
-      setShowSubscriptionRequest(false)
-    }
-  }, [])
-
-  // Handle browser back button and URL changes
-  useEffect(() => {
-    const handlePopState = () => {
-      const pathname = window.location.pathname
-      if (pathname === '/login') {
-        setShowLogin(true)
-        setShowSubscriptionRequest(false)
-      } else if (pathname === '/subscription_request' || pathname === '/subscription-request') {
-        setShowLogin(false)
-        setShowSubscriptionRequest(true)
-      } else {
-        setShowLogin(false)
-        setShowSubscriptionRequest(false)
-      }
-    }
-    
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
+    setUser(getUser())
+    setAuthenticated(isAuthenticated())
   }, [])
 
   useEffect(() => {
@@ -182,9 +160,11 @@ export default function App() {
         await logout()
         setUser(null)
         setAuthenticated(false)
-        window.history.pushState({ showLogin: false, showSubscriptionRequest: false, selectedPlan: null }, '', '/')
+        navigate(ROUTES.HOME)
       } catch (err) {
-        console.error('Logout failed', err)
+        if (import.meta.env.DEV) {
+          console.error('Logout failed', err)
+        }
         try {
           window.alert('Logout failed. Please try again.')
         } catch (e) {
@@ -192,63 +172,120 @@ export default function App() {
         }
       }
     } else {
-      setShowLogin(true)
-      window.history.pushState({ showLogin: true, showSubscriptionRequest: false }, '', '/login')
+      navigate(ROUTES.LOGIN)
     }
   }
 
-  function handleSelectPlan(plan) {
-    setSelectedPlan(plan)
-    setShowSubscriptionRequest(true)
-    window.history.pushState({ showSubscriptionRequest: true, selectedPlan: plan, showLogin: false }, '', '/subscription_request')
+  const handleLoginSuccess = (userData) => {
+    setUser(userData)
+    setAuthenticated(true)
+    const roleName = getRoleName(userData)
+    if (roleName === ROLES.CUSTOMER_SERVICE) {
+      navigate(ROUTES.CUSTOMER_SERVICE)
+    } else {
+      navigate(ROUTES.DASHBOARD)
+    }
   }
 
-  function handleCartClick() {
-    setSelectedPlan(null)
-    setShowSubscriptionRequest(true)
-    window.history.pushState({ showSubscriptionRequest: true, selectedPlan: null, showLogin: false }, '', '/subscription_request')
+  const handleLogout = () => {
+    setUser(null)
+    setAuthenticated(false)
+    navigate(ROUTES.HOME)
   }
 
-  function handleBackToLoginFromSubscription() {
-    setShowSubscriptionRequest(false)
-    setShowLogin(true)
-    window.history.pushState({ showSubscriptionRequest: false, showLogin: true, selectedPlan: null }, '', '/login')
-  }
+  const goToSubscriptionRequest = useCallback(() => {
+    navigate(ROUTES.SUBSCRIPTION_REQUEST)
+  }, [navigate])
+
+  const goToSubscriptionRequestWithPlan = useCallback((plan) => {
+    navigate(ROUTES.SUBSCRIPTION_REQUEST, { state: { selectedPlan: plan } })
+  }, [navigate])
 
   return (
-    <div>
-      {showLogin ? (
-        <Login onLoginSuccess={(userData) => {
-          setUser(userData)
-          setAuthenticated(true)
-          setShowLogin(false)
-          window.history.pushState({ showLogin: false, showSubscriptionRequest: false, selectedPlan: null }, '', '/')
-        }} />
-      ) : showSubscriptionRequest ? (
-        <SubscriptionRequest
-          selectedPlan={selectedPlan}
-          onBackToLogin={handleBackToLoginFromSubscription}
-        />
-      ) : (
-        <>
-          <NavBar 
-            appName="unihub" 
-            logoSrc="/logo.png" 
-            onUserIconClick={handleUserIconClick} 
-            onLogoClick={() => window.scrollTo(0, 0)}
-            onCartClick={handleCartClick}
-            isAuthenticated={authenticated}
+    <Routes>
+      <Route 
+        path={ROUTES.HOME} 
+        element={
+          <>
+            <NavBar 
+              appName="unihub" 
+              logoSrc="/logo.png" 
+              onUserIconClick={handleUserIconClick} 
+              onLogoClick={() => window.scrollTo(0, 0)}
+              cartTo={ROUTES.SUBSCRIPTION_REQUEST}
+              onCartClick={goToSubscriptionRequest}
+              isAuthenticated={authenticated}
+            />
+            <main>
+              <About />
+              <Solutions />
+              <Pricing 
+                onSelectPlan={goToSubscriptionRequestWithPlan}
+              />
+              <SuccessPartners />
+              <Contact />
+            </main>
+          </>
+        } 
+      />
+      <Route 
+        path={ROUTES.SUBSCRIPTION_REQUEST} 
+        element={
+          <SubscriptionRequest 
+            onBackToLogin={() => navigate(ROUTES.HOME)} 
           />
-          <main>
-            <About />
-            <Solutions />
-            <Pricing onSelectPlan={handleSelectPlan} />
-            <SuccessPartners />
-            <Contact />
-          </main>
-        </>
-      )}
-    </div>
+        } 
+      />
+      <Route 
+        path={ROUTES.LOGIN} 
+        element={<Login onLoginSuccess={handleLoginSuccess} />} 
+      />
+      <Route 
+        path={ROUTES.CUSTOMER_SERVICE} 
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+            <CustomerServiceLanding onLogout={handleLogout} />
+          </ProtectedRoute>
+        } 
+     />
+     <Route 
+  path="/customer-service/request/:id" 
+  element={
+    <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+      <RequestDetails />
+    </ProtectedRoute>
+  } 
+/>
+
+<Route 
+  path="/customer-service/requests" 
+  element={
+    <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+      <SubscriptionRequests />
+    </ProtectedRoute>
+  } 
+/>
+      <Route 
+        path={ROUTES.ADD_PLAN} 
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+            <AddPlan />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path={ROUTES.DASHBOARD} 
+        element={
+          <ProtectedRoute disallowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+            <div style={{ padding: '20px' }}>
+              <h1>Dashboard</h1>
+              <p>Welcome back, {user?.name || 'User'}!</p>
+              <button type="button" onClick={handleLogout}>Logout</button>
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+    </Routes>
   )
 }
 
