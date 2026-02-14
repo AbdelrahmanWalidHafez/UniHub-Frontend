@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { get } from '../utils/api'
+import { getSortIcon, SkeletonRow, formatDate } from './TableCommons'
 
 export default function SubscriptionRequests() {
   const navigate = useNavigate()
@@ -97,23 +98,6 @@ export default function SubscriptionRequests() {
     setPage(1)
   }
 
-  const getSortIcon = (field) => {
-    if (sortField !== field) return (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.4 }}>
-        <path d="M7 15l5 5 5-5M7 9l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    )
-    return sortDir === 'asc' ? (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-        <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ) : (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-        <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    )
-  }
-
   const handleRowClick = (requestId) => {
     navigate(`/customer-service/request/${requestId}`)
   }
@@ -156,14 +140,7 @@ export default function SubscriptionRequests() {
     }
   }
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '—'
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
+  
 
   const columns = [
     { key: 'rid',            label: 'Request ID',  width: '18%' },
@@ -173,22 +150,7 @@ export default function SubscriptionRequests() {
     { key: null,             label: '',             width: '9%'  }
   ]
 
-  const SkeletonRow = ({ index }) => (
-    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
-      {[18, 37, 18, 18, 9].map((w, i) => (
-        <td key={i} style={{ padding: '18px 20px' }}>
-          <div style={{
-            height: '14px',
-            borderRadius: '6px',
-            backgroundColor: '#F3F4F6',
-            width: i === 4 ? '24px' : `${60 + (index * 7 + i * 13) % 30}%`,
-            animation: 'shimmer 1.5s ease-in-out infinite',
-            animationDelay: `${index * 0.07}s`
-          }} />
-        </td>
-      ))}
-    </tr>
-  )
+  
 
   return (
     <div style={{ padding: '36px 40px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -325,7 +287,7 @@ export default function SubscriptionRequests() {
                         backgroundColor: sortField === col.key ? 'rgba(255,255,255,0.15)' : 'transparent',
                         transition: 'background-color 0.15s'
                       }}>
-                        {getSortIcon(col.key)}
+                        {getSortIcon(col.key, sortField, sortDir)}
                       </span>
                     </span>
                   ) : null}

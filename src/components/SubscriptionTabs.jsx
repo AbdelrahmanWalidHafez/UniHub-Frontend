@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import SubscriptionRequests from './SubscriptionRequests'
+import Inquiries from './Inquiries'
 
 export default function SubscriptionTabs() {
 	const [activeTab, setActiveTab] = useState('subscription-requests')
@@ -37,11 +38,7 @@ export default function SubscriptionTabs() {
 
 			<div className="tab-content" style={{ padding: '20px 0' }}>
 				{activeTab === 'subscription-requests' && <SubscriptionRequests />}
-				{activeTab === 'inquiries' && (
-					<div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-						<p>Inquiries content will go here</p>
-					</div>
-				)}
+				{activeTab === 'inquiries' && <Inquiries />}
 				{activeTab === 'universities' && (
 					<div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
 						<p>Universities content will go here</p>
