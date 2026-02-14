@@ -1,168 +1,223 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import NavBar from './NavBar'
-import { logout } from '../utils/auth'
+import { post } from '../utils/api'
 import { ROUTES } from '../constants/routes'
-import { ENABLE_LOGGING } from '../utils/config'
+import { logout } from '../utils/auth'
 
 export default function AddPlan({ onGoBack }) {
   const navigate = useNavigate()
-  const [formData, setFormData] = useState({
-    planName: '',
-    description: '',
-    price: '',
-    maxUsers: '',
-    currency: 'USD'
-  })
+  const [form, setForm] = useState({ planName: '', description: '', price: '', maxUsers: '' })
+  const [warning, setWarning] = useState('')
+  const [errors, setErrors] = useState({ planName: '', description: '', price: '', maxUsers: '' })
+  const [loading, setLoading] = useState(false)
+
+  const handleCancel = () => {
+    if (onGoBack) return onGoBack()
+    navigate(ROUTES.CUSTOMER_SERVICE)
+  }
 
   const handleLogout = async () => {
     await logout()
-    navigate(ROUTES.HOME)
+    navigate(ROUTES.LOGIN)
   }
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+  function validateForm() {
+    const next = { planName: '', description: '', price: '', maxUsers: '' }
+
+    // planName: NotBlank, size 3-50, letters and spaces only
+    const name = (form.planName || '').trim()
+    if (!name) next.planName = 'Plan name must not be empty'
+    else if (name.length < 3 || name.length > 50) next.planName = 'Plan name must be between 3 and 50 characters'
+    else if (!/^[A-Za-z ]+$/.test(name)) next.planName = 'Plan name must contain letters and spaces only'
+
+    // description: NotBlank, size 10-200
+    const desc = (form.description || '').trim()
+    if (!desc) next.description = 'Plan description must not be empty'
+    else if (desc.length < 10 || desc.length > 200) next.description = 'Plan description must be between 10 and 200 characters'
+
+    // price: required, integer >=1
+    const priceVal = Number(form.price)
+    if (form.price === '' || isNaN(priceVal)) next.price = 'Price is required and must be a number'
+    else if (!Number.isInteger(priceVal)) next.price = 'Price must be an integer (smallest currency unit)'
+    else if (priceVal < 1) next.price = 'Price must be at least 1'
+
+    // maxUsers: integer between 1 and 1_000_000
+    const maxVal = Number(form.maxUsers)
+    if (form.maxUsers === '' || isNaN(maxVal)) next.maxUsers = 'Max users is required and must be a number'
+    else if (!Number.isInteger(maxVal)) next.maxUsers = 'Max users must be an integer'
+    else if (maxVal < 1) next.maxUsers = 'Max user amount must be at least 1'
+    else if (maxVal > 1000000) next.maxUsers = 'Max user amount is too large'
+
+    setErrors(next)
+    return !next.planName && !next.description && !next.price && !next.maxUsers
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (ENABLE_LOGGING) {
-      console.debug('New plan data:', formData)
+  const handleCreate = async () => {
+    setWarning('')
+    if (!validateForm()) return
+
+    setLoading(true)
+    try {
+      const payload = {
+        subscription_plan_name: form.planName.trim(),
+        subscription_plan_description: form.description.trim(),
+        price: Number(form.price),
+        subscription_plan_max_user_amount: Number(form.maxUsers)
+      }
+
+      const res = await post('subscription/api/v1/subscription-plans/customer-service/create', payload)
+      if (res && res.subscription_plan_id) {
+        navigate(ROUTES.CUSTOMER_SERVICE, { state: { message: 'Subscription plan created' } })
+      } else {
+        setWarning(res?.warn || 'Created, but unexpected response')
+      }
+      } catch (err) {
+      setWarning(err?.message || 'Failed to create plan')
+    } finally {
+      setLoading(false)
     }
-    // TODO: Send to backend API
-    navigate(ROUTES.CUSTOMER_SERVICE)
   }
 
-  const handleCancel = () => {
-    navigate(ROUTES.CUSTOMER_SERVICE)
-  }
+  const labelStyle = { fontSize: 13, color: '#6B7280', marginBottom: 8 }
 
   return (
-    <div>
-      <NavBar 
-        appName="UniHub" 
-        logoSrc="/logo.png" 
-        onUserIconClick={handleLogout} 
-        onLogoClick={() => navigate(ROUTES.CUSTOMER_SERVICE)}
-        isAuthenticated={true}
-      />
+    <>
+      <header className="navbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', borderBottom: '1px solid #e0e0e0' }}>
+        <div style={{ flex: 1 }}></div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+          <button
+            onClick={() => navigate(ROUTES.CUSTOMER_SERVICE)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            <img src="/logo.png" alt="UniHub Logo" style={{ height: '40px' }} />
+          </button>
+        </div>
 
-      <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px' }}>
-        <h2>Add New Subscription Plan</h2>
-        <p style={{ color: '#666', marginBottom: '30px' }}>Create a new subscription plan for your customers</p>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            onClick={handleLogout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+              color: '#666'
+            }}
+            title="Logout"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17 16L21 12M21 12L17 8M21 12H7M13 16C13 17.6569 11.6569 19 10 19H6C4.34315 19 3 17.6569 3 16V8C3 6.34315 4.34315 5 6 5H10C11.6569 5 13 6.34315 13 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </header>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>Plan Name</label>
-            <input
-              type="text"
-              name="planName"
-              value={formData.planName}
-              onChange={handleInputChange}
-              placeholder="e.g., Premium Plan"
-              required
-              style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px' }}
-            />
-          </div>
+      <div className="subscription-request-page">
+        <main className="subscription-request-main">
+          <section className="subscription-request" aria-label="Add subscription plan">
+            <div className="subscription-request-inner">
+              <div className="subscription-header">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <button onClick={() => (onGoBack ? onGoBack() : navigate(-1))} style={{ width: 40, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, border: '1px solid #e6e8f0', background: '#fff', cursor: 'pointer' }} aria-label="Back">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18L9 12L15 6" stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <h2 style={{ margin: 0 }}>Add subscription plan</h2>
+                      <p style={{ margin: 0, color: '#667085' }}>Create a new subscription plan for your institution.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Describe this plan"
-              rows="4"
-              required
-              style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px', fontFamily: 'inherit' }}
-            />
-          </div>
+              <form className="subscription-form" onSubmit={(e) => { e.preventDefault(); handleCreate() }}>
+                {warning && (
+                  <div className="form-error-message" style={{ background: '#FFFBEB', border: '1px solid #FDE68A', padding: 12, borderRadius: 8, color: '#92400E' }}>
+                    {warning}
+                  </div>
+                )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>Price</label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                placeholder="100.00"
-                step="0.01"
-                required
-                style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px' }}
-              />
+                <div className="form-section-group">
+                  <h3 className="form-section-title" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ width: 4, height: 28, background: 'var(--app-color)', borderRadius: 2, display: 'inline-block' }} />
+                    <span>Plan details</span>
+                  </h3>
+                  <div className="subscription-grid" style={{ gridTemplateColumns: '1fr' }}>
+                    <label>
+                      Plan name
+                      <input
+                        name="planName"
+                        value={form.planName}
+                        onChange={(e) => setForm({ ...form, planName: e.target.value })}
+                        placeholder="e.g. Professional Plan"
+                      />
+                      <div className="field-help">{errors.planName}</div>
+                    </label>
+
+                    <label>
+                      Description
+                      <textarea
+                        name="description"
+                        className="subscription-textarea"
+                        value={form.description}
+                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        rows={5}
+                        placeholder="Short summary of the plan"
+                      />
+                      <div className="field-help">{errors.description}</div>
+                    </label>
+
+                    <label>
+                      Price (yearly)
+                      <input
+                        name="price"
+                        value={form.price}
+                        onChange={(e) => setForm({ ...form, price: e.target.value })}
+                        placeholder="0"
+                      />
+                      <div className="field-help">{errors.price}</div>
+                    </label>
+
+                    <label>
+                      Max users
+                      <input
+                        name="maxUsers"
+                        value={form.maxUsers}
+                        onChange={(e) => setForm({ ...form, maxUsers: e.target.value })}
+                        placeholder="e.g. 50"
+                      />
+                      <div className="field-help">{errors.maxUsers}</div>
+                    </label>
+
+                  </div>
+                </div>
+
+                <div className="subscription-actions">
+                  <button
+                    type="submit"
+                    className={`submit-btn ${loading || !form.planName || isNaN(Number(form.price)) || isNaN(Number(form.maxUsers)) ? 'is-disabled' : ''} ${loading ? 'is-loading' : ''}`}
+                    disabled={loading || !form.planName || isNaN(Number(form.price)) || isNaN(Number(form.maxUsers))}
+                  >
+                    {loading ? <><span className="spinner"></span> Creating...</> : 'Create plan'}
+                  </button>
+                </div>
+              </form>
             </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>Max Users</label>
-              <input
-                type="number"
-                name="maxUsers"
-                value={formData.maxUsers}
-                onChange={handleInputChange}
-                placeholder="50"
-                required
-                style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px' }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600' }}>Currency</label>
-            <select
-              name="currency"
-              value={formData.currency}
-              onChange={handleInputChange}
-              style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px' }}
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="AED">AED</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button
-              type="submit"
-              style={{
-                flex: 1,
-                padding: '12px',
-                backgroundColor: '#3a4a52',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: '600'
-              }}
-            >
-              Create Plan
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              style={{
-                flex: 1,
-                padding: '12px',
-                backgroundColor: '#f0f0f0',
-                color: '#333',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: '600'
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+          </section>
+        </main>
       </div>
-    </div>
+    </>
   )
 }

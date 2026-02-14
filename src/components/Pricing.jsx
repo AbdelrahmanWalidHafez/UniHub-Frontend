@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { get } from '../utils/api'
+import { useNavigate } from 'react-router-dom'
+import { get, post, put, deleteRequest } from '../utils/api'
+import { getUser } from '../utils/auth'
+import { getRoleName, ROLES } from '../constants/roles'
 import { MOUNT_ANIMATION_DELAY } from '../utils/config'
 
 export default function Pricing({ 
@@ -11,6 +14,15 @@ export default function Pricing({
 	onSelectPlan = null
 }) {
 	const [plans, setPlans] = useState([])
+	const [selectedPlan, setSelectedPlan] = useState(null)
+	const [detailsOpen, setDetailsOpen] = useState(false)
+	const [isEditing, setIsEditing] = useState(false)
+	const [formState, setFormState] = useState({ planName: '', planDescription: '', price: '', maxUserAmount: 1, currency: 'USD' })
+	const [actionError, setActionError] = useState('')
+	// Determine whether current user is customer service
+	const user = getUser()
+	const roleName = getRoleName(user)
+	const isCustomerService = roleName === ROLES.CUSTOMER_SERVICE
 	const [currentPage, setCurrentPage] = useState(1)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
@@ -46,6 +58,69 @@ export default function Pricing({
 		}
 	}
 
+		const navigate = useNavigate()
+
+		function openDetails(plan) {
+			if (isCustomerService) {
+				navigate(`/customer-service/subscription-plan/${plan.subscription_plan_id}`)
+				return
+			}
+
+			setSelectedPlan(plan)
+			setFormState({
+				planName: plan.subscription_plan_name || '',
+				planDescription: plan.subscription_plan_description || '',
+				price: (plan.subscription_plan_price != null) ? (plan.subscription_plan_price).toFixed(2) : '',
+				maxUserAmount: plan.subscription_plan_max_user_amount || 1,
+				currency: plan.subscription_plan_currency || 'USD'
+			})
+			setActionError('')
+			setIsEditing(false)
+			setDetailsOpen(true)
+		}
+
+	function closeDetails() {
+		setDetailsOpen(false)
+		setSelectedPlan(null)
+		setActionError('')
+	}
+
+	function handleFormChange(e) {
+		const { name, value } = e.target
+		setFormState(prev => ({ ...prev, [name]: value }))
+	}
+
+	async function handleUpdate() {
+		setActionError('')
+		try {
+			const body = {
+				subscription_plan_name: formState.planName,
+				subscription_plan_description: formState.planDescription,
+				price: Math.round(parseFloat(formState.price) * 100) / 100,
+				subscription_plan_max_user_amount: parseInt(formState.maxUserAmount, 10)
+			}
+			await put(`subscription/api/v1/subscription-plans/customer-service/update/${selectedPlan.subscription_plan_id}`, body)
+			await fetchPlans(currentPage)
+			setIsEditing(false)
+			closeDetails()
+		} catch (err) {
+			setActionError(err.message || 'Failed to update plan')
+		}
+	}
+
+	async function handleDelete() {
+		setActionError('')
+		if (!selectedPlan) return
+		if (!window.confirm('Are you sure you want to delete this subscription plan?')) return
+		try {
+			await deleteRequest(`subscription/api/v1/subscription-plans/customer-service/delete/${selectedPlan.subscription_plan_id}`)
+			await fetchPlans(currentPage)
+			closeDetails()
+		} catch (err) {
+			setActionError(err.message || 'Failed to delete plan')
+		}
+	}
+
 	function prev() {
 		if (currentPage > 1) setCurrentPage(currentPage - 1)
 	}
@@ -76,6 +151,11 @@ export default function Pricing({
 				{plans.length === 0 && !loading ? (
 					<div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
 						No subscription plans available at the moment.
+						{(showAddPlanButton && isCustomerService) && (
+							<div style={{ marginTop: '16px' }}>
+								<button onClick={onAddNewPlan} style={{ padding: '12px 18px', borderRadius: '6px', background: '#3a4a52', color: '#fff', border: 'none', cursor: 'pointer' }}>Add subscription plan</button>
+							</div>
+						)}
 					</div>
 				) : (
 					<div className={`pricing-row ${mounted ? 'enter' : ''}`} style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 0.3s ease' }}>
@@ -115,17 +195,28 @@ export default function Pricing({
 									</div>
 
 									<div className="card-actions">
-										<button
-											className="buy-pill"
-											type="button"
-											onClick={() => onSelectPlan && onSelectPlan(plan)}
-										>
-											{buyButtonText}
-										</button>
+										{!isCustomerService && (
+											<button
+												className="buy-pill"
+												type="button"
+												onClick={() => onSelectPlan && onSelectPlan(plan)}
+											>
+												{buyButtonText}
+											</button>
+										)}
+										{isCustomerService && (
+											<button
+												className="buy-pill more-pill"
+												type="button"
+												onClick={() => openDetails(plan)}
+											>
+												More info
+											</button>
+										)}
 									</div>
 								</article>
 							))}
-							{showAddPlanButton && (
+							{(showAddPlanButton && isCustomerService) && (
 								<div
 									className="pricing-card add-plan-card"
 									onClick={onAddNewPlan}
@@ -156,6 +247,43 @@ export default function Pricing({
 						</button>
 					</div>
 				)}
+
+			{detailsOpen && selectedPlan && (
+				<div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+					<div style={{ width: '600px', maxWidth: '95%', background: '#fff', borderRadius: '8px', padding: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+						<h3 style={{ marginTop: 0 }}>{selectedPlan.subscription_plan_name}</h3>
+						{actionError && <div style={{ color: '#b71c1c', background: '#fdecea', padding: '8px', borderRadius: '4px', marginBottom: '12px' }}>{actionError}</div>}
+						{!isEditing ? (
+							<div>
+								<p style={{ color: '#444' }}>{selectedPlan.subscription_plan_description}</p>
+								<ul>
+									<li><strong>Price:</strong> {selectedPlan.subscription_plan_currency} ${selectedPlan.subscription_plan_price.toFixed(2)}</li>
+									<li><strong>Max users:</strong> {selectedPlan.subscription_plan_max_user_amount}</li>
+									<li><strong>Created at:</strong> {selectedPlan.created_at || selectedPlan.createdAt}</li>
+								</ul>
+								<div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+									<button onClick={() => setIsEditing(true)} style={{ padding: '8px 12px' }}>Edit</button>
+									<button onClick={handleDelete} style={{ padding: '8px 12px', background: '#b71c1c', color: '#fff', border: 'none' }}>Delete</button>
+									<button onClick={closeDetails} style={{ padding: '8px 12px' }}>Close</button>
+								</div>
+							</div>
+						) : (
+							<div>
+								<div style={{ display: 'grid', gap: '8px' }}>
+									<label>Plan name<input name="planName" value={formState.planName} onChange={handleFormChange} /></label>
+									<label>Description<textarea name="planDescription" value={formState.planDescription} onChange={handleFormChange} rows={4} /></label>
+									<label>Price<input name="price" type="number" step="0.01" value={formState.price} onChange={handleFormChange} /></label>
+									<label>Max users<input name="maxUserAmount" type="number" value={formState.maxUserAmount} onChange={handleFormChange} /></label>
+								</div>
+								<div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+									<button onClick={handleUpdate} style={{ padding: '8px 12px', background: '#2e7d32', color: '#fff', border: 'none' }}>Save</button>
+									<button onClick={() => setIsEditing(false)} style={{ padding: '8px 12px' }}>Cancel</button>
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+			)}
 			</div>
 		</section>
 	)

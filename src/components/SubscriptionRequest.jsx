@@ -169,7 +169,20 @@ export default function SubscriptionRequest({ selectedPlan: selectedPlanProp, on
 			newErrors.universityDomain = domainRule.messages.pattern
 		}
 
-		// Validate files
+		// Validate CIF
+		const cifRule = VALIDATION_RULES.cif
+		if (!trimmedValues.cif) {
+			newErrors.cif = cifRule.messages.empty
+		} else if (
+			trimmedValues.cif.length < cifRule.minLength ||
+			trimmedValues.cif.length > cifRule.maxLength
+		) {
+			newErrors.cif = cifRule.messages.length
+		} else if (!cifRule.pattern.test(trimmedValues.cif)) {
+			newErrors.cif = cifRule.messages.pattern
+		}
+
+		// Validate files presence (type validation handled when selecting/dropping files)
 		if (!logoFile) {
 			newErrors.universityLogo = 'University logo is required'
 		}
@@ -181,31 +194,67 @@ export default function SubscriptionRequest({ selectedPlan: selectedPlanProp, on
 		return Object.keys(newErrors).length === 0
 	}
 
-	function handleFileSelect(e, type) {
-		const file = e.target.files && e.target.files[0]
-		if (!file) return
-		if (type === FILE_TYPES.LOGO) {
-			setLogoFile(file)
-			setShowLogoModal(false)
-		} else if (type === FILE_TYPES.ACCREDITATION) {
-			setAccreditationFile(file)
-			setShowAccreditationModal(false)
+		/** Check whether a file matches the accept string (e.g. '.png,.jpg,.jpeg,.pdf') */
+		function isAllowedFile(file, acceptString) {
+			if (!file || !acceptString) return true
+			const tokens = acceptString.split(',').map((s) => s.trim().toLowerCase())
+			const name = (file.name || '').toLowerCase()
+			const type = (file.type || '').toLowerCase()
+			for (const t of tokens) {
+				if (!t) continue
+				if (t.startsWith('.')) {
+					if (name.endsWith(t)) return true
+				} else if (t.endsWith('/*')) {
+					const prefix = t.split('/')[0]
+					if (type.startsWith(prefix + '/')) return true
+				} else {
+					if (type === t) return true
+				}
+			}
+			return false
 		}
-	}
 
-	function handleFileDrop(e, type) {
-		e.preventDefault()
-		e.stopPropagation()
-		const file = e.dataTransfer.files && e.dataTransfer.files[0]
-		if (!file) return
-		if (type === FILE_TYPES.LOGO) {
-			setLogoFile(file)
-			setShowLogoModal(false)
-		} else if (type === FILE_TYPES.ACCREDITATION) {
-			setAccreditationFile(file)
-			setShowAccreditationModal(false)
+		function handleFileSelect(e, type) {
+			const file = e.target.files && e.target.files[0]
+			if (!file) return
+			if (type === FILE_TYPES.LOGO) {
+				if (!isAllowedFile(file, FILE_CONFIG.logo.accept)) {
+					setErrors((prev) => ({ ...prev, universityLogo: 'Only PNG, JPEG and PDF files are allowed' }))
+					return
+				}
+				setLogoFile(file)
+				setShowLogoModal(false)
+			} else if (type === FILE_TYPES.ACCREDITATION) {
+				if (!isAllowedFile(file, FILE_CONFIG.accreditation.accept)) {
+					setErrors((prev) => ({ ...prev, universityAccreditation: 'Only PNG, JPEG and PDF files are allowed' }))
+					return
+				}
+				setAccreditationFile(file)
+				setShowAccreditationModal(false)
+			}
 		}
-	}
+
+		function handleFileDrop(e, type) {
+			e.preventDefault()
+			e.stopPropagation()
+			const file = e.dataTransfer.files && e.dataTransfer.files[0]
+			if (!file) return
+			if (type === FILE_TYPES.LOGO) {
+				if (!isAllowedFile(file, FILE_CONFIG.logo.accept)) {
+					setErrors((prev) => ({ ...prev, universityLogo: 'Only PNG, JPEG and PDF files are allowed' }))
+					return
+				}
+				setLogoFile(file)
+				setShowLogoModal(false)
+			} else if (type === FILE_TYPES.ACCREDITATION) {
+				if (!isAllowedFile(file, FILE_CONFIG.accreditation.accept)) {
+					setErrors((prev) => ({ ...prev, universityAccreditation: 'Only PNG, JPEG and PDF files are allowed' }))
+					return
+				}
+				setAccreditationFile(file)
+				setShowAccreditationModal(false)
+			}
+		}
 
 	/** Prevents default browser behavior for drag and drop */
 	function preventDefault(e) {
@@ -290,6 +339,8 @@ export default function SubscriptionRequest({ selectedPlan: selectedPlanProp, on
 			} else {
 				setErrors({ submit: ERROR_MESSAGES[400] })
 			}
+		} else if (response.status === 504) {
+			setErrors({ submit: ERROR_MESSAGES[504] })
 		} else {
 			const message = errorData?.message || errorData?.error || ERROR_MESSAGES.DEFAULT
 			setErrors({ submit: message })
@@ -377,6 +428,19 @@ export default function SubscriptionRequest({ selectedPlan: selectedPlanProp, on
 									required
 								/>
 								<div className="field-help">{errors.universityDomain}</div>
+							</label>
+
+							<label>
+								CIF
+								<input
+									name="cif"
+									type="text"
+									value={form.cif}
+									onChange={handleChange}
+									aria-invalid={!!errors.cif}
+									placeholder="CIF / Company ID"
+								/>
+								<div className="field-help">{errors.cif}</div>
 							</label>
 						</div>
 
