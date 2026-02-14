@@ -13,6 +13,7 @@ import SubscriptionRequest from './components/SubscriptionRequest'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 import RequestDetails from './components/RequestDetails'
+import SubscriptionPlanDetails from './components/SubscriptionPlanDetails'
 import SubscriptionRequests from './components/SubscriptionRequests'
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
@@ -256,6 +257,15 @@ export default function App() {
     </ProtectedRoute>
   } 
 />
+
+          <Route
+            path="/customer-service/subscription-plan/:id"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+                <SubscriptionPlanDetails />
+              </ProtectedRoute>
+            }
+          />
 
 <Route 
   path="/customer-service/requests" 

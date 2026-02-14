@@ -376,6 +376,26 @@ main{padding-top:calc(var(--nav-height) + 12px)}
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
 }
 
+/* Styled textarea for subscription-like forms */
+.subscription-textarea {
+  margin-top: 8px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 2px solid #e6e8f0;
+  font-size: 0.96rem;
+  background: #f9fafb;
+  color: #2b3740;
+  min-height: 120px;
+  box-sizing: border-box;
+  transition: all 0.18s ease;
+}
+.subscription-textarea:hover { border-color: #d1d9e8; background: #fff; box-shadow: 0 4px 12px rgba(11,95,255,0.06); }
+.subscription-textarea:focus { outline: none; border-color: var(--app-color); background: #fff; box-shadow: 0 0 0 4px rgba(11,95,255,0.08); }
+.subscription-textarea::placeholder { color: #9CA3AF; opacity: 1; }
+
+/* Slight indent for helper text following long fields like description */
+.subscription-grid label .field-help { margin-left: 6px; }
+
 /* Row styling */
 .subscription-row-2 {
   display: grid;

@@ -12,6 +12,7 @@ export const FORM_FIELDS = {
 	CONTACT_NUMBER: 'contactNumber',
 	UNIVERSITY_WEBSITE_URL: 'universityWebsiteUrl',
 	UNIVERSITY_DOMAIN: 'universityDomain',
+	CIF: 'cif',
 }
 
 export const INITIAL_FORM_STATE = {
@@ -23,6 +24,7 @@ export const INITIAL_FORM_STATE = {
 	contactNumber: '',
 	universityWebsiteUrl: '',
 	universityDomain: '',
+	cif: '',
 }
 
 export const VALIDATION_RULES = {
@@ -82,12 +84,23 @@ export const VALIDATION_RULES = {
 			pattern: 'Invalid university domain',
 		},
 	},
+	cif: {
+		minLength: 2,
+		maxLength: 50,
+		pattern: /^[A-Za-z0-9\-]+$/,
+		messages: {
+			empty: 'CIF is required',
+			length: 'CIF must be between 2 and 50 characters',
+			pattern: 'CIF contains invalid characters',
+		},
+	},
 }
 
 export const ERROR_MESSAGES = {
 	409: 'There is already an active request with this data. If you see any suspicious activity contact us.',
 	400: 'Invalid request data',
 	500: 'Server error occurred. If you see any suspicious activity contact us.',
+	504: 'Server timeout. Please try again later.',
 	DEFAULT: 'Submission failed. If you see any suspicious activity contact us.',
 }
 
@@ -108,12 +121,12 @@ export const FILE_TYPES = {
 export const FILE_CONFIG = {
 	logo: {
 		name: 'University logo',
-		accept: 'image/*',
+		accept: '.png,.jpg,.jpeg,.pdf',
 		fieldName: 'media',
 	},
 	accreditation: {
 		name: 'University accreditation',
-		accept: '.pdf,image/*',
+		accept: '.pdf,.png,.jpg,.jpeg',
 		fieldName: 'file',
 	},
 }

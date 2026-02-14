@@ -13,32 +13,53 @@ export default function SubscriptionRequests() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const [hasMore, setHasMore] = useState(false)
-  const itemsPerPage = 5
+  const [itemsPerPage, setItemsPerPage] = useState(5)
 
   // Sorting
   const [sortField, setSortField] = useState('createdAt')
   const [sortDir, setSortDir] = useState('desc')
 
-  async function fetchSubscriptionRequests() {
+  async function fetchSubscriptionRequests(pageNum = page) {
     setLoading(true)
     setError('')
     try {
       const params = new URLSearchParams({
-        page_num: page,
+        page_num: pageNum,
         page_size: itemsPerPage,
         sort_field: sortField,
         sort_dir: sortDir
       })
       const data = await get(`subscription/api/v1/customer-service/get-requests?${params.toString()}`)
-      const requestsData = data?.['subscription-requests'] || (Array.isArray(data) ? data : []) || []
-      setRequests(Array.isArray(requestsData) ? requestsData : [])
-      setTotalPages(data?.total_pages || Math.ceil((data?.total_count || 0) / itemsPerPage) || 1)
-      setTotalItems(data?.total_count || requestsData.length || 0)
-      setHasMore(data?.has_more || page < (data?.total_pages || 1))
+
+      // Accept several possible response shapes from the API and normalize to an array
+      let requestsData = []
+      if (Array.isArray(data?.['subscription-requests'])) requestsData = data['subscription-requests']
+      else if (Array.isArray(data?.metaDataList)) requestsData = data.metaDataList
+      else if (Array.isArray(data?.subscriptionRequests)) requestsData = data.subscriptionRequests
+      else if (Array.isArray(data)) requestsData = data
+
+      const serverHasCount = typeof data?.total_count === 'number'
+      const totalCount = serverHasCount ? Number(data.total_count) : (Array.isArray(requestsData) ? requestsData.length : 0)
+      const computedTotalPages = serverHasCount ? Number(data?.total_pages ?? Math.max(1, Math.ceil(totalCount / itemsPerPage))) : null
+
+      // Update state based on fetched page
+      setRequests(requestsData || [])
+      setTotalItems(totalCount)
+      setTotalPages(computedTotalPages || 1)
+
+      if (typeof data?.has_more === 'boolean') {
+        setHasMore(data.has_more)
+      } else {
+        setHasMore(Array.isArray(requestsData) && requestsData.length >= itemsPerPage)
+      }
+
+      // return normalized response so callers can decide how to react
+      return { requestsData: requestsData || [], totalCount, hasMore: typeof data?.has_more === 'boolean' ? data.has_more : (Array.isArray(requestsData) && requestsData.length >= itemsPerPage) }
     } catch (err) {
       console.error('Failed to fetch subscription requests:', err)
       setError(err.message || 'Failed to load subscription requests')
       setRequests([])
+      return { requestsData: [], totalCount: 0, hasMore: false }
     } finally {
       setLoading(false)
     }
@@ -46,7 +67,25 @@ export default function SubscriptionRequests() {
 
   useEffect(() => {
     fetchSubscriptionRequests()
-  }, [page, sortField, sortDir])
+  }, [page, sortField, sortDir, itemsPerPage])
+
+  // Optimistic navigation: try to load target page before committing page state
+  async function goNext() {
+    const target = page + 1
+    const result = await fetchSubscriptionRequests(target)
+    if (result.requestsData && result.requestsData.length > 0) {
+      setPage(target)
+    }
+  }
+
+  async function goPrev() {
+    if (page <= 1) return
+    const target = page - 1
+    const result = await fetchSubscriptionRequests(target)
+    if (result.requestsData && result.requestsData.length > 0) {
+      setPage(target)
+    }
+  }
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -171,7 +210,7 @@ export default function SubscriptionRequests() {
           </p>
         </div>
 
-        {/* Stats pill */}
+        {/* Header pill showing total and inline Prev/Next arrows (replaces 'page N of M') */}
         {!loading && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: '6px',
@@ -184,10 +223,33 @@ export default function SubscriptionRequests() {
           }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3a4a52' }} />
             <span style={{ color: '#111827', fontWeight: '700' }}>{totalItems}</span>
-            total &nbsp;·&nbsp; page&nbsp;
-            <span style={{ color: '#111827', fontWeight: '700' }}>{page}</span>
-            &nbsp;of&nbsp;
-            <span style={{ color: '#111827', fontWeight: '700' }}>{totalPages}</span>
+            <span style={{ margin: '0 6px' }}>total ·</span>
+
+            <div style={{ display: 'inline-flex', gap: '6px' }}>
+              <button
+                onClick={() => goPrev()}
+                disabled={page === 1}
+                style={{
+                  width: 36, height: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8,
+                  border: '1px solid #E5E7EB', background: page === 1 ? '#F9FAFB' : 'white', cursor: page === 1 ? 'not-allowed' : 'pointer'
+                }}
+                aria-label="Previous page"
+              >
+                ‹
+              </button>
+
+              <button
+                onClick={() => goNext()}
+                disabled={!hasMore}
+                style={{
+                  width: 36, height: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8,
+                  border: '1px solid #E5E7EB', background: !hasMore ? '#F9FAFB' : 'white', cursor: !hasMore ? 'not-allowed' : 'pointer'
+                }}
+                aria-label="Next page"
+              >
+                ›
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -410,144 +472,7 @@ export default function SubscriptionRequests() {
           </tbody>
         </table>
 
-        {/* ── Pagination ── */}
-        {!loading && totalPages > 1 && (
-          <div style={{
-            padding: '16px 20px',
-            borderTop: '1px solid #F3F4F6',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            backgroundColor: '#FAFBFC'
-          }}>
-            {/* Info text */}
-            <span style={{ fontSize: '13px', color: '#9CA3AF', fontWeight: '500' }}>
-              Showing{' '}
-              <span style={{ color: '#374151', fontWeight: '700' }}>
-                {(page - 1) * itemsPerPage + 1}–{Math.min(page * itemsPerPage, totalItems)}
-              </span>
-              {' '}of{' '}
-              <span style={{ color: '#374151', fontWeight: '700' }}>{totalItems}</span>
-            </span>
-
-            {/* Buttons */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-
-              {/* Prev */}
-              <button
-                onClick={() => setPage(Math.max(1, page - 1))}
-                disabled={page === 1}
-                style={{
-                  width: '36px', height: '36px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: page === 1 ? '#F9FAFB' : 'white',
-                  color: page === 1 ? '#D1D5DB' : '#3a4a52',
-                  border: `1px solid ${page === 1 ? '#F3F4F6' : '#E5E7EB'}`,
-                  borderRadius: '8px',
-                  cursor: page === 1 ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  if (page !== 1) {
-                    e.currentTarget.style.backgroundColor = '#3a4a52'
-                    e.currentTarget.style.color = 'white'
-                    e.currentTarget.style.borderColor = '#3a4a52'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (page !== 1) {
-                    e.currentTarget.style.backgroundColor = 'white'
-                    e.currentTarget.style.color = '#3a4a52'
-                    e.currentTarget.style.borderColor = '#E5E7EB'
-                  }
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-
-              {/* Page numbers */}
-              {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                let pageNum = i + 1
-                if (totalPages > 5 && page > 3) {
-                  pageNum = page - 3 + i
-                  if (pageNum > totalPages) pageNum = totalPages - (4 - i)
-                }
-                if (pageNum < 1 || pageNum > totalPages) return null
-                const isActive = page === pageNum
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setPage(pageNum)}
-                    style={{
-                      width: '36px', height: '36px',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      backgroundColor: isActive ? '#3a4a52' : 'white',
-                      color: isActive ? 'white' : '#374151',
-                      border: `1px solid ${isActive ? '#3a4a52' : '#E5E7EB'}`,
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: isActive ? '700' : '500',
-                      transition: 'all 0.2s',
-                      boxShadow: isActive ? '0 2px 8px rgba(58,74,82,0.3)' : 'none'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.backgroundColor = '#F3F4F6'
-                        e.currentTarget.style.borderColor = '#3a4a52'
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.backgroundColor = 'white'
-                        e.currentTarget.style.borderColor = '#E5E7EB'
-                      }
-                    }}
-                  >
-                    {pageNum}
-                  </button>
-                )
-              })}
-
-              {/* Next */}
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={!hasMore || page >= totalPages}
-                style={{
-                  width: '36px', height: '36px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: (!hasMore || page >= totalPages) ? '#F9FAFB' : 'white',
-                  color: (!hasMore || page >= totalPages) ? '#D1D5DB' : '#3a4a52',
-                  border: `1px solid ${(!hasMore || page >= totalPages) ? '#F3F4F6' : '#E5E7EB'}`,
-                  borderRadius: '8px',
-                  cursor: (!hasMore || page >= totalPages) ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  if (hasMore && page < totalPages) {
-                    e.currentTarget.style.backgroundColor = '#3a4a52'
-                    e.currentTarget.style.color = 'white'
-                    e.currentTarget.style.borderColor = '#3a4a52'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (hasMore && page < totalPages) {
-                    e.currentTarget.style.backgroundColor = 'white'
-                    e.currentTarget.style.color = '#3a4a52'
-                    e.currentTarget.style.borderColor = '#E5E7EB'
-                  }
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-
-            </div>
-          </div>
-        )}
+        {/* Pagination removed — header arrows control navigation now */}
       </div>
 
       <style>{`
