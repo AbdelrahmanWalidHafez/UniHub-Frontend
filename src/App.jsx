@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import RequestDetails from './components/RequestDetails'
 import SubscriptionPlanDetails from './components/SubscriptionPlanDetails'
 import SubscriptionRequests from './components/SubscriptionRequests'
+import InquiryDetails from './components/InquiryDetails'
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
 import { isAuthenticated, getUser, logout } from './utils/auth'
@@ -257,6 +258,15 @@ export default function App() {
     </ProtectedRoute>
   } 
 />
+
+         <Route 
+      path="/customer-service/inquiry/:id" 
+      element={
+        <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+          <InquiryDetails />
+        </ProtectedRoute>
+      } 
+    />
 
           <Route
             path="/customer-service/subscription-plan/:id"
