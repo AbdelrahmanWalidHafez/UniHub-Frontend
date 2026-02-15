@@ -1,6 +1,6 @@
 export function sanitizeInput(input) {
 	if (typeof input !== 'string') return ''
-	
+
 	return input
 		.trim()
 		.replace(/[<>]/g, '')
@@ -14,7 +14,7 @@ export function sanitizeInput(input) {
 
 export function escapeHtml(text) {
 	if (typeof text !== 'string') return ''
-	
+
 	const map = {
 		'&': '&amp;',
 		'<': '&lt;',
@@ -22,8 +22,10 @@ export function escapeHtml(text) {
 		'"': '&quot;',
 		"'": '&#039;'
 	}
-	
+
 	return text.replace(/[&<>"']/g, (m) => map[m])
 }
+
+
 
 
