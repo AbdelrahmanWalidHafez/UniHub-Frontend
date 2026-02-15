@@ -29,7 +29,7 @@ export default function MapView({ lat = 31.23052, lng = 29.952007500000004, zoom
         }).addTo(mapRef.current)
         L.marker([lat, lng]).addTo(mapRef.current)
       } catch (e) {
-        // fail silently
+        
       }
     }
 

@@ -94,12 +94,12 @@ export default function Solutions() {
     return () => obs.disconnect()
   }, [])
 
-  // animate detail panel on active change
+  
   useEffect(() => {
     setDetailState((s) => s + 1)
   }, [active])
 
-  // ensure visual pane scrolls to the active feature (keeps images in sync)
+  
   useEffect(() => {
     const el = visualRefs.current[active]
     if (el && visualScrollRef.current) {
@@ -107,7 +107,7 @@ export default function Solutions() {
     }
   }, [active])
 
-  // (indicator removed — custom track now replaces it)
+  
 
   function scrollToIndex(i) {
     const el = visualRefs.current[i]
@@ -115,23 +115,23 @@ export default function Solutions() {
     el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
-  // custom track/thumb sync + interactions
+  
   useEffect(() => {
     const scroller = visualScrollRef.current
     const track = trackRef.current
     const thumb = thumbRef.current
     if (!scroller || !track || !thumb) return
 
-    // enable wheel scrolling from the left column only
+    
     const leftEl = leftRef.current
     function onLeftWheel(e) {
-      // only when wheel happens near the paragraph
+      
       e.preventDefault()
       scroller.scrollBy({ top: e.deltaY, behavior: 'auto' })
       updateThumb()
     }
 
-    // track whether the cursor is in the left area
+    
     function onLeftEnter() { areaActiveRef.current = true }
     function onLeftLeave() { areaActiveRef.current = false }
     leftEl && leftEl.addEventListener('wheel', onLeftWheel, { passive: false })
@@ -145,10 +145,10 @@ export default function Solutions() {
     let rafId = null
     function doUpdateThumb() {
       rafId = null
-      // set track sizing to match the left column (decoupled from paragraph)
+      
       const leftEl = leftRef.current
       if (leftEl) {
-        // position track at the top of the left column
+        
         track.style.top = `0px`
         const newH = `${leftEl.clientHeight}px`
         if (track.style.height !== newH) track.style.height = newH
@@ -166,7 +166,7 @@ export default function Solutions() {
       const thumbH = Math.max((visibleH / scrollH) * trackH, 24)
       const maxThumbTop = trackH - thumbH
       const top = (scroller.scrollTop / (scrollH - visibleH)) * maxThumbTop
-      // apply updates in a single frame
+      
       thumb.style.height = `${thumbH}px`
       thumb.style.transform = `translateY(${top}px)`
     }
@@ -180,7 +180,7 @@ export default function Solutions() {
     scroller.addEventListener('scroll', onScroll, { passive: true })
 
     function onPointerDown(e) {
-      // only start dragging if cursor is in the left area (near paragraph)
+      
       if (!areaActiveRef.current) return
       isDragging = true
       startY = e.clientY
@@ -205,7 +205,7 @@ export default function Solutions() {
     }
 
     function onTrackClick(e) {
-      // only respond to clicks when cursor is in the left area
+      
       if (!areaActiveRef.current) return
       if (e.target === thumb) return
       const trackRect = track.getBoundingClientRect()
@@ -225,11 +225,11 @@ export default function Solutions() {
     window.addEventListener('pointerup', onPointerUp)
     track.addEventListener('click', onTrackClick)
 
-    // initial
+    
     scheduleUpdate()
     const ro = new ResizeObserver(scheduleUpdate)
     ro.observe(scroller)
-    // observe the left column so the track stays stable when layout changes
+    
     ro.observe(leftEl)
 
     return () => {
@@ -245,7 +245,7 @@ export default function Solutions() {
     }
   }, [])
 
-  // convert feature PNGs to monochrome variants — defer until section is visible to avoid heavy startup work
+  
   useEffect(() => {
     let cancelled = false
     let obs = null
@@ -280,7 +280,7 @@ export default function Solutions() {
       )
       obs.observe(sec)
     } else {
-      // fallback: process immediately in environments without IntersectionObserver
+      
       processAll()
     }
 
@@ -290,7 +290,7 @@ export default function Solutions() {
     }
   }, [])
 
-  // helper: load image and convert to black icon on white background
+  
   function processImageToMonochrome(src) {
     return new Promise((resolve, reject) => {
       const img = new Image()
@@ -306,13 +306,13 @@ export default function Solutions() {
           ctx.drawImage(img, 0, 0)
           const id = ctx.getImageData(0, 0, w, h)
           const d = id.data
-          // determine background as dark pixels; threshold
+          
           for (let i = 0; i < d.length; i += 4) {
             const r = d[i]
             const g = d[i + 1]
             const b = d[i + 2]
             const a = d[i + 3]
-            // treat very transparent pixels as background
+            
             if (a < 16) {
               d[i] = 255
               d[i + 1] = 255
@@ -321,14 +321,14 @@ export default function Solutions() {
               continue
             }
             const brightness = (r + g + b) / 3
-            // if pixel is dark (likely background), make it white
+            
             if (brightness < 64) {
               d[i] = 255
               d[i + 1] = 255
               d[i + 2] = 255
               d[i + 3] = 255
             } else {
-              // make icon pixel black and opaque
+              
               d[i] = 0
               d[i + 1] = 0
               d[i + 2] = 0
@@ -354,9 +354,9 @@ export default function Solutions() {
           <h2 className="solutions-title">Trusted features driving UniHub</h2>
           <p className="solutions-desc">Explore core platform capabilities — scroll the list to the right to preview each feature.</p>
 
-          {/* visual indicator removed — custom scroll track replaces it */}
+          {}
 
-          {/* custom scroll track beside the paragraph */}
+          {}
           <div className="custom-scroll-track" ref={trackRef} aria-hidden>
             <div className="custom-scroll-thumb" ref={thumbRef} />
           </div>
@@ -383,7 +383,7 @@ export default function Solutions() {
               ))}
               </div>
 
-              {/* (custom scroll track moved to left column) */}
+              {}
           </div>
         </div>
       </div>

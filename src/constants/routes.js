@@ -1,7 +1,4 @@
-/**
- * Centralized route paths for the application.
- * Use these constants instead of string literals to avoid typos and simplify refactoring.
- */
+
 export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',

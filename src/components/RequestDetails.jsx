@@ -94,31 +94,31 @@ export default function RequestDetails() {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────
-  // State machine rules:
-  //
-  //   PENDING   → can Approve ✅  |  can Reject ✅
-  //   REJECTED  → can Approve ✅  |  cannot Reject (already rejected)  |  cannot go to Pending
-  //   APPROVED  → FINAL — no further actions allowed 🔒
-  //
-  // Per tab, `getTabState(tabValue, currentStatus)` returns one of:
-  //   'active'    → this IS the current status (highlighted)
-  //   'clickable' → available action the user can take
-  //   'locked'    → not allowed from current status (greyed + lock icon)
-  // ─────────────────────────────────────────────────────────────────────
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   const getTabState = (tabValue, currentStatus) => {
     if (tabValue === currentStatus) return 'active'
 
-    // Once APPROVED → everything else is locked
+    
     if (currentStatus === 'APPROVED') return 'locked'
 
-    // PENDING is never a selectable action (set by backend only)
+    
     if (tabValue === 'PENDING') return 'locked'
 
-    // From PENDING → both Approve and Reject are clickable
+    
     if (currentStatus === 'PENDING') return 'clickable'
 
-    // From REJECTED → only Approve is clickable, Reject is already active (handled above)
+    
     if (currentStatus === 'REJECTED' && tabValue === 'APPROVED') return 'clickable'
 
     return 'locked'
@@ -169,7 +169,7 @@ export default function RequestDetails() {
     }
   ]
 
-  // Helper text shown below the tabs to explain current options
+  
   const getStatusHint = (currentStatus) => {
     switch (currentStatus) {
       case 'PENDING':
@@ -191,7 +191,7 @@ export default function RequestDetails() {
     </svg>
   )
 
-  // ── Reusable NavBar ──
+  
   const NavBar = () => (
     <header style={{
       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -299,7 +299,7 @@ export default function RequestDetails() {
 
   const currentStatus = request.subscription_request_status
 
-  // ── Reusable InfoItem ──
+  
   const InfoItem = ({ label, value, isLink, mono }) => (
     <div>
       <div style={{
@@ -329,7 +329,7 @@ export default function RequestDetails() {
     </div>
   )
 
-  // ── Reusable SectionCard ──
+  
   const SectionCard = ({ title, children, noBorder }) => (
     <div style={{
       backgroundColor: 'white', borderRadius: '14px',
@@ -357,7 +357,7 @@ export default function RequestDetails() {
 
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px 60px' }}>
 
-        {/* ── Page Header ── */}
+        {}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '28px', gap: '12px', flexWrap: 'wrap' }}>
           <button
             onClick={() => navigate(-1)}
@@ -394,7 +394,7 @@ export default function RequestDetails() {
           </div>
 
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Current Status Badge */}
+            {}
             {(() => {
               const tab = tabs.find(t => t.value === currentStatus)
               if (!tab) return null
@@ -413,7 +413,7 @@ export default function RequestDetails() {
               )
             })()}
 
-            {/* Delete Button */}
+            {}
             <button
               onClick={handleDeleteClick}
               disabled={actionLoading}
@@ -446,7 +446,7 @@ export default function RequestDetails() {
           </div>
         </div>
 
-        {/* Warning */}
+        {}
         {warning && (
           <div style={{
             padding: '14px 18px', backgroundColor: '#FFFBEB',
@@ -463,10 +463,10 @@ export default function RequestDetails() {
           </div>
         )}
 
-        {/* ── Status Tabs ── */}
+        {}
         <SectionCard title="Request Status" noBorder>
 
-          {/* Hint text — dynamically explains what's available */}
+          {}
           <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#9CA3AF', fontWeight: '500' }}>
             {getStatusHint(currentStatus)}
           </p>
@@ -474,11 +474,11 @@ export default function RequestDetails() {
           <div style={{ display: 'flex', gap: '10px' }}>
             {tabs.map((tab) => {
               const tabState = getTabState(tab.value, currentStatus)
-              // 'active'    → highlighted current status
-              // 'clickable' → available action
-              // 'locked'    → not allowed, greyed out
+              
+              
+              
 
-              // ── ACTIVE: highlighted, non-interactive ──
+              
               if (tabState === 'active') {
                 return (
                   <div
@@ -501,7 +501,7 @@ export default function RequestDetails() {
                 )
               }
 
-              // ── LOCKED: greyed out with lock icon, non-interactive ──
+              
               if (tabState === 'locked') {
                 return (
                   <div
@@ -522,7 +522,7 @@ export default function RequestDetails() {
                 )
               }
 
-              // ── CLICKABLE: available action button ──
+              
               return (
                 <button
                   key={tab.value}
@@ -563,7 +563,7 @@ export default function RequestDetails() {
           </div>
         </SectionCard>
 
-        {/* ── University Information ── */}
+        {}
         <SectionCard title="University Information">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px 40px' }}>
             <InfoItem label="University Name" value={request.university_name} />
@@ -576,7 +576,7 @@ export default function RequestDetails() {
           </div>
         </SectionCard>
 
-        {/* ── Documents ── */}
+        {}
         {(request.logo_key || request.accreditation_key) && (
           <SectionCard title="Documents">
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -649,7 +649,7 @@ export default function RequestDetails() {
           </SectionCard>
         )}
 
-        {/* ── Metadata ── */}
+        {}
         <SectionCard title="Request Metadata">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px 40px' }}>
             <InfoItem label="Request ID" value={request.request_id} mono />
@@ -661,7 +661,7 @@ export default function RequestDetails() {
 
       </div>
 
-      {/* Modals */}
+      {}
       {showLogoModal && request.logo_key && (
         <FileViewerModal fileKey={request.logo_key} onClose={() => setShowLogoModal(false)} title="University Logo" />
       )}

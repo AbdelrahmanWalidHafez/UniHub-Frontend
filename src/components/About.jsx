@@ -4,7 +4,7 @@ export default function About() {
   const wrapperRef = useRef(null)
 
   useEffect(() => {
-    // Removed intersection-based intro animation; keep content static
+    
     return () => {}
   }, [])
 

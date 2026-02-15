@@ -1,14 +1,6 @@
 import { getAccessToken, refreshTokens, clearAuth, shouldRefreshToken } from './auth'
 import { REQUEST_TIMEOUT, API_GATEWAY_BASE_URL, ENABLE_LOGGING } from './config'
 
-/**
- * Refresh token flow in apiCall:
- * 1. Proactive: Before each authenticated request, if shouldRefreshToken() (token near expiry),
- *    refresh once and use the new access token.
- * 2. Reactive: If the request returns 401, call refreshTokens(), then retry the request once
- *    with the new token. If refresh fails or retry fails, clear auth and throw "Session expired".
- * Concurrent requests share a single refresh (refreshTokens() is deduplicated in auth.js).
- */
 export async function apiCall(url, options = {}) {
 	const { public: isPublic = false, ...fetchOptions } = options
 
@@ -192,7 +184,6 @@ export async function authPost(endpoint, data, options = {}) {
 		body: JSON.stringify(data),
 	})
 }
-// Add this function for file downloads as blob (for images, PDFs, etc.)
 export async function getFileAsBlob(url, options = {}) {
   const { public: isPublic = false, ...fetchOptions } = options
 

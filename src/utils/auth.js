@@ -1,16 +1,5 @@
 import { AUTH_API_BASE_URL, AUTH_REQUEST_TIMEOUT, LOGOUT_TIMEOUT, TOKEN_REFRESH_BUFFER_MS, ENABLE_LOGGING } from './config'
 
-/**
- * Auth module: login, refresh, logout, and token/user storage.
- *
- * Storage: Access token, refresh token, and user object are stored in localStorage.
- * - Pros: Simple, works across tabs, survives refresh.
- * - Security: localStorage is readable by any script on the same origin (XSS). Mitigate by:
- *   (1) Sanitizing inputs and using CSP, (2) Short-lived access tokens and refresh rotation,
- *   (3) Backend enforcing auth on every request (never trust the client).
- * For higher security, consider httpOnly cookies for tokens (requires backend support).
- */
-
 let refreshPromise = null
 let isRefreshing = false
 
@@ -102,7 +91,7 @@ function isTokenExpired(token) {
 	try {
 		const parts = token.split('.')
 		if (parts.length !== 3) return false
-		
+
 		const payload = JSON.parse(atob(parts[1]))
 		const exp = payload.exp * 1000
 		return Date.now() >= exp
@@ -114,11 +103,11 @@ function isTokenExpired(token) {
 export function shouldRefreshToken() {
 	const token = getAccessToken()
 	if (!token) return false
-	
+
 	try {
 		const parts = token.split('.')
 		if (parts.length !== 3) return false
-		
+
 		const payload = JSON.parse(atob(parts[1]))
 		const exp = payload.exp * 1000
 		return Date.now() >= (exp - TOKEN_REFRESH_BUFFER_MS)
@@ -189,11 +178,6 @@ export async function login(email, password) {
 	}
 }
 
-/**
- * Refresh flow: Uses refresh_token to get new access + refresh tokens.
- * Deduplicates concurrent calls (multiple 401s or shouldRefreshToken) so only one refresh runs.
- * On success: stores new tokens (and user if returned). On failure: clears auth and throws.
- */
 export async function refreshTokens() {
 	if (isRefreshing && refreshPromise) {
 		return refreshPromise

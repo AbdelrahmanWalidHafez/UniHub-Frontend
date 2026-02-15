@@ -91,7 +91,7 @@ export default function FileViewerModal({ fileKey, onClose, title }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {}
         <div style={{
           padding: '16px 24px',
           borderBottom: '1px solid #E5E7EB',
@@ -137,7 +137,7 @@ export default function FileViewerModal({ fileKey, onClose, title }) {
           </button>
         </div>
 
-        {/* Content */}
+        {}
         <div style={{ 
           padding: '24px', 
           flex: 1,
@@ -309,7 +309,7 @@ export default function FileViewerModal({ fileKey, onClose, title }) {
           )}
         </div>
 
-        {/* Footer with file info */}
+        {}
         {!loading && !error && fileUrl && (
           <div style={{
             padding: '12px 24px',

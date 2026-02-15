@@ -169,18 +169,7 @@ export default function SubscriptionRequest({ selectedPlan: selectedPlanProp, on
 			newErrors.universityDomain = domainRule.messages.pattern
 		}
 
-		// Validate CIF
-		const cifRule = VALIDATION_RULES.cif
-		if (!trimmedValues.cif) {
-			newErrors.cif = cifRule.messages.empty
-		} else if (
-			trimmedValues.cif.length < cifRule.minLength ||
-			trimmedValues.cif.length > cifRule.maxLength
-		) {
-			newErrors.cif = cifRule.messages.length
-		} else if (!cifRule.pattern.test(trimmedValues.cif)) {
-			newErrors.cif = cifRule.messages.pattern
-		}
+		// CIF field removed — no validation required
 
 		// Validate files presence (type validation handled when selecting/dropping files)
 		if (!logoFile) {
@@ -430,18 +419,7 @@ export default function SubscriptionRequest({ selectedPlan: selectedPlanProp, on
 								<div className="field-help">{errors.universityDomain}</div>
 							</label>
 
-							<label>
-								CIF
-								<input
-									name="cif"
-									type="text"
-									value={form.cif}
-									onChange={handleChange}
-									aria-invalid={!!errors.cif}
-									placeholder="CIF / Company ID"
-								/>
-								<div className="field-help">{errors.cif}</div>
-							</label>
+							{/* CIF field removed */}
 						</div>
 
 						<div className="subscription-grid">
