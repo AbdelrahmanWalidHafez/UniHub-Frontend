@@ -20,11 +20,11 @@ export default function CustomerServiceLanding({ onLogout }) {
 
   return (
     <div>
-      {/* Custom NavBar for Customer Service - Logo centered + Logout only */}
+      {}
       <header className="navbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', borderBottom: '1px solid #e0e0e0' }}>
         <div style={{ flex: 1 }}></div>
         
-        {/* Logo centered */}
+        {}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
           <button 
             onClick={() => navigate(ROUTES.CUSTOMER_SERVICE)}
@@ -42,7 +42,7 @@ export default function CustomerServiceLanding({ onLogout }) {
           </button>
         </div>
 
-        {/* Logout button on right */}
+        {}
         <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
           <button 
             onClick={handleLogout}

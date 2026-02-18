@@ -26,7 +26,6 @@ export default function Inquiries() {
       const params = new URLSearchParams({ page_num: pageNum, page_size: itemsPerPage, sort_field: sortField, sort_dir: sortDir })
       const data = await get(`subscription/api/v1/inquiries/customer-service/get-inquiries?${params.toString()}`)
 
-      // normalize possible shapes
       let list = []
       if (Array.isArray(data?.inquires)) list = data.inquires
       else if (Array.isArray(data)) list = data
@@ -49,7 +48,7 @@ export default function Inquiries() {
     }
   }
 
-  // Lightweight preview fetch that does not mutate component state
+  
   async function previewFetch(pageNum) {
     try {
       const params = new URLSearchParams({ page_num: pageNum, page_size: itemsPerPage, sort_field: sortField, sort_dir: sortDir })
@@ -68,7 +67,7 @@ export default function Inquiries() {
     fetchInquiries()
   }, [page, itemsPerPage, sortField, sortDir])
 
-  // update preview availability for prev/next buttons so they can be disabled when target page is empty
+  
   useEffect(() => {
     let cancelled = false
     async function checkNeighbors() {

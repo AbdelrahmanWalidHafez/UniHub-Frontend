@@ -417,7 +417,6 @@ export default function SubscriptionRequest({ selectedPlan: selectedPlanProp, on
 								<div className="field-help">{errors.universityDomain}</div>
 							</label>
 
-
 						</div>
 
 						<div className="subscription-grid">

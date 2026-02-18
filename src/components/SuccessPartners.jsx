@@ -8,14 +8,14 @@ export default function SuccessPartners(){
     { id: 'aws', src: '/AWS.png', alt: 'AWS' },
   ]
 
-  // Repeat the list several times so the track fills large viewports
+  
   const repeatCount = 6
   const looped = Array.from({ length: repeatCount }).flatMap((_) => partners).concat(partners)
 
   const trackRef = useRef(null)
   const viewportRef = useRef(null)
 
-  // compute marquee shift (half the track width) and set CSS variables
+  
   useEffect(() => {
     const track = trackRef.current
     const viewport = viewportRef.current
@@ -24,7 +24,7 @@ export default function SuccessPartners(){
     function update() {
       const trackWidth = track.scrollWidth || 0
       const shift = Math.floor(trackWidth / 2)
-      // speed in pixels per second (tweakable)
+      
       const speed = 120
       const duration = Math.max(6, shift / speed)
       track.style.setProperty('--marquee-shift', `${shift}px`)

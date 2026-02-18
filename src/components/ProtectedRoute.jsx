@@ -4,12 +4,7 @@ import { ROUTES } from '../constants/routes'
 import { isAuthenticated, getUser } from '../utils/auth'
 import { getRoleName, ROLES } from '../constants/roles'
 
-/**
- * Protects routes by requiring authentication and optionally role checks.
- * - If not authenticated → redirect to login (with return URL in state).
- * - allowedRoles: if set, only these roles can access; others redirect to role-specific default.
- * - disallowedRoles: if set, these roles are redirected away (e.g. dashboard disallows customer service).
- */
+
 export default function ProtectedRoute({ children, allowedRoles = null, disallowedRoles = null }) {
   const location = useLocation()
   const authenticated = isAuthenticated()

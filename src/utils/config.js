@@ -1,4 +1,3 @@
-// In production, set VITE_AUTH_API_BASE_URL and VITE_API_GATEWAY_BASE_URL in your environment.
 export const AUTH_API_BASE_URL = import.meta.env.VITE_AUTH_API_BASE_URL || 'http://localhost:8083/api/v1/auth'
 
 export const API_GATEWAY_BASE_URL = import.meta.env.VITE_API_GATEWAY_BASE_URL || 'http://localhost:8082/unihub'

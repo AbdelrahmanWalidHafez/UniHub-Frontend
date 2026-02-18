@@ -30,18 +30,18 @@ export default function AddPlan({ onGoBack }) {
     else if (name.length < 3 || name.length > 50) next.planName = 'Plan name must be between 3 and 50 characters'
     else if (!/^[A-Za-z ]+$/.test(name)) next.planName = 'Plan name must contain letters and spaces only'
 
-    // description: NotBlank, size 10-200
+    
     const desc = (form.description || '').trim()
     if (!desc) next.description = 'Plan description must not be empty'
     else if (desc.length < 10 || desc.length > 200) next.description = 'Plan description must be between 10 and 200 characters'
 
-    // price: required, integer >=1
+    
     const priceVal = Number(form.price)
     if (form.price === '' || isNaN(priceVal)) next.price = 'Price is required and must be a number'
     else if (!Number.isInteger(priceVal)) next.price = 'Price must be an integer (smallest currency unit)'
     else if (priceVal < 1) next.price = 'Price must be at least 1'
 
-    // maxUsers: integer between 1 and 1_000_000
+    
     const maxVal = Number(form.maxUsers)
     if (form.maxUsers === '' || isNaN(maxVal)) next.maxUsers = 'Max users is required and must be a number'
     else if (!Number.isInteger(maxVal)) next.maxUsers = 'Max users must be an integer'

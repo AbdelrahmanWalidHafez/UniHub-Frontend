@@ -1,7 +1,4 @@
-/**
- * Subscription Request Component Constants
- * Contains validation rules, API configuration, and UI messages
- */
+
 
 export const FORM_FIELDS = {
 	UNIVERSITY_NAME: 'universityName',
@@ -82,7 +79,6 @@ export const VALIDATION_RULES = {
 			pattern: 'Invalid university domain',
 		},
 	},
-
 }
 
 export const ERROR_MESSAGES = {

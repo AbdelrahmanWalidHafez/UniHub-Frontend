@@ -106,19 +106,19 @@ export default function ConfirmationModal({ action, onConfirm, onCancel }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Colored top accent bar */}
+        {}
         <div style={{
           height: '4px',
           background: `linear-gradient(90deg, ${d.accentColor}, ${d.accentColor}88)`,
           width: '100%'
         }} />
 
-        {/* Body */}
+        {}
         <div style={{ padding: '32px 32px 28px' }}>
 
-          {/* Icon + Title row */}
+          {}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '16px' }}>
-            {/* Icon circle */}
+            {}
             <div style={{
               width: '48px', height: '48px', borderRadius: '14px',
               backgroundColor: d.iconBg,
@@ -151,7 +151,7 @@ export default function ConfirmationModal({ action, onConfirm, onCancel }) {
             </div>
           </div>
 
-          {/* Destructive warning strip for delete */}
+          {}
           {d.type === 'delete' && (
             <div style={{
               marginTop: '16px',
@@ -175,14 +175,14 @@ export default function ConfirmationModal({ action, onConfirm, onCancel }) {
           )}
         </div>
 
-        {/* Footer */}
+        {}
         <div style={{
           padding: '0 32px 28px',
           display: 'flex',
           gap: '10px',
           justifyContent: 'flex-end'
         }}>
-          {/* Cancel */}
+          {}
           <button
             onClick={onCancel}
             style={{
@@ -211,7 +211,7 @@ export default function ConfirmationModal({ action, onConfirm, onCancel }) {
             Cancel
           </button>
 
-          {/* Confirm */}
+          {}
           <button
             onClick={onConfirm}
             style={{

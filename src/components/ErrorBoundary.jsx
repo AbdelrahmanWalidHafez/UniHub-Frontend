@@ -1,9 +1,6 @@
 import React from 'react'
 
-/**
- * Error boundary to catch React render errors and display a fallback UI.
- * Prevents the entire app from unmounting on component tree errors.
- */
+
 export default class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null }
 

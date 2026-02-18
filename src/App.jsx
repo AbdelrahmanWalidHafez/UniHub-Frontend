@@ -16,7 +16,7 @@ import RequestDetails from './components/RequestDetails'
 import SubscriptionPlanDetails from './components/SubscriptionPlanDetails'
 import SubscriptionRequests from './components/SubscriptionRequests'
 import InquiryDetails from './components/InquiryDetails'
-import UniversityDetails from './components/UniversityDetails'  
+import UniversityDetails from './components/UniversityDetails'
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
 import { isAuthenticated, getUser, logout } from './utils/auth'
@@ -26,7 +26,6 @@ export default function App() {
   const [authenticated, setAuthenticated] = useState(isAuthenticated())
   const navigate = useNavigate()
 
-  // Sync auth state when app loads (e.g. after refresh or tab focus)
   useEffect(() => {
     setUser(getUser())
     setAuthenticated(isAuthenticated())
@@ -38,17 +37,14 @@ export default function App() {
 
     sections.forEach((s) => s.classList.add('reveal-on-scroll'))
 
-    const obs = new IntersectionObserver(
-      (entries, observer) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('in-view')
-            observer.unobserve(entry.target)
-          }
-        })
-      },
-      { threshold: 0.14 }
-    )
+    const obs = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view')
+          observer.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.14 })
 
     sections.forEach((s) => obs.observe(s))
     const navLinks = Array.from(document.querySelectorAll('.nav-links a'))
@@ -81,17 +77,14 @@ export default function App() {
     })
     const spySections = Array.from(document.querySelectorAll('main > section[id]'))
     if (spySections.length) {
-      const spy = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              const id = entry.target.id
-              navLinks.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${id}`))
-            }
-          })
-        },
-        { threshold: 0.56 }
-      )
+      const spy = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id
+            navLinks.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${id}`))
+          }
+        })
+      }, { threshold: 0.56 })
       spySections.forEach((s) => spy.observe(s))
 
       return () => {
@@ -178,7 +171,6 @@ export default function App() {
         try {
           window.alert('Logout failed. Please try again.')
         } catch (e) {
-          // ignore alert failures
         }
       }
     } else {
@@ -213,14 +205,14 @@ export default function App() {
 
   return (
     <Routes>
-      <Route 
-        path={ROUTES.HOME} 
-        element={
+      <Route
+        path={ROUTES.HOME}
+        element={(
           <>
-            <NavBar 
-              appName="unihub" 
-              logoSrc="/logo.png" 
-              onUserIconClick={handleUserIconClick} 
+            <NavBar
+              appName="unihub"
+              logoSrc="/logo.png"
+              onUserIconClick={handleUserIconClick}
               onLogoClick={() => window.scrollTo(0, 0)}
               cartTo={ROUTES.SUBSCRIPTION_REQUEST}
               onCartClick={goToSubscriptionRequest}
@@ -229,61 +221,70 @@ export default function App() {
             <main>
               <About />
               <Solutions />
-              <Pricing 
+              <Pricing
                 onSelectPlan={goToSubscriptionRequestWithPlan}
               />
               <SuccessPartners />
               <Contact />
             </main>
           </>
-        } 
+        )}
       />
-      <Route 
-        path={ROUTES.SUBSCRIPTION_REQUEST} 
-        element={
-          <SubscriptionRequest 
-            onBackToLogin={() => navigate(ROUTES.HOME)} 
+      <Route
+        path={ROUTES.SUBSCRIPTION_REQUEST}
+        element={(
+          <SubscriptionRequest
+            onBackToLogin={() => navigate(ROUTES.HOME)}
           />
-        } 
+        )}
       />
-      <Route 
-        path={ROUTES.LOGIN} 
-        element={<Login onLoginSuccess={handleLoginSuccess} />} 
+      <Route
+        path={ROUTES.LOGIN}
+        element={<Login onLoginSuccess={handleLoginSuccess} />}
       />
-      <Route 
-        path={ROUTES.CUSTOMER_SERVICE} 
-        element={
+      <Route
+        path={ROUTES.CUSTOMER_SERVICE}
+        element={(
           <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
             <CustomerServiceLanding onLogout={handleLogout} />
           </ProtectedRoute>
-        } 
-     />
-     <Route 
-  path="/customer-service/request/:id" 
-  element={
-    <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-      <RequestDetails />
-    </ProtectedRoute>
-  } 
-/>
+        )}
+      />
+      <Route
+        path="/customer-service/request/:id"
+        element={(
+          <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+            <RequestDetails />
+          </ProtectedRoute>
+        )}
+      />
 
-         <Route 
-      path="/customer-service/inquiry/:id" 
-      element={
-        <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-          <InquiryDetails />
-        </ProtectedRoute>
-      } 
-    />
+      <Route
+        path="/customer-service/inquiry/:id"
+        element={(
+          <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+            <InquiryDetails />
+          </ProtectedRoute>
+        )}
+      />
 
-          <Route
-            path="/customer-service/subscription-plan/:id"
-            element={
-              <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-                <SubscriptionPlanDetails />
-              </ProtectedRoute>
-            }
-          />
+      <Route
+        path="/customer-service/university/:id"
+        element={(
+          <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+            <UniversityDetails />
+          </ProtectedRoute>
+        )}
+      />
+
+      <Route
+        path="/customer-service/subscription-plan/:id"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+            <SubscriptionPlanDetails />
+          </ProtectedRoute>
+        }
+      />
 
 <Route 
   path="/customer-service/requests" 
@@ -293,25 +294,17 @@ export default function App() {
     </ProtectedRoute>
   } 
 />
-      <Route
-        path="/customer-service/university/:id"
-        element={
-          <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-            <UniversityDetails />
-          </ProtectedRoute>
-        }
-      />
       <Route 
         path={ROUTES.ADD_PLAN} 
         element={
           <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
             <AddPlan />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path={ROUTES.DASHBOARD} 
-        element={
+      <Route
+        path={ROUTES.DASHBOARD}
+        element={(
           <ProtectedRoute disallowedRoles={[ROLES.CUSTOMER_SERVICE]}>
             <div style={{ padding: '20px' }}>
               <h1>Dashboard</h1>
@@ -319,7 +312,7 @@ export default function App() {
               <button type="button" onClick={handleLogout}>Logout</button>
             </div>
           </ProtectedRoute>
-        } 
+        )}
       />
     </Routes>
   )

@@ -9,14 +9,11 @@ export default function SubscriptionRequests() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // Pagination
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const [hasMore, setHasMore] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState(5)
-
-  // Sorting
   const [sortField, setSortField] = useState('createdAt')
   const [sortDir, setSortDir] = useState('desc')
 
@@ -32,7 +29,7 @@ export default function SubscriptionRequests() {
       })
       const data = await get(`subscription/api/v1/customer-service/get-requests?${params.toString()}`)
 
-      // Accept several possible response shapes from the API and normalize to an array
+      
       let requestsData = []
       if (Array.isArray(data?.['subscription-requests'])) requestsData = data['subscription-requests']
       else if (Array.isArray(data?.metaDataList)) requestsData = data.metaDataList
@@ -43,7 +40,7 @@ export default function SubscriptionRequests() {
       const totalCount = serverHasCount ? Number(data.total_count) : (Array.isArray(requestsData) ? requestsData.length : 0)
       const computedTotalPages = serverHasCount ? Number(data?.total_pages ?? Math.max(1, Math.ceil(totalCount / itemsPerPage))) : null
 
-      // Update state based on fetched page
+      
       setRequests(requestsData || [])
       setTotalItems(totalCount)
       setTotalPages(computedTotalPages || 1)
@@ -54,7 +51,7 @@ export default function SubscriptionRequests() {
         setHasMore(Array.isArray(requestsData) && requestsData.length >= itemsPerPage)
       }
 
-      // return normalized response so callers can decide how to react
+      
       return { requestsData: requestsData || [], totalCount, hasMore: typeof data?.has_more === 'boolean' ? data.has_more : (Array.isArray(requestsData) && requestsData.length >= itemsPerPage) }
     } catch (err) {
       console.error('Failed to fetch subscription requests:', err)
@@ -70,7 +67,6 @@ export default function SubscriptionRequests() {
     fetchSubscriptionRequests()
   }, [page, sortField, sortDir, itemsPerPage])
 
-  // Optimistic navigation: try to load target page before committing page state
   async function goNext() {
     const target = page + 1
     const result = await fetchSubscriptionRequests(target)
@@ -155,7 +151,7 @@ export default function SubscriptionRequests() {
   return (
     <div style={{ padding: '36px 40px', maxWidth: '1200px', margin: '0 auto' }}>
 
-      {/* ── Page Header ── */}
+      {}
       <div style={{ marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h1 style={{
@@ -172,7 +168,7 @@ export default function SubscriptionRequests() {
           </p>
         </div>
 
-        {/* Header pill showing total and inline Prev/Next arrows (replaces 'page N of M') */}
+        {}
         {!loading && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: '6px',
@@ -216,7 +212,7 @@ export default function SubscriptionRequests() {
         )}
       </div>
 
-      {/* ── Error Banner ── */}
+      {}
       {error && (
         <div style={{
           padding: '14px 18px',
@@ -237,7 +233,7 @@ export default function SubscriptionRequests() {
         </div>
       )}
 
-      {/* ── Table Card ── */}
+      {}
       <div style={{
         backgroundColor: 'white',
         borderRadius: '16px',
@@ -247,7 +243,7 @@ export default function SubscriptionRequests() {
       }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
 
-          {/* thead */}
+          {}
           <thead>
             <tr style={{ backgroundColor: '#000' }}>
               {columns.map((col, i) => (
@@ -296,7 +292,7 @@ export default function SubscriptionRequests() {
             </tr>
           </thead>
 
-          {/* tbody */}
+          {}
           <tbody>
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} index={i} />)
@@ -348,7 +344,7 @@ export default function SubscriptionRequests() {
                       if (arrow) { arrow.style.opacity = '0'; arrow.style.transform = 'translateX(0)' }
                     }}
                   >
-                    {/* Request ID */}
+                    {}
                     <td style={{ padding: '18px 20px' }}>
                       <span style={{
                         fontSize: '12px',
@@ -366,7 +362,7 @@ export default function SubscriptionRequests() {
                       </span>
                     </td>
 
-                    {/* University */}
+                    {}
                     <td style={{ padding: '18px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <button
@@ -393,7 +389,7 @@ export default function SubscriptionRequests() {
                       </div>
                     </td>
 
-                    {/* Status */}
+                    {}
                     <td style={{ padding: '18px 20px' }}>
                       <span style={{
                         display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -414,14 +410,14 @@ export default function SubscriptionRequests() {
                       </span>
                     </td>
 
-                    {/* Created At */}
+                    {}
                     <td style={{ padding: '18px 20px' }}>
                       <span style={{ fontSize: '13px', color: '#6B7280', fontWeight: '500' }}>
                         {formatDate(request.created_at)}
                       </span>
                     </td>
 
-                    {/* Chevron arrow */}
+                    {}
                     <td style={{ padding: '18px 20px', textAlign: 'right' }}>
                       <span
                         className="row-arrow"
@@ -444,7 +440,7 @@ export default function SubscriptionRequests() {
           </tbody>
         </table>
 
-        {/* Pagination removed — header arrows control navigation now */}
+        {}
       </div>
 
       <style>{`
