@@ -16,6 +16,7 @@ import RequestDetails from './components/RequestDetails'
 import SubscriptionPlanDetails from './components/SubscriptionPlanDetails'
 import SubscriptionRequests from './components/SubscriptionRequests'
 import InquiryDetails from './components/InquiryDetails'
+import UniversityDetails from './components/UniversityDetails'  
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
 import { isAuthenticated, getUser, logout } from './utils/auth'
@@ -55,6 +56,13 @@ export default function App() {
     const navClickHandlers = []
     navLinks.forEach((a) => {
       const handler = (e) => {
+        // if nav is disabled (user authenticated) prevent returning to home sections
+        const navRoot = a.closest('.nav-links')
+        if (navRoot && navRoot.classList.contains('nav-disabled')) {
+          e.preventDefault()
+          return
+        }
+
         const href = a.getAttribute('href')
         if (!href || !href.startsWith('#')) return
         const id = href.slice(1)
@@ -285,6 +293,14 @@ export default function App() {
     </ProtectedRoute>
   } 
 />
+      <Route
+        path="/customer-service/university/:id"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+            <UniversityDetails />
+          </ProtectedRoute>
+        }
+      />
       <Route 
         path={ROUTES.ADD_PLAN} 
         element={

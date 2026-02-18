@@ -144,14 +144,14 @@ export default function RequestDetails() {
       activeLabel: 'Approved',
       actionLabel: 'Approve',
       activeStyle: {
-        background: 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)',
+        background: '#ECFDF5',
         color: '#064E3B',
-        border: '1.5px solid #10B981',
-        shadow: '0 4px 12px rgba(16,185,129,0.25)'
+        border: '1.5px solid #9DD957',
+        shadow: 'none'
       },
       hoverBg: '#F0FDF8',
       hoverColor: '#065F46',
-      dot: '#10B981'
+      dot: '#9DD957'
     },
     {
       value: 'REJECTED',
@@ -206,33 +206,7 @@ export default function RequestDetails() {
           <img src="/logo.png" alt="UniHub Logo" style={{ height: '36px' }} />
         </button>
       </div>
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-        <button
-          onClick={handleLogout}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            background: 'none', border: '1px solid #E5E7EB', borderRadius: '8px',
-            cursor: 'pointer', padding: '8px 14px',
-            color: '#6B7280', fontSize: '13px', fontWeight: '500', transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#3a4a52'
-            e.currentTarget.style.color = '#3a4a52'
-            e.currentTarget.style.backgroundColor = '#F8FAFB'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#E5E7EB'
-            e.currentTarget.style.color = '#6B7280'
-            e.currentTarget.style.backgroundColor = 'transparent'
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M17 16L21 12M21 12L17 8M21 12H7M13 16C13 17.6569 11.6569 19 10 19H6C4.34315 19 3 17.6569 3 16V8C3 6.34315 4.34315 5 6 5H10C11.6569 5 13 6.34315 13 8"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Logout
-        </button>
-      </div>
+          <div style={{ flex: 1 }} />
     </header>
   )
 
@@ -342,8 +316,8 @@ export default function RequestDetails() {
         display: 'flex', alignItems: 'center', gap: '10px',
         backgroundColor: '#FAFBFC'
       }}>
-        <div style={{ width: '3px', height: '16px', backgroundColor: '#3a4a52', borderRadius: '2px', flexShrink: 0 }} />
-        <h2 style={{ margin: 0, fontSize: '11px', fontWeight: '700', color: '#3a4a52', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <div style={{ width: '3px', height: '16px', backgroundColor: '#9DD957', borderRadius: '2px', flexShrink: 0 }} />
+        <h2 style={{ margin: 0, fontSize: '11px', fontWeight: '700', color: '#000000', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           {title}
         </h2>
       </div>
@@ -591,10 +565,10 @@ export default function RequestDetails() {
                     transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#3a4a52'
-                    e.currentTarget.style.borderColor = '#3a4a52'
-                    e.currentTarget.style.color = 'white'
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(58,74,82,0.3)'
+                    e.currentTarget.style.backgroundColor = '#9DD957'
+                    e.currentTarget.style.borderColor = '#9DD957'
+                    e.currentTarget.style.color = '#000'
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(157,217,87,0.3)'
                     e.currentTarget.style.transform = 'translateY(-1px)'
                   }}
                   onMouseLeave={(e) => {
@@ -624,11 +598,11 @@ export default function RequestDetails() {
                     transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#3a4a52'
-                    e.currentTarget.style.borderColor = '#3a4a52'
-                    e.currentTarget.style.color = 'white'
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(58,74,82,0.3)'
-                    e.currentTarget.style.transform = 'translateY(-1px)'
+                      e.currentTarget.style.backgroundColor = '#9DD957'
+                      e.currentTarget.style.borderColor = '#9DD957'
+                      e.currentTarget.style.color = '#000'
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(157,217,87,0.3)'
+                      e.currentTarget.style.transform = 'translateY(-1px)'
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'white'

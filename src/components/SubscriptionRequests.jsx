@@ -115,11 +115,11 @@ export default function SubscriptionRequests() {
         }
       case 'APPROVED':
         return {
-          bg: 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)',
-          color: '#064E3B',
-          border: '#10B981',
-          dot: '#10B981',
-          label: 'Approved'
+            bg: '#ECFDF5',
+            color: '#064E3B',
+            border: '#9DD957',
+            dot: '#9DD957',
+            label: 'Approved'
         }
       case 'REJECTED':
         return {
@@ -183,7 +183,7 @@ export default function SubscriptionRequests() {
             boxShadow: '0 1px 3px rgba(58,74,82,0.06)',
             fontSize: '13px', color: '#6B7280', fontWeight: '500'
           }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3a4a52' }} />
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--brand-lime-dark)' }} />
             <span style={{ color: '#111827', fontWeight: '700' }}>{totalItems}</span>
             <span style={{ margin: '0 6px' }}>total ·</span>
 
@@ -249,7 +249,7 @@ export default function SubscriptionRequests() {
 
           {/* thead */}
           <thead>
-            <tr style={{ backgroundColor: '#3a4a52' }}>
+            <tr style={{ backgroundColor: '#000' }}>
               {columns.map((col, i) => (
                 <th
                   key={i}
@@ -260,7 +260,7 @@ export default function SubscriptionRequests() {
                     fontSize: '11px',
                     fontWeight: '700',
                     color: col.key
-                      ? (sortField === col.key ? 'white' : 'rgba(255,255,255,0.6)')
+                      ? (sortField === col.key ? 'white' : 'rgba(255,255,255,0.75)')
                       : 'transparent',
                     textTransform: 'uppercase',
                     letterSpacing: '0.07em',
@@ -274,7 +274,7 @@ export default function SubscriptionRequests() {
                   onMouseLeave={(e) => {
                     if (col.key) e.currentTarget.style.color = sortField === col.key
                       ? 'white'
-                      : 'rgba(255,255,255,0.6)'
+                      : 'rgba(255,255,255,0.75)'
                   }}
                 >
                   {col.key ? (
@@ -284,7 +284,7 @@ export default function SubscriptionRequests() {
                         display: 'inline-flex',
                         padding: '2px',
                         borderRadius: '4px',
-                        backgroundColor: sortField === col.key ? 'rgba(255,255,255,0.15)' : 'transparent',
+                        backgroundColor: sortField === col.key ? 'rgba(255,255,255,0.12)' : 'transparent',
                         transition: 'background-color 0.15s'
                       }}>
                         {getSortIcon(col.key, sortField, sortDir)}
@@ -369,17 +369,27 @@ export default function SubscriptionRequests() {
                     {/* University */}
                     <td style={{ padding: '18px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{
-                          width: '34px', height: '34px', borderRadius: '10px',
-                          backgroundColor: '#E8ECF0', flexShrink: 0,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '13px', fontWeight: '700', color: '#3a4a52'
-                        }}>
-                          {(request.university_name || '?').charAt(0).toUpperCase()}
-                        </div>
-                        <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
-                          {request.university_name || '—'}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const uid = request.university_id || request.universityId || request.uniId || request.university?.id || request.university_id
+                            if (uid) navigate(`/customer-service/university/${uid}`)
+                          }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+                        >
+                          <div style={{
+                            width: '34px', height: '34px', borderRadius: '10px',
+                            backgroundColor: '#E8ECF0', flexShrink: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '13px', fontWeight: '700', color: '#3a4a52'
+                          }}>
+                            {(request.university_name || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
+                            {request.university_name || '—'}
+                          </span>
+                        </button>
                       </div>
                     </td>
 

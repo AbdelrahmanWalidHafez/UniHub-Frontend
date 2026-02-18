@@ -12,7 +12,6 @@ export const FORM_FIELDS = {
 	CONTACT_NUMBER: 'contactNumber',
 	UNIVERSITY_WEBSITE_URL: 'universityWebsiteUrl',
 	UNIVERSITY_DOMAIN: 'universityDomain',
-	CIF: 'cif',
 }
 
 export const INITIAL_FORM_STATE = {
@@ -24,7 +23,6 @@ export const INITIAL_FORM_STATE = {
 	contactNumber: '',
 	universityWebsiteUrl: '',
 	universityDomain: '',
-	cif: '',
 }
 
 export const VALIDATION_RULES = {
@@ -84,16 +82,7 @@ export const VALIDATION_RULES = {
 			pattern: 'Invalid university domain',
 		},
 	},
-	cif: {
-		minLength: 2,
-		maxLength: 50,
-		pattern: /^[A-Za-z0-9\-]+$/,
-		messages: {
-			empty: 'CIF is required',
-			length: 'CIF must be between 2 and 50 characters',
-			pattern: 'CIF contains invalid characters',
-		},
-	},
+
 }
 
 export const ERROR_MESSAGES = {

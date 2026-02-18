@@ -115,9 +115,7 @@ export default function AddPlan({ onGoBack }) {
             }}
             title="Logout"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17 16L21 12M21 12L17 8M21 12H7M13 16C13 17.6569 11.6569 19 10 19H6C4.34315 19 3 17.6569 3 16V8C3 6.34315 4.34315 5 6 5H10C11.6569 5 13 6.34315 13 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <img src="/logout.png" alt="Logout" style={{ width: 20, height: 20 }} />
           </button>
         </div>
       </header>
@@ -151,7 +149,7 @@ export default function AddPlan({ onGoBack }) {
 
                 <div className="form-section-group">
                   <h3 className="form-section-title" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ width: 4, height: 28, background: 'var(--app-color)', borderRadius: 2, display: 'inline-block' }} />
+                    <span style={{ width: 4, height: 28, background: '#9DD957', borderRadius: 2, display: 'inline-block' }} />
                     <span>Plan details</span>
                   </h3>
                   <div className="subscription-grid" style={{ gridTemplateColumns: '1fr' }}>
@@ -208,6 +206,7 @@ export default function AddPlan({ onGoBack }) {
                   <button
                     type="submit"
                     className={`submit-btn ${loading || !form.planName || isNaN(Number(form.price)) || isNaN(Number(form.maxUsers)) ? 'is-disabled' : ''} ${loading ? 'is-loading' : ''}`}
+                    style={{ background: '#9DD957', color: '#fff' }}
                     disabled={loading || !form.planName || isNaN(Number(form.price)) || isNaN(Number(form.maxUsers))}
                   >
                     {loading ? <><span className="spinner"></span> Creating...</> : 'Create plan'}

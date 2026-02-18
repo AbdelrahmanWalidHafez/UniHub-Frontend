@@ -30,8 +30,8 @@ export default function InquiryDetails() {
   const SectionCard = ({ title, children }) => (
     <div style={{ backgroundColor: 'white', borderRadius: '14px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 2px 12px rgba(58,74,82,0.08)', marginBottom: '24px' }}>
       <div style={{ padding: '20px 48px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#FAFBFC' }}>
-        <div style={{ width: '4px', height: '18px', backgroundColor: '#3a4a52', borderRadius: '2px', flexShrink: 0 }} />
-        <h2 style={{ margin: 0, fontSize: '12px', fontWeight: '800', color: '#3a4a52', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</h2>
+        <div style={{ width: '4px', height: '18px', backgroundColor: '#9DD957', borderRadius: '2px', flexShrink: 0 }} />
+        <h2 style={{ margin: 0, fontSize: '12px', fontWeight: '800', color: '#000000', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</h2>
       </div>
       <div style={{ padding: '36px 48px' }}>{children}</div>
     </div>
@@ -105,25 +105,7 @@ export default function InquiryDetails() {
             </button>
           </div>
 
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-            <button 
-              onClick={handleLogout}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '8px',
-                color: '#666'
-              }}
-              title="Logout"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17 16L21 12M21 12L17 8M21 12H7M13 16C13 17.6569 11.6569 19 10 19H6C4.34315 19 3 17.6569 3 16V8C3 6.34315 4.34315 5 6 5H10C11.6569 5 13 6.34315 13 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
+          <div style={{ flex: 1 }} />
         </header>
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 84px)' }}>
@@ -159,25 +141,7 @@ export default function InquiryDetails() {
             </button>
           </div>
 
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-            <button 
-              onClick={handleLogout}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '8px',
-                color: '#666'
-              }}
-              title="Logout"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17 16L21 12M21 12L17 8M21 12H7M13 16C13 17.6569 11.6569 19 10 19H6C4.34315 19 3 17.6569 3 16V8C3 6.34315 4.34315 5 6 5H10C11.6569 5 13 6.34315 13 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
+          <div style={{ flex: 1 }} />
         </header>
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 84px)' }}>
@@ -187,7 +151,7 @@ export default function InquiryDetails() {
             </div>
             <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '600', color: '#111827' }}>Inquiry not found</h3>
             <p style={{ margin: '0 0 24px 0', color: '#6B7280', fontSize: '14px' }}>{error || 'No inquiry data available'}</p>
-            <button onClick={() => navigate(-1)} style={{ padding: '10px 28px', backgroundColor: '#3a4a52', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }} onMouseEnter={(e) => e.target.style.backgroundColor = '#2c3a40'} onMouseLeave={(e) => e.target.style.backgroundColor = '#3a4a52'}>Go Back</button>
+            <button onClick={() => navigate(-1)} style={{ padding: '10px 28px', backgroundColor: '#9DD957', color: '#000', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }} onMouseEnter={(e) => e.target.style.backgroundColor = '#85c84a'} onMouseLeave={(e) => e.target.style.backgroundColor = '#9DD957'}>Go Back</button>
           </div>
         </div>
       </div>
@@ -215,25 +179,7 @@ export default function InquiryDetails() {
           </button>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-          <button 
-            onClick={handleLogout}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '8px',
-              color: '#666'
-            }}
-            title="Logout"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17 16L21 12M21 12L17 8M21 12H7M13 16C13 17.6569 11.6569 19 10 19H6C4.34315 19 3 17.6569 3 16V8C3 6.34315 4.34315 5 6 5H10C11.6569 5 13 6.34315 13 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
+        <div style={{ flex: 1 }} />
       </header>
 
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '60px 40px 100px' }}>
@@ -260,7 +206,7 @@ export default function InquiryDetails() {
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
               onClick={() => openEmail(inquiry.customer_email || inquiry.customerEmail || '', inquiry.subject || '')}
-              style={{ padding: '8px 16px', backgroundColor: '#3a4a52', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+              style={{ padding: '8px 16px', backgroundColor: '#9DD957', color: '#000', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
             >
               Send email
             </button>

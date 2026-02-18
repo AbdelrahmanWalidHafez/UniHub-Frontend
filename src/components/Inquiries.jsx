@@ -210,7 +210,7 @@ export default function Inquiries() {
       <div style={{ backgroundColor: 'white', borderRadius: '16px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 4px 16px rgba(58,74,82,0.08)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ backgroundColor: '#3a4a52' }}>
+            <tr style={{ backgroundColor: '#000' }}>
               {columns.map((col, i) => (
                 <th
                   key={i}
@@ -220,7 +220,7 @@ export default function Inquiries() {
                     textAlign: 'left',
                     fontSize: '11px',
                     fontWeight: '700',
-                    color: col.key ? (sortField === col.key ? 'white' : 'rgba(255,255,255,0.6)') : 'transparent',
+                    color: col.key ? (sortField === col.key ? 'white' : 'rgba(255,255,255,0.75)') : 'transparent',
                     textTransform: 'uppercase',
                     letterSpacing: '0.07em',
                     cursor: col.key ? 'pointer' : 'default',
@@ -233,7 +233,7 @@ export default function Inquiries() {
                   onMouseLeave={(e) => {
                     if (col.key) e.currentTarget.style.color = sortField === col.key
                       ? 'white'
-                      : 'rgba(255,255,255,0.6)'
+                      : 'rgba(255,255,255,0.75)'
                   }}
                 >
                   {col.key ? (
