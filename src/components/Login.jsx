@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { login } from '../utils/auth'
 import { authGet } from '../utils/api'
 import { ENABLE_LOGGING } from '../utils/config'
+import { ROUTES } from '../constants/routes'
 
 export default function Login({ onLoginSuccess }) {
 	const [form, setForm] = useState({ email: '', password: '' })
@@ -127,7 +129,11 @@ export default function Login({ onLoginSuccess }) {
 						</form>
 
 						<div className="login-legal">
-							By signing in, you agree to our Terms of Service and Privacy Policy
+							By signing in, you agree to our Terms of Service and Privacy Policy.
+						</div>
+
+						<div className="login-forgot">
+						Forgot your password? <Link to={ROUTES.FORGOT_PASSWORD} className="change-password-link">Change password</Link>
 						</div>
 					</div>
 				</div>
