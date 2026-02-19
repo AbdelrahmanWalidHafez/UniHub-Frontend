@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ROUTES } from '../constants/routes'
+import { authPost, authPatch } from '../utils/api'
 
 export default function ForgotPassword() {
   const [step, setStep] = useState('email') // 'email', 'code', or 'reset'
@@ -10,6 +11,7 @@ export default function ForgotPassword() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [opaqueToken, setOpaqueToken] = useState(null)
   const navigate = useNavigate()
 
   function handleEmailChange(e) {
@@ -30,12 +32,12 @@ export default function ForgotPassword() {
     setError('')
 
     try {
-      // send email to server to request code
-      console.log('requesting code for', email)
-      await new Promise((r) => setTimeout(r, 500))
+      // call auth service to request password reset
+      const payload = { email: email.trim() }
+      await authPost('forgot-password', payload, { public: true })
       setStep('code')
     } catch (err) {
-      setError('Failed to send verification email. Please try again.')
+      setError(err.message || 'Failed to send verification email. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -54,6 +56,8 @@ export default function ForgotPassword() {
 
   const codeFilled = code.every((d) => d !== '')
 
+  const passwordsMatch = newPassword === confirmPassword
+
   async function handleCodeSubmit(e) {
     e.preventDefault()
     if (!codeFilled || loading) return
@@ -62,12 +66,14 @@ export default function ForgotPassword() {
 
     try {
       const entered = code.join('')
-      console.log('verifying code', entered)
-      await new Promise((r) => setTimeout(r, 500))
-      // move to reset password step
+      const payload = { verification_code: entered, email: email.trim() }
+      const resp = await authPost('verify-forgot-password-token', payload, { public: true })
+      const opaque = resp?.['verification-opaque-token']?.token
+      if (!opaque) throw new Error('Missing verification token from server')
+      setOpaqueToken(opaque)
       setStep('reset')
     } catch (err) {
-      setError('Invalid code, please try again.')
+      setError(err.message || 'Invalid code, please try again.')
     } finally {
       setLoading(false)
     }
@@ -153,7 +159,18 @@ export default function ForgotPassword() {
             </form>
 
             <div className="forgot-back">
-              If you didn't receive a code, <button type="button" className="link-button" onClick={() => setStep('email')}>Resend</button>
+              If you didn't receive a code, <button type="button" className="link-button" onClick={async () => {
+                if (loading) return
+                setLoading(true)
+                setError('')
+                try {
+                  await authPost('forgot-password', { email: email.trim() }, { public: true })
+                } catch (err) {
+                  setError(err.message || 'Failed to resend code. Please try again.')
+                } finally {
+                  setLoading(false)
+                }
+              }}>Resend</button>
             </div>
           </>
         ) : (
@@ -183,13 +200,14 @@ export default function ForgotPassword() {
               </div>
               <div className="reset-form">
                 <form onSubmit={(e) => e.preventDefault()}>
+                  {error && <div className="login-error" style={{ marginBottom: 12 }}>{error}</div>}
                   <label>
                     New Password
                     <input
                       className="reset-input"
                       type="password"
                       value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
+                      onChange={(e) => { setNewPassword(e.target.value); setError('') }}
                       placeholder=""
                     />
                   </label>
@@ -199,9 +217,13 @@ export default function ForgotPassword() {
                       className="reset-input"
                       type="password"
                       value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onChange={(e) => { setConfirmPassword(e.target.value); setError('') }}
                       placeholder=""
+                      aria-invalid={confirmPassword && !passwordsMatch}
                     />
+                    <div className="field-help">
+                      {confirmPassword && !passwordsMatch ? 'Passwords do not match' : ''}
+                    </div>
                   </label>
                   <button
                     type="button"
@@ -214,15 +236,24 @@ export default function ForgotPassword() {
                         /[a-z]/.test(newPassword) &&
                         /[^A-Za-z0-9]/.test(newPassword) &&
                         /[0-9]/.test(newPassword)
-                      )
+                      ) || loading || !opaqueToken
                     }
-                    onClick={() => {
-                      // TODO: call API to update password
-                      console.log('password changed to', newPassword)
-                      navigate(ROUTES.LOGIN, { replace: true, state: { passwordChanged: true } })
+                    onClick={async () => {
+                      if (loading) return
+                      setLoading(true)
+                      setError('')
+                      try {
+                        await authPatch('change-forgot-password', { password: newPassword, confirm_password: confirmPassword }, { public: true, headers: { Authorization: `Bearer ${opaqueToken}` } })
+                        navigate(ROUTES.LOGIN, { replace: true, state: { passwordChanged: true } })
+                      } catch (err) {
+                        setError(err.message || 'Failed to change password. Please try again.')
+                      } finally {
+                        setLoading(false)
+                      }
                     }}
                   >
-                    Reset Password
+                    {loading ? <span className="btn-loader" aria-hidden /> : null}
+                    <span>Reset Password</span>
                   </button>
 
                   <div className="forgot-back" style={{marginTop:12}}>
