@@ -964,14 +964,17 @@ main{padding-top:calc(var(--nav-height) + 12px)}
   width:100%;
   max-width:980px;
   padding:6px 12px; /* move logo higher */
-  padding-top:240px; /* make room for fixed header (logo + name + spacer) */
+  padding-top:320px; /* make room for fixed header (logo + name + spacer) */
+  position:relative;
+  z-index:1000;
   background:transparent; /* remove white center card */
   backdrop-filter:none;
   border-radius:0;
   text-align:center;
 }
-.forgot-logo{width:140px;height:auto;margin:0 0 0px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.08));position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:1300}
-.forgot-app-link{display:block;font-weight:900;color:#000;margin-top:6px;text-decoration:none;position:fixed;top:208px;left:50%;transform:translateX(-50%);z-index:1200;font-size:20px;letter-spacing:-0.4px}
+.forgot-header{position:fixed;top:230px;left:50%;transform:translateX(-50%);z-index:1400;display:flex;flex-direction:column;align-items:center;gap:8px}
+.forgot-logo{width:140px;height:auto;margin:0 0 0px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.08));}
+.forgot-app-link{display:block;font-weight:900;color:#000;margin-top:6px;text-decoration:none;font-size:20px;letter-spacing:-0.4px}
 .forgot-app-link{text-shadow:0 1px 0 rgba(255,255,255,0.6)}
 
 .forgot-title{margin:0 0 8px;font-size:32px;font-weight:800;color:#000}
@@ -1031,9 +1034,10 @@ main{padding-top:calc(var(--nav-height) + 12px)}
   .login-form-container h2{font-size:24px}
 
   /* adjust fixed header spacing on small screens */
-  .forgot-logo{width:120px;top:10px}
-  .forgot-app-link{top:170px}
-  .forgot-content{padding-top:180px}
+  .forgot-header{top:110px}
+  .forgot-logo{width:120px}
+  .forgot-app-link{top:auto}
+  .forgot-content{padding-top:260px}
 
   /* responsive: full width inputs on small screens */
   .forgot-content .login-form input,

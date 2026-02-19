@@ -82,8 +82,10 @@ export default function ForgotPassword() {
   return (
     <div className="forgot-page-wrapper">
       <div className="forgot-content">
-        <img src="/logo.png" alt="UniHub Logo" className="forgot-logo" />
-        <div className="forgot-app-link">UniHub</div>
+        <div className="forgot-header">
+          <img src="/logo.png" alt="UniHub Logo" className="forgot-logo" />
+          <div className="forgot-app-link">UniHub</div>
+        </div>
         {step === 'email' ? (
           <>
             <h2 className="forgot-title">Forgot your password?</h2>
