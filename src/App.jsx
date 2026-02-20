@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import About from './components/About'
 import Solutions from './components/Solutions'
@@ -18,6 +18,9 @@ import SubscriptionPlanDetails from './components/SubscriptionPlanDetails'
 import SubscriptionRequests from './components/SubscriptionRequests'
 import InquiryDetails from './components/InquiryDetails'
 import UniversityDetails from './components/UniversityDetails'
+import UniversitySystemAdmin from './components/UniversitySystemAdmin'
+import CheckoutSuccess from './components/CheckoutSuccess'
+import CheckoutFailure from './components/CheckoutFailure'
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
 import { isAuthenticated, getUser, logout } from './utils/auth'
@@ -185,6 +188,8 @@ export default function App() {
     const roleName = getRoleName(userData)
     if (roleName === ROLES.CUSTOMER_SERVICE) {
       navigate(ROUTES.CUSTOMER_SERVICE)
+    } else if (roleName === ROLES.SYSTEM_ADMIN) {
+      navigate(ROUTES.UNIVERSITY_ADMIN)
     } else {
       navigate(ROUTES.DASHBOARD)
     }
@@ -209,26 +214,35 @@ export default function App() {
       <Route
         path={ROUTES.HOME}
         element={(
-          <>
-            <NavBar
-              appName="unihub"
-              logoSrc="/logo.png"
-              onUserIconClick={handleUserIconClick}
-              onLogoClick={() => window.scrollTo(0, 0)}
-              cartTo={ROUTES.SUBSCRIPTION_REQUEST}
-              onCartClick={goToSubscriptionRequest}
-              isAuthenticated={authenticated}
-            />
-            <main>
-              <About />
-              <Solutions />
-              <Pricing
-                onSelectPlan={goToSubscriptionRequestWithPlan}
-              />
-              <SuccessPartners />
-              <Contact />
-            </main>
-          </>
+          authenticated
+            ? (() => {
+              const roleName = getRoleName(user)
+              if (roleName === ROLES.CUSTOMER_SERVICE) return <Navigate to={ROUTES.CUSTOMER_SERVICE} replace />
+              if (roleName === ROLES.SYSTEM_ADMIN) return <Navigate to={ROUTES.UNIVERSITY_ADMIN} replace />
+              return <Navigate to={ROUTES.DASHBOARD} replace />
+            })()
+            : (
+              <>
+                <NavBar
+                  appName="unihub"
+                  logoSrc="/logo.png"
+                  onUserIconClick={handleUserIconClick}
+                  onLogoClick={() => window.scrollTo(0, 0)}
+                  cartTo={ROUTES.SUBSCRIPTION_REQUEST}
+                  onCartClick={goToSubscriptionRequest}
+                  isAuthenticated={authenticated}
+                />
+                <main>
+                  <About />
+                  <Solutions />
+                  <Pricing
+                    onSelectPlan={goToSubscriptionRequestWithPlan}
+                  />
+                  <SuccessPartners />
+                  <Contact />
+                </main>
+              </>
+            )
         )}
       />
       <Route
@@ -241,7 +255,16 @@ export default function App() {
       />
       <Route
         path={ROUTES.LOGIN}
-        element={<Login onLoginSuccess={handleLoginSuccess} />}
+        element={(
+          authenticated
+            ? (() => {
+              const roleName = getRoleName(user)
+              if (roleName === ROLES.CUSTOMER_SERVICE) return <Navigate to={ROUTES.CUSTOMER_SERVICE} replace />
+              if (roleName === ROLES.SYSTEM_ADMIN) return <Navigate to={ROUTES.UNIVERSITY_ADMIN} replace />
+              return <Navigate to={ROUTES.DASHBOARD} replace />
+            })()
+            : <Login onLoginSuccess={handleLoginSuccess} />
+        )}
       />
       <Route
         path={ROUTES.FORGOT_PASSWORD}
@@ -255,6 +278,25 @@ export default function App() {
           </ProtectedRoute>
         )}
       />
+
+      <Route
+        path={ROUTES.UNIVERSITY_ADMIN}
+        element={(
+          <ProtectedRoute allowedRoles={[ROLES.SYSTEM_ADMIN]}>
+            <UniversitySystemAdmin />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/system-admin/subscription-plan/:id"
+        element={(
+          <ProtectedRoute allowedRoles={[ROLES.SYSTEM_ADMIN]}>
+            <SubscriptionPlanDetails />
+          </ProtectedRoute>
+        )}
+      />
+      <Route path="/success" element={<CheckoutSuccess />} />
+      <Route path="/failure" element={<CheckoutFailure />} />
       <Route
         path="/customer-service/request/:id"
         element={(

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { get, put, deleteRequest } from '../utils/api'
 import { logout, getUser } from '../utils/auth'
+import { getRoleName, ROLES } from '../constants/roles'
+import { post } from '../utils/api'
 import { ROUTES } from '../constants/routes'
 import ConfirmationModal from './ConfirmationModal'
 
@@ -27,7 +29,7 @@ export default function SubscriptionPlanDetails() {
     setLoading(true)
     setError('')
     try {
-      const data = await get(`subscription/api/v1/subscription-plans/customer-service/${id}`)
+      const data = await get(`subscription/api/v1/subscription-plans/admin/${id}`)
       setPlan(data)
       if (data) {
         setForm({
@@ -49,6 +51,54 @@ export default function SubscriptionPlanDetails() {
   const handleLogout = async () => {
     await logout()
     navigate(ROUTES.HOME)
+  }
+
+  const userRole = getRoleName(user)
+  const isSystemAdmin = userRole === ROLES.SYSTEM_ADMIN
+  const [subscribedPlanId, setSubscribedPlanId] = useState(
+    user?.university?.subscription_plan?.subscription_plan_id ||
+    user?.university?.subscription_plan?.plan_id ||
+    user?.university?.subscription_plan_id ||
+    user?.university?.subscriptionPlanId ||
+    user?.university?.current_subscription_plan_id ||
+    null
+  )
+  const isCurrentPlan = subscribedPlanId && String(subscribedPlanId) === String(id)
+
+  useEffect(() => {
+    async function fetchUniversitySubscription() {
+      if (subscribedPlanId) return
+      const uid = user?.university?.tid || user?.university?.uid || user?.universityId
+      if (!uid) return
+      try {
+        const data = await get(`universitymanagement/api/v1/get-university/${uid}`)
+        const pid = data?.subscription_plan?.plan_id || data?.subscription_plan?.planId || data?.subscription_plan_id || (data?.subscription_plan && (data.subscription_plan.record_id || data.subscription_plan.plan_id)) || data?.subscriptionPlanNormalized?.plan_id
+        if (pid) setSubscribedPlanId(pid)
+      } catch (err) {
+        // silently ignore
+      }
+    }
+    fetchUniversitySubscription()
+  }, [subscribedPlanId, user])
+
+  const handleBuy = async () => {
+    try {
+      // store chosen plan id so success page can finalize
+      localStorage.setItem('checkout_plan_id', id)
+      // call create-session endpoint
+      const resp = await post(`subscription/api/v1/system-admin/stripe/create-session/${id}`, {})
+      const sessionUrl = resp?.session_url || resp?.sessionUrl || resp?.session_id
+      if (sessionUrl) {
+        window.location.href = sessionUrl
+      } else if (resp?.session_url) {
+        window.location.href = resp.session_url
+      } else {
+        alert('Failed to start checkout session')
+      }
+    } catch (err) {
+      console.error('Create session failed', err)
+      alert(err.message || 'Failed to start checkout session')
+    }
   }
 
   const formatDate = (dateString) => {
@@ -270,35 +320,58 @@ export default function SubscriptionPlanDetails() {
           </div>
 
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              onClick={handleEditClick}
-              disabled={actionLoading}
-              style={{
-                padding: '8px 16px', backgroundColor: '#9DD957', color: '#000',
-                border: 'none', borderRadius: '8px', cursor: actionLoading ? 'not-allowed' : 'pointer',
-                fontSize: '13px', fontWeight: '600', opacity: actionLoading ? 0.5 : 1, transition: 'all 0.2s'
-              }}
-            >
-              Edit
-            </button>
+            {isSystemAdmin ? (
+              !isCurrentPlan ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                  <button
+                    onClick={handleBuy}
+                    disabled={actionLoading}
+                    style={{
+                      padding: '8px 16px', backgroundColor: '#9DD957', color: '#000',
+                      border: 'none', borderRadius: '8px', cursor: actionLoading ? 'not-allowed' : 'pointer',
+                      fontSize: '13px', fontWeight: '600', opacity: actionLoading ? 0.5 : 1, transition: 'all 0.2s'
+                    }}
+                  >
+                    Buy
+                  </button>
+                  <div style={{ fontSize: 12, color: '#6B7280', textAlign: 'right' }}>
+                    By purchasing this plan you agree to UniHub's Terms &amp; Services.
+                  </div>
+                </div>
+              ) : null
+            ) : (
+              <>
+                <button
+                  onClick={handleEditClick}
+                  disabled={actionLoading}
+                  style={{
+                    padding: '8px 16px', backgroundColor: '#9DD957', color: '#000',
+                    border: 'none', borderRadius: '8px', cursor: actionLoading ? 'not-allowed' : 'pointer',
+                    fontSize: '13px', fontWeight: '600', opacity: actionLoading ? 0.5 : 1, transition: 'all 0.2s'
+                  }}
+                >
+                  Edit
+                </button>
 
-            <button
-              onClick={handleDeleteClick}
-              disabled={actionLoading}
-              style={{
-                padding: '8px 18px', backgroundColor: 'white', color: '#DC2626',
-                border: '1px solid #FECACA', borderRadius: '8px',
-                cursor: actionLoading ? 'not-allowed' : 'pointer',
-                fontSize: '13px', fontWeight: '600',
-                opacity: actionLoading ? 0.5 : 1, transition: 'all 0.2s',
-                display: 'flex', alignItems: 'center', gap: '6px'
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Delete
-            </button>
+                <button
+                  onClick={handleDeleteClick}
+                  disabled={actionLoading}
+                  style={{
+                    padding: '8px 18px', backgroundColor: 'white', color: '#DC2626',
+                    border: '1px solid #FECACA', borderRadius: '8px',
+                    cursor: actionLoading ? 'not-allowed' : 'pointer',
+                    fontSize: '13px', fontWeight: '600',
+                    opacity: actionLoading ? 0.5 : 1, transition: 'all 0.2s',
+                    display: 'flex', alignItems: 'center', gap: '6px'
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Delete
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -324,20 +397,7 @@ export default function SubscriptionPlanDetails() {
           {plan.warn && (<div style={{ marginTop: 16, padding: 12, background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, color: '#92400E' }}>{plan.warn}</div>)}
         </SectionCard>
 
-        <SectionCard title="Metadata">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-            <div>
-              <InfoItem label="Created at" value={formatDate(plan.created_at || plan.createdAt)} />
-              <div style={{ height: 12 }} />
-              <InfoItem label="Created by" value={plan.created_by || plan.createdBy} />
-            </div>
-            <div>
-              <InfoItem label="Updated at" value={formatDate(plan.updated_at || plan.updatedAt)} />
-              <div style={{ height: 12 }} />
-              <InfoItem label="Updated by" value={plan.updated_by || plan.updatedBy} />
-            </div>
-          </div>
-        </SectionCard>
+        {/* Metadata removed per request */}
 
         {warning && (<div style={{ marginBottom: 12, padding: 12, background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, color: '#92400E' }}>{warning}</div>)}
 

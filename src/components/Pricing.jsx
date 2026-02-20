@@ -11,7 +11,8 @@ export default function Pricing({
 	showAddPlanButton = false,
 	sectionId = 'pricing',
 	hideHeader = false,
-	onSelectPlan = null
+	onSelectPlan = null,
+	subscribedPlanId = null
 }) {
 	const [plans, setPlans] = useState([])
 	const [selectedPlan, setSelectedPlan] = useState(null)
@@ -196,13 +197,23 @@ export default function Pricing({
 
 									<div className="card-actions">
 										{!isCustomerService && (
-											<button
-												className="buy-pill"
-												type="button"
-												onClick={() => onSelectPlan && onSelectPlan(plan)}
-											>
-												{buyButtonText}
-											</button>
+											plan.subscription_plan_id === subscribedPlanId ? (
+												<button
+													className="buy-pill"
+													type="button"
+													onClick={() => onSelectPlan && onSelectPlan(plan)}
+												>
+													More info
+												</button>
+											) : (
+												<button
+													className="buy-pill"
+													type="button"
+													onClick={() => onSelectPlan && onSelectPlan(plan)}
+												>
+													{buyButtonText}
+												</button>
+											)
 										)}
 										{isCustomerService && (
 											<button
