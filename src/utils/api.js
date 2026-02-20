@@ -184,6 +184,16 @@ export async function authPost(endpoint, data, options = {}) {
 		body: JSON.stringify(data),
 	})
 }
+export async function authPatch(endpoint, data, options = {}) {
+  const { AUTH_API_BASE_URL } = await import('./config.js')
+  const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint
+  const fullUrl = `${AUTH_API_BASE_URL}/${cleanPath}`
+  return apiCall(fullUrl, {
+    ...options,
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
 export async function getFileAsBlob(url, options = {}) {
   const { public: isPublic = false, ...fetchOptions } = options
 

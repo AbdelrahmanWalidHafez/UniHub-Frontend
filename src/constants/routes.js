@@ -7,4 +7,5 @@ export const ROUTES = {
   SUBSCRIPTION_PLAN_DETAILS: '/customer-service/subscription-plan/:id',
   DASHBOARD: '/dashboard',
   SUBSCRIPTION_REQUEST: '/subscription-request',
+  FORGOT_PASSWORD: '/forgot-password',
 }
