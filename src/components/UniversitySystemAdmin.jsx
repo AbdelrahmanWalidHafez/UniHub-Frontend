@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ROUTES } from '../constants/routes'
 import { get, getFileAsBlob, post } from '../utils/api'
 import FileViewerModal from './FileViewerModal'
+import { formatInCairo, parseAsCairo } from '../utils/timezone'
 import Pricing from './Pricing'
 import './universityAdmin.css'
 
@@ -43,14 +44,13 @@ export default function UniversitySystemAdmin() {
   const [animatingExit, setAnimatingExit] = useState(false)
 
   function formatDate(dateStr) {
-    if (!dateStr) return ''
-    try {
-      const d = new Date(dateStr)
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    } catch (e) {
-      return dateStr
+      if (!dateStr) return ''
+      try {
+        return formatInCairo(dateStr, { month: 'short', day: 'numeric', year: 'numeric' })
+      } catch (e) {
+        return dateStr
+      }
     }
-  }
 
   const InfoItem = ({ label, value }) => (
     <div style={{ marginBottom: 14 }}>
@@ -162,8 +162,8 @@ export default function UniversitySystemAdmin() {
     const e = university?.subscriptionPlanNormalized?.end_date
     if (!s && !e) return false
     const now = Date.now()
-    const start = s ? new Date(s).getTime() : 0
-    const end = e ? new Date(e).getTime() : Infinity
+    const start = s ? parseAsCairo(s) ?? 0 : 0
+    const end = e ? parseAsCairo(e) ?? Infinity : Infinity
     return now >= start && now <= end
   }
 

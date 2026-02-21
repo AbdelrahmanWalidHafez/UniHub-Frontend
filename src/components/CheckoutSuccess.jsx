@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { post } from '../utils/api'
+import { post, put } from '../utils/api'
 import { ROUTES } from '../constants/routes'
 
 export default function CheckoutSuccess() {
@@ -23,14 +23,24 @@ export default function CheckoutSuccess() {
         return
       }
 
+      const action = localStorage.getItem('checkout_action') || 'upgrade'
+
       try {
-        await post(`subscription/api/v1/subscription-plans/system-admin/set-university-subscription/${planId}`, {})
+        if (action === 'set') {
+          await post(`subscription/api/v1/subscription-plans/system-admin/set-university-subscription/${planId}`, {})
+        } else {
+          await put(`subscription/api/v1/subscription-plans/system-admin/upgrade-university-subscription/${planId}`, {})
+        }
         if (cancelled) return
         localStorage.removeItem('checkout_plan_id')
+        localStorage.removeItem('checkout_action')
         setMessage('Subscription successful! Redirecting to University Admin...')
         setTimeout(() => navigate(ROUTES.UNIVERSITY_ADMIN), 4000)
       } catch (err) {
-        console.error('Failed to set subscription', err)
+        console.error('Failed to finalize subscription', err)
+        // still clear stored keys to avoid stale state
+        localStorage.removeItem('checkout_plan_id')
+        localStorage.removeItem('checkout_action')
         setMessage('Subscription succeeded but finalization failed. Redirecting...')
         setTimeout(() => navigate(ROUTES.UNIVERSITY_ADMIN), 4000)
       }

@@ -5,6 +5,7 @@ import { logout, getUser } from '../utils/auth'
 import { ROUTES } from '../constants/routes'
 import FileViewerModal from './FileViewerModal'
 import ConfirmationModal from './ConfirmationModal'
+import { formatInCairo } from '../utils/timezone'
 
 export default function RequestDetails() {
   const { id } = useParams()
@@ -45,11 +46,7 @@ export default function RequestDetails() {
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return '-'
-    return new Date(dateString).toLocaleString('en-US', {
-      year: 'numeric', month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    })
+    return formatInCairo(dateString, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
   const handleStatusChange = (newStatus) => {

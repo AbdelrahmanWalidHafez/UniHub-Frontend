@@ -4,8 +4,10 @@ import { get, put, deleteRequest } from '../utils/api'
 import { logout, getUser } from '../utils/auth'
 import { getRoleName, ROLES } from '../constants/roles'
 import { post } from '../utils/api'
+import { parseAsCairo } from '../utils/timezone'
 import { ROUTES } from '../constants/routes'
 import ConfirmationModal from './ConfirmationModal'
+import { formatInCairo } from '../utils/timezone'
 
 export default function SubscriptionPlanDetails() {
   const { id } = useParams()
@@ -64,16 +66,23 @@ export default function SubscriptionPlanDetails() {
     null
   )
   const isCurrentPlan = subscribedPlanId && String(subscribedPlanId) === String(id)
+  const [isSubscribedActive, setIsSubscribedActive] = useState(false)
+  const isCurrentPlanActive = isCurrentPlan && isSubscribedActive
 
   useEffect(() => {
     async function fetchUniversitySubscription() {
-      if (subscribedPlanId) return
       const uid = user?.university?.tid || user?.university?.uid || user?.universityId
       if (!uid) return
       try {
         const data = await get(`universitymanagement/api/v1/get-university/${uid}`)
         const pid = data?.subscription_plan?.plan_id || data?.subscription_plan?.planId || data?.subscription_plan_id || (data?.subscription_plan && (data.subscription_plan.record_id || data.subscription_plan.plan_id)) || data?.subscriptionPlanNormalized?.plan_id
         if (pid) setSubscribedPlanId(pid)
+        const start = data?.subscription_plan?.start_date || data?.subscription_plan?.startDate || data?.subscriptionPlanNormalized?.start_date
+        const end = data?.subscription_plan?.end_date || data?.subscription_plan?.endDate || data?.subscriptionPlanNormalized?.end_date
+        const now = Date.now()
+        const startTs = start ? (parseAsCairo(start) ?? 0) : 0
+        const endTs = end ? (parseAsCairo(end) ?? Infinity) : Infinity
+        setIsSubscribedActive(now >= startTs && now <= endTs)
       } catch (err) {
         // silently ignore
       }
@@ -83,8 +92,10 @@ export default function SubscriptionPlanDetails() {
 
   const handleBuy = async () => {
     try {
-      // store chosen plan id so success page can finalize
+      // store chosen plan id and action so success page can finalize
       localStorage.setItem('checkout_plan_id', id)
+      // if university already has an active subscribed plan, treat as upgrade; otherwise it's a new set/renewal
+      localStorage.setItem('checkout_action', (subscribedPlanId && isSubscribedActive) ? 'upgrade' : 'set')
       // call create-session endpoint
       const resp = await post(`subscription/api/v1/system-admin/stripe/create-session/${id}`, {})
       const sessionUrl = resp?.session_url || resp?.sessionUrl || resp?.session_id
@@ -102,11 +113,7 @@ export default function SubscriptionPlanDetails() {
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return '-'
-    return new Date(dateString).toLocaleString('en-US', {
-      year: 'numeric', month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    })
+    return formatInCairo(dateString, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
   const handleDeleteClick = () => {
@@ -321,7 +328,7 @@ export default function SubscriptionPlanDetails() {
 
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
             {isSystemAdmin ? (
-              !isCurrentPlan ? (
+              !isCurrentPlanActive ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
                   <button
                     onClick={handleBuy}
