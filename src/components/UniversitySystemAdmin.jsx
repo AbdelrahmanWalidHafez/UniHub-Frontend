@@ -84,9 +84,9 @@ export default function UniversitySystemAdmin() {
     return () => document.removeEventListener('click', onDocClick)
   }, [menuOpen])
 
-  function handleLogout() {
+  async function handleLogout() {
     try {
-      logout()
+      await logout()
     } finally {
       navigate(ROUTES.HOME)
       // force reload so App reads cleared auth state
