@@ -297,6 +297,7 @@ export default function App() {
       />
       <Route path="/success" element={<CheckoutSuccess />} />
       <Route path="/failure" element={<CheckoutFailure />} />
+      <Route path="/cancel" element={<CheckoutFailure />} />
       <Route
         path="/customer-service/request/:id"
         element={(
