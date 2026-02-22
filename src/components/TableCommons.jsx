@@ -1,4 +1,5 @@
 import React from 'react'
+import { formatInCairo } from '../utils/timezone'
 
 export function getSortIcon(field, currentField, dir) {
   if (currentField !== field) return (
@@ -37,7 +38,7 @@ export const SkeletonRow = ({ index }) => (
 export function formatDate(dateString) {
   if (!dateString) return '—'
   try {
-    return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    return formatInCairo(dateString, { year: 'numeric', month: 'short', day: 'numeric' })
   } catch {
     return '—'
   }

@@ -161,7 +161,7 @@ export default function Inquiries() {
             padding: '8px 16px', backgroundColor: 'white', border: '1px solid #E5E7EB', borderRadius: '10px',
             boxShadow: '0 1px 3px rgba(58,74,82,0.06)', fontSize: '13px', color: '#6B7280', fontWeight: '500'
           }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3a4a52' }} />
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--brand-lime-dark)' }} />
             <span style={{ color: '#111827', fontWeight: '700' }}>{totalItems}</span>
             <span style={{ margin: '0 6px' }}>total ·</span>
 
