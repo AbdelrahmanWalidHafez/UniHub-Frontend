@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { post, put } from '../utils/api'
+import { getUser, refreshTokens } from '../utils/auth'
+import { ROLES, getRoleName } from '../constants/roles'
 import { ROUTES } from '../constants/routes'
 
 export default function CheckoutSuccess() {
@@ -35,14 +37,41 @@ export default function CheckoutSuccess() {
         localStorage.removeItem('checkout_plan_id')
         localStorage.removeItem('checkout_action')
         setMessage('Subscription successful! Redirecting to University Admin...')
-        setTimeout(() => navigate(ROUTES.UNIVERSITY_ADMIN), 4000)
+        setTimeout(() => {
+          (async () => {
+            try {
+              const usr = getUser()
+              if (usr && getRoleName(usr) === ROLES.SYSTEM_ADMIN) {
+                // refresh tokens so permissions take effect after payment
+                await refreshTokens()
+              }
+            } catch (e) {
+              console.warn('Token refresh after payment failed', e)
+            } finally {
+              navigate(ROUTES.UNIVERSITY_ADMIN)
+            }
+          })()
+        }, 4000)
       } catch (err) {
         console.error('Failed to finalize subscription', err)
         // still clear stored keys to avoid stale state
         localStorage.removeItem('checkout_plan_id')
         localStorage.removeItem('checkout_action')
         setMessage('Subscription succeeded but finalization failed. Redirecting...')
-        setTimeout(() => navigate(ROUTES.UNIVERSITY_ADMIN), 4000)
+        setTimeout(() => {
+          (async () => {
+            try {
+              const usr = getUser()
+              if (usr && getRoleName(usr) === ROLES.SYSTEM_ADMIN) {
+                await refreshTokens()
+              }
+            } catch (e) {
+              console.warn('Token refresh after payment failed', e)
+            } finally {
+              navigate(ROUTES.UNIVERSITY_ADMIN)
+            }
+          })()
+        }, 4000)
       }
     }
 

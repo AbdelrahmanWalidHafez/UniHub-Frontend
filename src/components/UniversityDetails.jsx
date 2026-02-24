@@ -112,7 +112,15 @@ export default function UniversityDetails() {
   
 
   return (
-    <div style={{ backgroundColor: '#F4F6F8', minHeight: '100vh' }}>
+    <div className="university-details-root" style={{ backgroundColor: '#F4F6F8', minHeight: '100vh', overflow: 'auto' }}>
+      <style>{`
+        /* Hide native scrollbar visually while keeping scroll functional */
+        .university-details-root {
+          -ms-overflow-style: none; /* IE 10+ */
+          scrollbar-width: none; /* Firefox */
+        }
+        .university-details-root::-webkit-scrollbar { display: none; height: 0; width: 0; }
+      `}</style>
       <header style={{ padding: '20px 60px', borderBottom: '1px solid #e0e0e0' }}>
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <button onClick={() => navigate(ROUTES.CUSTOMER_SERVICE)} style={{ background: 'transparent', border: 'none' }}><img src="/logo.png" alt="logo" style={{ height: 40 }} /></button>
