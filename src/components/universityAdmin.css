@@ -5,8 +5,10 @@
 .sidenav-logo-placeholder{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
 .sidenav-title{font-weight:700;font-size:16px;text-transform:capitalize}
 .sidenav-links{display:flex;flex-direction:column;gap:8px;margin-top:80px}
-.snav-item{background:transparent;border:0;padding:12px 10px;text-align:left;border-radius:8px;font-weight:700;cursor:pointer}
-.snav-item.active{background:#eafbea;color:#1a7f2b}
+.snav-item{background:transparent;border:0;padding:12px 10px;text-align:left;border-radius:8px;font-weight:700;cursor:pointer;transition:background .18s ease,color .18s ease,transform .12s ease}
+.snav-item:hover{background:rgba(157,217,87,0.12);color:#9DD957;transform:translateY(-2px)}
+.snav-item.active{background:rgba(157,217,87,0.12);color:#9DD957;font-weight:700;transition:background .18s ease,color .18s ease,transform .12s ease}
+.snav-item.active:hover{background:rgba(157,217,87,0.18);transform:translateY(-2px)}
 .uni-admin-main{flex:1;display:flex;flex-direction:column;background:#fff}
 .uni-admin-header{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:none;background:#fff}
 .header-left{display:flex;align-items:center;gap:12px}

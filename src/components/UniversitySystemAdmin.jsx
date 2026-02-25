@@ -7,6 +7,7 @@ import { get, getFileAsBlob, post } from '../utils/api'
 import FileViewerModal from './FileViewerModal'
 import { formatInCairo, parseAsCairo } from '../utils/timezone'
 import Pricing from './Pricing'
+import Colleges from './Colleges'
 import './universityAdmin.css'
 
 function stringToColor(str) {
@@ -42,6 +43,7 @@ export default function UniversitySystemAdmin() {
   const [planLoading, setPlanLoading] = useState(false)
   const [planError, setPlanError] = useState('')
   const [animatingExit, setAnimatingExit] = useState(false)
+  const [activeNav, setActiveNav] = useState('university')
 
   function formatDate(dateStr) {
       if (!dateStr) return ''
@@ -184,15 +186,69 @@ export default function UniversitySystemAdmin() {
           <div className="sidenav-title">Admin Dashboard</div>
         </div>
         <nav className="nav-links sidenav-links" aria-label="Admin navigation">
-          <Link to="#" className="snav-item active">University</Link>
-          <Link to="#" className="snav-item">Users</Link>
-          <Link to="#" className="snav-item">Colleges</Link>
-          <Link to="#" className="snav-item">Usage</Link>
-          <Link to="#" className="snav-item">Task Manager</Link>
-          <Link to="#" className="snav-item">Calendar</Link>
-          <Link to="#" className="snav-item">Chats</Link>
-          <Link to="#" className="snav-item">Video Chats</Link>
-          <Link to="#" className="snav-item">Announcements</Link>
+          <button 
+            onClick={() => setActiveNav('university')}
+            className={`snav-item ${activeNav === 'university' ? 'active' : ''}`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            University
+          </button>
+          <button 
+            onClick={() => setActiveNav('users')}
+            className={`snav-item ${activeNav === 'users' ? 'active' : ''}`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            Users
+          </button>
+          <button 
+            onClick={() => setActiveNav('colleges')}
+            className={`snav-item ${activeNav === 'colleges' ? 'active' : ''}`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            Colleges
+          </button>
+          <button 
+            onClick={() => setActiveNav('usage')}
+            className={`snav-item ${activeNav === 'usage' ? 'active' : ''}`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            Usage
+          </button>
+          <button 
+            onClick={() => setActiveNav('task-manager')}
+            className={`snav-item ${activeNav === 'task-manager' ? 'active' : ''}`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            Task Manager
+          </button>
+          <button 
+            onClick={() => setActiveNav('calendar')}
+            className={`snav-item ${activeNav === 'calendar' ? 'active' : ''}`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            Calendar
+          </button>
+          <button 
+            onClick={() => setActiveNav('chats')}
+            className={`snav-item ${activeNav === 'chats' ? 'active' : ''}`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            Chats
+          </button>
+          <button 
+            onClick={() => setActiveNav('video-chats')}
+            className={`snav-item ${activeNav === 'video-chats' ? 'active' : ''}`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            Video Chats
+          </button>
+          <button 
+            onClick={() => setActiveNav('announcements')}
+            className={`snav-item ${activeNav === 'announcements' ? 'active' : ''}`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            Announcements
+          </button>
         </nav>
       </aside>
 
@@ -238,6 +294,9 @@ export default function UniversitySystemAdmin() {
         </header>
 
         <main className="uni-admin-content">
+          {activeNav === 'colleges' ? (
+            <Colleges />
+          ) : (
           <section className="univ-details-card">
             {expandedPlanView ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -444,6 +503,7 @@ export default function UniversitySystemAdmin() {
               </>
             )}
           </section>
+          )}
         </main>
         {showAccModal && university?.accreditation_key && (
           <FileViewerModal fileKey={university.accreditation_key} onClose={() => setShowAccModal(false)} title="Accreditation Document" />
