@@ -39,6 +39,7 @@ export default function Users() {
   const [collegesLoading, setCollegesLoading] = useState(false)
   const [showRoleDropdown, setShowRoleDropdown] = useState(false)
   const [showCollegeDropdown, setShowCollegeDropdown] = useState(false)
+  const [hoveredCollegeId, setHoveredCollegeId] = useState(null)
   const roleDropdownRef = useRef(null)
   const collegeDropdownRef = useRef(null)
   const collegeScrollRef = useRef(null)
@@ -49,6 +50,23 @@ export default function Users() {
   const [importFile, setImportFile] = useState(null)
   const [importLoading, setImportLoading] = useState(false)
   const [importResult, setImportResult] = useState(null)
+
+  const extractErrorMessage = (error) => {
+    // If it's a validation error object like { email: "error message", firstName: "error" }
+    try {
+      const parsed = typeof error === 'string' ? JSON.parse(error) : error
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        // Get first error message from object
+        const firstKey = Object.keys(parsed)[0]
+        if (firstKey && typeof parsed[firstKey] === 'string') {
+          return parsed[firstKey]
+        }
+      }
+    } catch (e) {
+      // Not JSON, return as-is
+    }
+    return String(error || '')
+  }
   const [importError, setImportError] = useState('')
   const fileInputRef = useRef(null)
 
@@ -62,6 +80,11 @@ export default function Users() {
   const truncate = (s, n = 36) => {
     if (!s) return ''
     return s.length > n ? s.substring(0, n - 1) + '…' : s
+  }
+
+  const getCollegeKey = (id) => {
+    if (id === null || id === undefined || id === '') return ''
+    return String(id)
   }
 
   const mapUserResponse = useCallback((u) => ({
@@ -81,11 +104,18 @@ export default function Users() {
     fetchUsers(1, '')
   }, [])
 
-  // Fetch colleges when college dropdown opens or page changes
+  // Fetch first page only when dropdown opens and cache is empty
   useEffect(() => {
-    if (showCollegeDropdown) {
-      fetchColleges(collegePage)
-    }
+    if (!showCollegeDropdown) return
+    if (colleges.length > 0) return
+    fetchColleges(1)
+  }, [showCollegeDropdown, colleges.length])
+
+  // Fetch additional pages while dropdown is open
+  useEffect(() => {
+    if (!showCollegeDropdown) return
+    if (collegePage <= 1) return
+    fetchColleges(collegePage)
   }, [showCollegeDropdown, collegePage])
 
   // Close filter dropdowns on click outside
@@ -96,6 +126,7 @@ export default function Users() {
       }
       if (collegeDropdownRef.current && !collegeDropdownRef.current.contains(e.target)) {
         setShowCollegeDropdown(false)
+        setHoveredCollegeId(null)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -136,7 +167,14 @@ export default function Users() {
         setColleges(prev => [...prev, ...collegeList])
       }
     } catch (err) {
-      console.error('Failed to fetch colleges:', err)
+      // If access is denied, silently show no colleges found instead of error
+      const text = String(err.message || '').toLowerCase()
+      const isAccessDenied = text.includes('403') || text.includes('forbidden') || text.includes('access denied')
+      
+      if (!isAccessDenied) {
+        console.error('Failed to fetch colleges:', err)
+      }
+      // Always clear colleges on error
       if (page === 1) setColleges([])
     } finally {
       setCollegesLoading(false)
@@ -370,18 +408,11 @@ export default function Users() {
       }
 
       if (!response.ok) {
-        const firstDetailedError = Array.isArray(data?.errors) && data.errors.length > 0
+        // Only show errors from API response
+        const apiError = Array.isArray(data?.errors) && data.errors.length > 0
           ? (data.errors[0]?.message || data.errors[0])
-          : ''
-        const trimmedText = responseText ? responseText.trim() : ''
-        const isHtmlText = trimmedText.startsWith('<!DOCTYPE') || trimmedText.startsWith('<html')
-        throw new Error(
-          firstDetailedError ||
-          data?.message ||
-          data?.error ||
-          (!isHtmlText && trimmedText ? trimmedText : '') ||
-          `Import failed: ${response.status}`
-        )
+          : (data?.message || data?.error || '')
+        throw new Error(apiError || 'Import failed')
       }
 
       setImportResult(data)
@@ -391,7 +422,12 @@ export default function Users() {
         fetchUsers(1, debouncedSearch)
       }, 1000)
     } catch (err) {
-      setImportError(err.message || 'Failed to import CSV')
+      const errorText = String(err.message || '').toLowerCase()
+      const isAccessDenied = errorText.includes('403') || errorText.includes('forbidden') || errorText.includes('access denied')
+      const message = isAccessDenied || !err.message
+        ? 'Access denied. Please renew or set a new subscription plan to use this feature.'
+        : extractErrorMessage(err.message)
+      setImportError(message)
     } finally {
       setImportLoading(false)
     }
@@ -717,8 +753,8 @@ export default function Users() {
                 ) : importResult ? (
                   <div>
                     <div style={{
-                      backgroundColor: importResult.failed === 0 && importResult.process_failures === 0 && importResult.write_failures === 0 ? '#D1FAE5' : '#FEF3C7',
-                      border: `1px solid ${importResult.failed === 0 && importResult.process_failures === 0 && importResult.write_failures === 0 ? '#6EE7B7' : '#FCD34D'}`,
+                      backgroundColor: importResult.status?.toLowerCase() === 'failed' ? '#FEE2E2' : importResult.failed === 0 && importResult.process_failures === 0 && importResult.write_failures === 0 ? '#D1FAE5' : '#FEF3C7',
+                      border: `1px solid ${importResult.status?.toLowerCase() === 'failed' ? '#EF4444' : importResult.failed === 0 && importResult.process_failures === 0 && importResult.write_failures === 0 ? '#6EE7B7' : '#FCD34D'}`,
                       borderRadius: '8px',
                       padding: '16px',
                       marginBottom: '20px'
@@ -727,11 +763,11 @@ export default function Users() {
                         margin: '0 0 12px 0',
                         fontSize: '14px',
                         fontWeight: '600',
-                        color: importResult.failed === 0 && importResult.process_failures === 0 && importResult.write_failures === 0 ? '#065F46' : '#92400E'
+                        color: importResult.status?.toLowerCase() === 'failed' ? '#991B1B' : importResult.failed === 0 && importResult.process_failures === 0 && importResult.write_failures === 0 ? '#065F46' : '#92400E'
                       }}>
                         Import Complete
                       </p>
-                      <div style={{ fontSize: '13px', lineHeight: '1.6', color: importResult.failed === 0 && importResult.process_failures === 0 && importResult.write_failures === 0 ? '#047857' : '#78350F' }}>
+                      <div style={{ fontSize: '13px', lineHeight: '1.6', color: importResult.status?.toLowerCase() === 'failed' ? '#7F1D1D' : importResult.failed === 0 && importResult.process_failures === 0 && importResult.write_failures === 0 ? '#047857' : '#78350F' }}>
                         <div>Status: <strong>{importResult.status}</strong></div>
                         <div>Total Read: <strong>{importResult.total_read}</strong></div>
                         <div>Successfully Inserted: <strong style={{ color: '#10B981' }}>{importResult.inserted}</strong></div>
@@ -975,7 +1011,15 @@ export default function Users() {
             {/* College Filter */}
             <div style={{ position: 'relative' }} ref={collegeDropdownRef}>
               <button
-                onClick={() => setShowCollegeDropdown(!showCollegeDropdown)}
+                onClick={() => {
+                  setShowCollegeDropdown((prev) => {
+                    if (prev) setHoveredCollegeId(null)
+                    if (!prev && colleges.length === 0 && collegePage !== 1) {
+                      setCollegePage(1)
+                    }
+                    return !prev
+                  })
+                }}
                 style={{
                   padding: '10px 14px',
                   fontSize: '13px',
@@ -1028,10 +1072,10 @@ export default function Users() {
                     onClick={() => {
                       setCollegeFilter('')
                       setShowCollegeDropdown(false)
+                      setHoveredCollegeId(null)
                     }}
                     onMouseEnter={(e) => {
-                      if (!collegeFilter) return
-                      e.currentTarget.style.backgroundColor = 'rgba(157,217,87,0.12)'
+                      if (collegeFilter) e.currentTarget.style.backgroundColor = 'rgba(157,217,87,0.12)'
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = !collegeFilter ? '#F3F4F6' : 'transparent'
@@ -1051,28 +1095,30 @@ export default function Users() {
                           padding: '12px 16px',
                           cursor: 'pointer',
                           fontSize: '13px',
-                          fontWeight: collegeFilter === college.college_id ? '600' : '400',
-                          backgroundColor: collegeFilter === college.college_id ? '#9DD957' : 'transparent',
-                          color: collegeFilter === college.college_id ? '#000' : '#111827',
+                          fontWeight: getCollegeKey(collegeFilter) === getCollegeKey(college.college_id) ? '600' : '400',
+                          backgroundColor: getCollegeKey(collegeFilter) === getCollegeKey(college.college_id) ? '#9DD957' : 'transparent',
+                          color: getCollegeKey(collegeFilter) === getCollegeKey(college.college_id) ? '#000' : '#111827',
                           transition: 'background 0.12s',
                           borderBottom: '1px solid #F3F4F6'
                         }}
                         onClick={() => {
-                          setCollegeFilter(college.college_id)
+                          setCollegeFilter(getCollegeKey(college.college_id))
                           setShowCollegeDropdown(false)
+                          setHoveredCollegeId(null)
                         }}
                         onMouseEnter={(e) => {
-                          if (collegeFilter === college.college_id) return
-                          e.currentTarget.style.backgroundColor = 'rgba(157,217,87,0.12)'
+                          if (getCollegeKey(collegeFilter) !== getCollegeKey(college.college_id)) {
+                            e.currentTarget.style.backgroundColor = 'rgba(157,217,87,0.12)'
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = collegeFilter === college.college_id ? '#9DD957' : 'transparent'
+                          e.currentTarget.style.backgroundColor = getCollegeKey(collegeFilter) === getCollegeKey(college.college_id) ? '#9DD957' : 'transparent'
                         }}
                       >
                         <div style={{ fontWeight: '500', color: 'inherit' }}>
                           {college.college_name}
                         </div>
-                        <div style={{ fontSize: '11px', color: collegeFilter === college.college_id ? 'rgba(0,0,0,0.6)' : '#6B7280', marginTop: '3px' }}>
+                        <div style={{ fontSize: '11px', color: getCollegeKey(collegeFilter) === getCollegeKey(college.college_id) ? 'rgba(0,0,0,0.6)' : '#6B7280', marginTop: '3px' }}>
                           {college.campus}
                         </div>
                       </div>

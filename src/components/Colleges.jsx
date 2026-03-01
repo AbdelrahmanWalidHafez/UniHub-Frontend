@@ -7,6 +7,12 @@ import ConfirmationModal from './ConfirmationModal'
 import { SkeletonRow, formatDate, getSortIcon } from './TableCommons'
 
 export default function Colleges() {
+  const accessDeniedSubscriptionWarning = 'Access denied. Please renew or set a new subscription plan to use this feature.'
+  const isAccessDeniedError = (message) => {
+    const text = String(message || '').toLowerCase()
+    return text.includes('403') || text.includes('forbidden') || text.includes('access denied')
+  }
+
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -38,8 +44,30 @@ export default function Colleges() {
   const [submitting, setSubmitting] = useState(false)
   const [validationErrors, setValidationErrors] = useState({})
   const [modalMessage, setModalMessage] = useState({ type: '', text: '' })
+  const messageClearTimerRef = useRef(null)
 
   const navigate = useNavigate()
+
+  const clearMessageTimer = () => {
+    if (messageClearTimerRef.current) {
+      clearTimeout(messageClearTimerRef.current)
+      messageClearTimerRef.current = null
+    }
+  }
+
+  const scheduleMessageClear = (delay = 1500) => {
+    clearMessageTimer()
+    messageClearTimerRef.current = setTimeout(() => {
+      setModalMessage({ type: '', text: '' })
+      messageClearTimerRef.current = null
+    }, delay)
+  }
+
+  useEffect(() => {
+    return () => {
+      clearMessageTimer()
+    }
+  }, [])
 
   const truncate = (s, n = 36) => {
     if (!s) return ''
@@ -256,7 +284,12 @@ export default function Colleges() {
 
   async function openCollegeDetails(id) {
     if (!id) return
+    clearMessageTimer()
+    setShowDetailModal(true)
+    setDetailEditMode(false)
+    setDetail(null)
     setDetailLoading(true)
+    setModalMessage({ type: '', text: '' })
     try {
       const data = await get(`universitymanagement/api/v1/colleges/system-admin/get-college/${id}`)
       if (!data) {
@@ -272,8 +305,6 @@ export default function Colleges() {
           created_by: c.created_by || c.createdBy
         }
         setDetail(mapped)
-        setShowDetailModal(true)
-        setDetailEditMode(false)
       }
     } catch (err) {
       console.error('Failed to fetch college details', err)
@@ -312,14 +343,14 @@ export default function Colleges() {
         setDetail(updated)
         setDetailEditMode(false)
         setModalMessage({ type: 'success', text: 'College updated successfully' })
-        setTimeout(() => setModalMessage({ type: '', text: '' }), 1500)
+        scheduleMessageClear(1500)
       }
     } catch (err) {
       console.error('Update failed', err)
       const user = getUser()
       const isSysAdmin = user && getRoleName(user) === ROLES.SYSTEM_ADMIN
-      if (isSysAdmin && err.message && (err.message.includes('403') || err.message.toLowerCase().includes('forbidden'))) {
-        setModalMessage({ type: 'warning', text: 'Please set or renew your subscription first so you can use the feature' })
+      if (isSysAdmin && isAccessDeniedError(err.message)) {
+        setModalMessage({ type: 'warning', text: accessDeniedSubscriptionWarning })
       } else {
         setModalMessage({ type: 'error', text: err.message || 'Failed to update college' })
       }
@@ -349,9 +380,12 @@ export default function Colleges() {
       console.error('Delete failed', err)
       const user = getUser()
       const isSysAdmin = user && getRoleName(user) === ROLES.SYSTEM_ADMIN
-      if (isSysAdmin && err.message && (err.message.includes('403') || err.message.toLowerCase().includes('forbidden'))) {
-        setModalMessage({ type: 'warning', text: 'Please set or renew your subscription first so you can use the feature' })
+      
+      // Keep detail modal open to show error message
+      if (isSysAdmin && isAccessDeniedError(err.message)) {
+        setModalMessage({ type: 'warning', text: accessDeniedSubscriptionWarning })
       } else {
+        // Display the actual error message from the API
         setModalMessage({ type: 'error', text: err.message || 'Failed to delete college' })
       }
     } finally {
@@ -439,10 +473,10 @@ export default function Colleges() {
       // If user is system admin and server returned 403, show subscription warning
       const user = getUser()
       const isSysAdmin = user && getRoleName(user) === ROLES.SYSTEM_ADMIN
-      if (isSysAdmin && err.message && (err.message.includes('403') || err.message.toLowerCase().includes('forbidden'))) {
+      if (isSysAdmin && isAccessDeniedError(err.message)) {
         setModalMessage({
           type: 'warning',
-          text: 'Please set or renew your subscription first so you can use the feature'
+          text: accessDeniedSubscriptionWarning
         })
       } else {
         setModalMessage({
@@ -457,6 +491,7 @@ export default function Colleges() {
 
   function handleCloseModal() {
     if (submitting) return
+    clearMessageTimer()
     setShowModal(false)
     setNewCollegeName('')
     setNewCampus('')
@@ -468,6 +503,7 @@ export default function Colleges() {
     if (detailEditMode) {
       if (!window.confirm('Discard unsaved changes?')) return
     }
+    clearMessageTimer()
     setShowDetailModal(false)
     setDetail(null)
     setDetailEditMode(false)
@@ -498,11 +534,11 @@ export default function Colleges() {
     </div>
   )
 
-  // Banner logic: when system admin sees 403, show subscription warning (yellow)
+  // Banner logic: when system admin sees access denied, show subscription warning (yellow)
   const _bannerUser = getUser()
   const _bannerIsSysAdmin = _bannerUser && getRoleName(_bannerUser) === ROLES.SYSTEM_ADMIN
-  const _bannerIsForbidden = error && (String(error).includes('403') || String(error).toLowerCase().includes('forbidden'))
-  const bannerMessage = _bannerIsForbidden && _bannerIsSysAdmin ? 'Please set or renew your current subscription plan' : error
+  const _bannerIsForbidden = error && isAccessDeniedError(error)
+  const bannerMessage = _bannerIsForbidden && _bannerIsSysAdmin ? accessDeniedSubscriptionWarning : error
   const bannerStyle = _bannerIsForbidden && _bannerIsSysAdmin ? styles.warningBanner : styles.errorBanner
 
   return (
@@ -843,7 +879,16 @@ export default function Colleges() {
 
       {/* Modal for college details (view / edit / delete) */}
       {showDetailModal && (
-        <div style={styles.modalOverlay} onClick={handleCloseDetailModal}>
+        <div
+          style={{
+            ...styles.modalOverlay,
+            alignItems: 'flex-start',
+            paddingTop: '6vh',
+            paddingBottom: '6vh',
+            backdropFilter: 'none'
+          }}
+          onClick={handleCloseDetailModal}
+        >
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div style={styles.modalHeader}>
               <h2 style={styles.modalTitle}>College Details</h2>
@@ -857,8 +902,46 @@ export default function Colleges() {
             </div>
 
             <div style={styles.modalBody} className="college-details-modal-body">
+              {/* Error/Warning Message */}
+              {modalMessage.text && (
+                <div style={{
+                  ...styles.messageBox,
+                  backgroundColor: modalMessage.type === 'success' ? '#D1FAE5' : 
+                                  modalMessage.type === 'warning' ? '#FEF3C7' : '#FEE2E2',
+                  borderColor: modalMessage.type === 'success' ? '#10B981' : 
+                              modalMessage.type === 'warning' ? '#F59E0B' : '#EF4444',
+                  color: modalMessage.type === 'success' ? '#065F46' : 
+                        modalMessage.type === 'warning' ? '#92400E' : '#991B1B',
+                  marginBottom: '16px'
+                }}>
+                  {modalMessage.text}
+                </div>
+              )}
+
               {detailLoading ? (
-                <div style={styles.suggestionLoading}>Loading...</div>
+                <div>
+                  <SectionCard title="College Information">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px 20px' }}>
+                      {Array.from({ length: 4 }).map((_, idx) => (
+                        <div key={`info-skeleton-${idx}`}>
+                          <div style={{ height: '10px', width: '70px', backgroundColor: '#E5E7EB', borderRadius: '4px', marginBottom: '8px' }} />
+                          <div style={{ height: '14px', width: '100%', backgroundColor: '#F3F4F6', borderRadius: '6px', animation: 'shimmer 1.2s ease-in-out infinite' }} />
+                        </div>
+                      ))}
+                    </div>
+                  </SectionCard>
+
+                  <SectionCard title="Metadata">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px 20px' }}>
+                      {Array.from({ length: 4 }).map((_, idx) => (
+                        <div key={`meta-skeleton-${idx}`}>
+                          <div style={{ height: '10px', width: '80px', backgroundColor: '#E5E7EB', borderRadius: '4px', marginBottom: '8px' }} />
+                          <div style={{ height: '14px', width: '100%', backgroundColor: '#F3F4F6', borderRadius: '6px', animation: 'shimmer 1.2s ease-in-out infinite' }} />
+                        </div>
+                      ))}
+                    </div>
+                  </SectionCard>
+                </div>
               ) : detail ? (
                 <div>
                   <SectionCard title="College Information">

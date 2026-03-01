@@ -124,6 +124,29 @@ export default function UserDetail() {
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [validationErrors, setValidationErrors] = useState({})
+
+  const extractErrorMessage = (error) => {
+    // If it's a validation error object like { email: "error message", firstName: "error" }
+    try {
+      const parsed = typeof error === 'string' ? JSON.parse(error) : error
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        // Get first error message from object
+        const firstKey = Object.keys(parsed)[0]
+        if (firstKey && typeof parsed[firstKey] === 'string') {
+          return parsed[firstKey]
+        }
+      }
+    } catch (e) {
+      // Not JSON, return as-is
+    }
+    return String(error || '')
+  }
+
+  const getCollegeKey = (id) => {
+    if (id === null || id === undefined || id === '') return ''
+    return String(id)
+  }
+
   const [isEditing, setIsEditing] = useState(isNewUser)
   const [isGpaQuickEdit, setIsGpaQuickEdit] = useState(false)
   const [quickGpaValue, setQuickGpaValue] = useState('')
@@ -136,6 +159,7 @@ export default function UserDetail() {
   const [showGenderDropdown, setShowGenderDropdown] = useState(false)
   const [showRoleDropdown, setShowRoleDropdown] = useState(false)
   const [showCollegeDropdown, setShowCollegeDropdown] = useState(false)
+  const [hoveredCollegeId, setHoveredCollegeId] = useState(null)
   const [collegePage, setCollegePage] = useState(1)
   const [collegesLoading, setCollegesLoading] = useState(false)
   const [collegesError, setCollegesError] = useState('')
@@ -742,11 +766,18 @@ export default function UserDetail() {
     fetchCollegeDetails()
   }, [user?.cid])
 
-  // Fetch colleges when dropdown opens or page changes
+  // Fetch first page only when dropdown opens and cache is empty
   useEffect(() => {
-    if (showCollegeDropdown) {
-      fetchColleges(collegePage)
-    }
+    if (!showCollegeDropdown) return
+    if (colleges.length > 0) return
+    fetchColleges(1)
+  }, [showCollegeDropdown, colleges.length])
+
+  // Fetch additional pages while dropdown is open
+  useEffect(() => {
+    if (!showCollegeDropdown) return
+    if (collegePage <= 1) return
+    fetchColleges(collegePage)
   }, [showCollegeDropdown, collegePage])
 
   useEffect(() => {
@@ -770,6 +801,7 @@ export default function UserDetail() {
       }
       if (collegeDDRef.current && !collegeDDRef.current.contains(e.target)) {
         setShowCollegeDropdown(false)
+        setHoveredCollegeId(null)
       }
     }
     document.addEventListener('click', handleClickOutside)
@@ -813,8 +845,18 @@ export default function UserDetail() {
         setCollegesError('No colleges available')
       }
     } catch (err) {
-      console.error('Failed to fetch colleges:', err)
-      setCollegesError('Failed to load colleges')
+      // If access is denied, silently show no colleges found instead of error
+      const text = String(err.message || '').toLowerCase()
+      const isAccessDenied = text.includes('403') || text.includes('forbidden') || text.includes('access denied')
+      
+      if (!isAccessDenied) {
+        console.error('Failed to fetch colleges:', err)
+        setCollegesError('Failed to load colleges')
+      }
+      // Always reset colleges and pagination on error
+      if (page === 1) {
+        setColleges([])
+      }
       setHasMoreColleges(false)
     } finally {
       setCollegesLoading(false)
@@ -984,7 +1026,12 @@ export default function UserDetail() {
         }, 1500)
       }
     } catch (err) {
-      setError(err.message || 'Failed to save user')
+      const errorText = String(err.message || '').toLowerCase()
+      const isAccessDenied = errorText.includes('403') || errorText.includes('forbidden') || errorText.includes('access denied')
+      const message = isAccessDenied || !err.message
+        ? 'Access denied. Please renew or set a new subscription plan to use this feature.'
+        : extractErrorMessage(err.message)
+      setError(message)
     } finally {
       setSubmitting(false)
     }
@@ -1488,7 +1535,13 @@ export default function UserDetail() {
                   onClick={(e) => {
                     if (!isEditing) return
                     e.stopPropagation()
-                    setShowCollegeDropdown(!showCollegeDropdown)
+                    setShowCollegeDropdown((prev) => {
+                      if (prev) setHoveredCollegeId(null)
+                      if (!prev && colleges.length === 0 && collegePage !== 1) {
+                        setCollegePage(1)
+                      }
+                      return !prev
+                    })
                   }}
                   disabled={!isEditing}
                   style={{
@@ -1561,7 +1614,6 @@ export default function UserDetail() {
                       overflowX: 'hidden',
                       overscrollBehavior: 'contain',
                       WebkitOverflowScrolling: 'touch',
-                      scrollbarGutter: 'stable',
                       zIndex: 40
                     }}
                     ref={collegeScrollRef}
@@ -1582,6 +1634,8 @@ export default function UserDetail() {
                           <div
                             key={college.college_id}
                             style={{
+                              width: '100%',
+                              boxSizing: 'border-box',
                               padding: '8px 10px',
                               borderBottom: '1px solid #F3F4F6',
                               cursor: 'pointer',
@@ -1589,30 +1643,29 @@ export default function UserDetail() {
                               gap: 10,
                               alignItems: 'center',
                               transition: 'background 0.12s',
-                              backgroundColor: user.collegeId === college.college_id ? '#9DD957' : 'transparent',
+                              backgroundColor: getCollegeKey(user.collegeId) === getCollegeKey(college.college_id) ? '#9DD957' : 'transparent',
                               fontSize: 13,
-                              color: user.collegeId === college.college_id ? '#000' : '#374151'
+                              color: getCollegeKey(user.collegeId) === getCollegeKey(college.college_id) ? '#000' : '#374151'
                             }}
                             onClick={() => {
-                              setUser({ ...user, collegeId: college.college_id, collegeName: college.college_name, collegeCampus: college.campus })
+                              setUser({ ...user, collegeId: getCollegeKey(college.college_id), collegeName: college.college_name, collegeCampus: college.campus })
                               setShowCollegeDropdown(false)
+                              setHoveredCollegeId(null)
                             }}
                             onMouseEnter={(e) => {
-                              if (user.collegeId !== college.college_id) {
+                              if (getCollegeKey(user.collegeId) !== getCollegeKey(college.college_id)) {
                                 e.currentTarget.style.backgroundColor = 'rgba(157,217,87,0.12)'
                               }
                             }}
                             onMouseLeave={(e) => {
-                              if (user.collegeId !== college.college_id) {
-                                e.currentTarget.style.backgroundColor = 'transparent'
-                              }
+                              e.currentTarget.style.backgroundColor = getCollegeKey(user.collegeId) === getCollegeKey(college.college_id) ? '#9DD957' : 'transparent'
                             }}
                           >
                             <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: '#E8ECF0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#3a4a52', fontSize: 12, flexShrink: 0 }}>
                               {(college.college_name || '?').charAt(0).toUpperCase()}
                             </div>
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontWeight: 600, color: user.collegeId === college.college_id ? '#000' : '#111827', fontSize: 13 }}>
+                              <div style={{ fontWeight: 600, color: getCollegeKey(user.collegeId) === getCollegeKey(college.college_id) ? '#000' : '#111827', fontSize: 13 }}>
                                 {college.college_name}
                               </div>
                               {college.campus && (
