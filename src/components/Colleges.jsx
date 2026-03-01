@@ -645,7 +645,7 @@ export default function Colleges() {
                   </span>
                 </span>
               </th>
-              <th onClick={() => handleSort('createdAt')} style={{ padding: '16px 20px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: sortField === 'createdAt' ? 'white' : 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.07em', cursor: 'pointer', userSelect: 'none', width: '18%' }}>
+              <th onClick={() => handleSort('createdAt')} style={{ padding: '16px 20px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: sortField === 'createdAt' ? 'white' : 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.07em', cursor: 'pointer', userSelect: 'none', width: '18%', whiteSpace: 'nowrap' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   CREATED AT
                   <span style={{ display: 'inline-flex', padding: '2px', borderRadius: '4px', backgroundColor: sortField === 'createdAt' ? 'rgba(255,255,255,0.15)' : 'transparent' }}>
@@ -653,7 +653,7 @@ export default function Colleges() {
                   </span>
                 </span>
               </th>
-              <th onClick={() => handleSort('created_by')} style={{ padding: '16px 20px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: sortField === 'created_by' ? 'white' : 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.07em', cursor: 'pointer', userSelect: 'none', width: '9%' }}>
+              <th onClick={() => handleSort('created_by')} style={{ padding: '16px 20px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: sortField === 'created_by' ? 'white' : 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.07em', cursor: 'pointer', userSelect: 'none', width: '9%', whiteSpace: 'nowrap' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   CREATED BY
                   <span style={{ display: 'inline-flex', padding: '2px', borderRadius: '4px', backgroundColor: sortField === 'created_by' ? 'rgba(255,255,255,0.15)' : 'transparent' }}>
@@ -716,12 +716,12 @@ export default function Colleges() {
                       {college.campus || '—'}
                     </span>
                   </td>
-                  <td style={{ padding: '18px 20px' }}>
+                  <td style={{ padding: '18px 20px', whiteSpace: 'nowrap' }}>
                     <span style={{ fontSize: '13px', color: '#6B7280', fontWeight: '500' }}>
                       {formatDate(college.createdAt)}
                     </span>
                   </td>
-                  <td style={{ padding: '18px 20px' }}>
+                  <td style={{ padding: '18px 20px', whiteSpace: 'nowrap' }}>
                     <span style={{ fontSize: '13px', color: '#6B7280', fontWeight: '500' }}>
                       {college.created_by || '—'}
                     </span>

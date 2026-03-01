@@ -1103,3 +1103,82 @@ main{padding-top:calc(var(--nav-height) + 12px)}
   margin-right: auto;
   display: block;
 }
+
+/* Page Transition Animations for System Admin */
+@keyframes pageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pageSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition-wrapper {
+  animation: pageFadeIn 1s ease-out;
+}
+
+.page-transition-slide {
+  animation: pageSlideIn 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.page-transition-up {
+  animation: pageSlideUp 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Smooth transition for route changes */
+.route-container {
+  position: relative;
+  min-height: 100vh;
+}
+
+.route-content {
+  animation: pageFadeIn 1s ease-out;
+}
+
+/* Add stagger effect for list items */
+@keyframes staggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .page-transition-wrapper,
+  .page-transition-slide,
+  .page-transition-up,
+  .route-content {
+    animation: none !important;
+    transition: none !important;
+  }
+}

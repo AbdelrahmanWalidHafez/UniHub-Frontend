@@ -8,6 +8,7 @@ import FileViewerModal from './FileViewerModal'
 import { formatInCairo, parseAsCairo } from '../utils/timezone'
 import Pricing from './Pricing'
 import Colleges from './Colleges'
+import Users from './Users'
 import './universityAdmin.css'
 
 function stringToColor(str) {
@@ -295,8 +296,15 @@ export default function UniversitySystemAdmin() {
 
         <main className="uni-admin-content">
           {activeNav === 'colleges' ? (
-            <Colleges />
+            <div key="colleges-tab" className="page-transition-up">
+              <Colleges />
+            </div>
+          ) : activeNav === 'users' ? (
+            <div key="users-tab" className="page-transition-up">
+              <Users />
+            </div>
           ) : (
+            <div key={`university-tab-${activeNav}`} className="page-transition-up">
           <section className="univ-details-card">
             {expandedPlanView ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -304,7 +312,7 @@ export default function UniversitySystemAdmin() {
                   aria-label="Back"
                   onClick={() => {
                     setAnimatingExit(true)
-                    setTimeout(() => { setAnimatingExit(false); setExpandedPlanView(false) }, 260)
+                    setTimeout(() => { setAnimatingExit(false); setExpandedPlanView(false) }, 640)
                   }}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 20, padding: '4px 6px', lineHeight: 1 }}
                 >
@@ -375,8 +383,7 @@ export default function UniversitySystemAdmin() {
                             const handleSelectPlan = (plan) => {
                               const pid = plan.subscription_plan_id
                               if (!pid) return
-                              // navigate to system admin plan detail route
-                              window.location.href = `/system-admin/subscription-plan/${pid}`
+                              navigate(`/system-admin/subscription-plan/${pid}`)
                             }
 
                             return <Pricing hideHeader={true} buyButtonText={buyText} onSelectPlan={handleSelectPlan} subscribedPlanId={university?.subscriptionPlanNormalized?.plan_id} />
@@ -388,7 +395,7 @@ export default function UniversitySystemAdmin() {
                 </div>
               </div>
             ) : (
-              <>
+              <div className={animatingExit ? 'expanded-exit' : 'expanded-anim'}>
                 <div className="cards-row">
                   <div className="card info-card">
                     {/* University information - mimic CustomerService view */}
@@ -411,9 +418,11 @@ export default function UniversitySystemAdmin() {
                     <div className="section-title">Documents</div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                       {logoUrl ? (
-                        <img src={logoUrl} alt="Logo" style={{ width: 120, height: 120, borderRadius: '6px', objectFit: 'cover' }} />
+                        <div style={{ width: 120, height: 120, borderRadius: '50%', padding: 4, background: '#F8FAFC', border: '1px solid #E5E7EB', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+                          <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                        </div>
                       ) : (
-                        <div style={{ width: 120, height: 120, borderRadius: 12, background: '#E6F7FF', border: '2px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0369A1', fontSize: 28, fontWeight: 700 }}>{(university?.universityName || '?').charAt(0).toUpperCase()}</div>
+                        <div style={{ width: 120, height: 120, borderRadius: '50%', background: '#E6F7FF', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0369A1', fontSize: 28, fontWeight: 700, boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>{(university?.universityName || '?').charAt(0).toUpperCase()}</div>
                       )}
 
                       {university?.accreditation_key ? (
@@ -463,14 +472,17 @@ export default function UniversitySystemAdmin() {
                             e.stopPropagation()
                             const willOpen = !expandedPlanView
                             if (willOpen) {
-                              setAnimatingExit(false)
-                              setExpandedPlanView(true)
+                              setAnimatingExit(true)
                               const pid = university?.subscriptionPlanNormalized?.plan_id
-                              if (pid) await fetchPlanDetails(pid)
+                              setTimeout(async () => {
+                                setExpandedPlanView(true)
+                                setAnimatingExit(false)
+                                if (pid) await fetchPlanDetails(pid)
+                              }, 640)
                             } else {
                               // play exit animation then hide
                               setAnimatingExit(true)
-                              setTimeout(() => { setAnimatingExit(false); setExpandedPlanView(false) }, 260)
+                              setTimeout(() => { setAnimatingExit(false); setExpandedPlanView(false) }, 640)
                             }
                           }}
                           style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 20, padding: '4px 6px', lineHeight: 1 }}
@@ -500,9 +512,10 @@ export default function UniversitySystemAdmin() {
                     <InfoItem label="Updated By" value={university?.updated_by || university?.updatedBy || '—'} />
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </section>
+            </div>
           )}
         </main>
         {showAccModal && university?.accreditation_key && (

@@ -1,7 +1,7 @@
-.uni-admin-root{display:flex;height:100vh;font-family:Inter, system-ui, Arial, sans-serif}
-.uni-admin-sidenav{width:220px;background:#fff;padding:28px 18px;box-shadow:none}
+.uni-admin-root{display:flex;min-height:100vh;font-family:Inter, system-ui, Arial, sans-serif}
+.uni-admin-sidenav{width:220px;background:#fff;padding:28px 18px;box-shadow:none;min-height:100vh}
 .sidenav-top{display:flex;align-items:center;gap:10px;margin-bottom:18px}
-.sidenav-logo{width:42px;height:42px;object-fit:contain}
+.sidenav-logo{width:42px;height:42px;object-fit:cover;border-radius:50%;border:1px solid #E5E7EB;background:#F8FAFC;padding:2px;box-sizing:border-box}
 .sidenav-logo-placeholder{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
 .sidenav-title{font-weight:700;font-size:16px;text-transform:capitalize}
 .sidenav-links{display:flex;flex-direction:column;gap:8px;margin-top:80px}
@@ -77,13 +77,13 @@
 @media(max-width:900px){.uni-admin-sidenav{display:none}.uni-admin-root{flex-direction:column}.uni-admin-header{height:64px}}
 
 /* Expanded subscription animation */
-.expanded-anim{animation: fadeInUp 320ms ease both}
+.expanded-anim{animation: fadeInUp 760ms cubic-bezier(0.16, 1, 0.3, 1) both}
 @keyframes fadeInUp{
 	from{opacity:0;transform:translateY(-8px) translateZ(0)}
 	to{opacity:1;transform:translateY(0) translateZ(0)}
 }
 
-.expanded-exit{animation: fadeOutDown 240ms ease both}
+.expanded-exit{animation: fadeOutDown 620ms cubic-bezier(0.16, 1, 0.3, 1) both}
 @keyframes fadeOutDown{
 	from{opacity:1;transform:translateY(0) translateZ(0)}
 	to{opacity:0;transform:translateY(-8px) translateZ(0)}
