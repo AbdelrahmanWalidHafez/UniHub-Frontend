@@ -770,10 +770,6 @@ export default function Users() {
                       <div style={{ fontSize: '13px', lineHeight: '1.6', color: importResult.status?.toLowerCase() === 'failed' ? '#7F1D1D' : importResult.failed === 0 && importResult.process_failures === 0 && importResult.write_failures === 0 ? '#047857' : '#78350F' }}>
                         <div>Status: <strong>{importResult.status}</strong></div>
                         <div>Total Read: <strong>{importResult.total_read}</strong></div>
-                        <div>Successfully Written: <strong style={{ color: '#10B981' }}>{importResult.writeCount || importResult.write_count || 0}</strong></div>
-                        {importResult.failed > 0 && <div>Failed: <strong style={{ color: '#EF4444' }}>{importResult.failed}</strong></div>}
-                        {importResult.process_failures > 0 && <div>Process Failures: <strong style={{ color: '#EF4444' }}>{importResult.process_failures}</strong></div>}
-                        {importResult.write_failures > 0 && <div>Write Failures: <strong style={{ color: '#EF4444' }}>{importResult.write_failures}</strong></div>}
                         <div style={{ marginTop: '8px', fontSize: '12px' }}>
                           Processing time: {importResult.start_time && importResult.end_time ? (
                             <span>{new Date(importResult.end_time).getTime() - new Date(importResult.start_time).getTime()}ms</span>
