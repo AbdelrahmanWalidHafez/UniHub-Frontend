@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import About from './components/About'
 import Solutions from './components/Solutions'
@@ -19,11 +19,22 @@ import SubscriptionRequests from './components/SubscriptionRequests'
 import InquiryDetails from './components/InquiryDetails'
 import UniversityDetails from './components/UniversityDetails'
 import UniversitySystemAdmin from './components/UniversitySystemAdmin'
+import UserDetail from './components/UserDetail'
 import CheckoutSuccess from './components/CheckoutSuccess'
 import CheckoutFailure from './components/CheckoutFailure'
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
 import { isAuthenticated, getUser, logout } from './utils/auth'
+
+// Page transition wrapper component
+const PageTransition = ({ children, className = 'page-transition-wrapper' }) => {
+  const location = useLocation()
+  return (
+    <div key={location.pathname} className={className}>
+      {children}
+    </div>
+  )
+}
 
 export default function App() {
   const [user, setUser] = useState(getUser())
@@ -274,7 +285,9 @@ export default function App() {
         path={ROUTES.CUSTOMER_SERVICE}
         element={(
           <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-            <CustomerServiceLanding onLogout={handleLogout} />
+            <PageTransition>
+              <CustomerServiceLanding onLogout={handleLogout} />
+            </PageTransition>
           </ProtectedRoute>
         )}
       />
@@ -283,7 +296,29 @@ export default function App() {
         path={ROUTES.UNIVERSITY_ADMIN}
         element={(
           <ProtectedRoute allowedRoles={[ROLES.SYSTEM_ADMIN]}>
-            <UniversitySystemAdmin />
+            <PageTransition>
+              <UniversitySystemAdmin />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/university-admin/users/new"
+        element={(
+          <ProtectedRoute allowedRoles={[ROLES.SYSTEM_ADMIN]}>
+            <PageTransition className="page-transition-slide">
+              <UserDetail />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/university-admin/users/:id"
+        element={(
+          <ProtectedRoute allowedRoles={[ROLES.SYSTEM_ADMIN]}>
+            <PageTransition className="page-transition-slide">
+              <UserDetail />
+            </PageTransition>
           </ProtectedRoute>
         )}
       />
@@ -291,7 +326,9 @@ export default function App() {
         path="/system-admin/subscription-plan/:id"
         element={(
           <ProtectedRoute allowedRoles={[ROLES.SYSTEM_ADMIN]}>
-            <SubscriptionPlanDetails />
+            <PageTransition className="page-transition-up">
+              <SubscriptionPlanDetails />
+            </PageTransition>
           </ProtectedRoute>
         )}
       />
@@ -302,7 +339,9 @@ export default function App() {
         path="/customer-service/request/:id"
         element={(
           <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-            <RequestDetails />
+            <PageTransition className="page-transition-slide">
+              <RequestDetails />
+            </PageTransition>
           </ProtectedRoute>
         )}
       />
@@ -311,7 +350,9 @@ export default function App() {
         path="/customer-service/inquiry/:id"
         element={(
           <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-            <InquiryDetails />
+            <PageTransition className="page-transition-slide">
+              <InquiryDetails />
+            </PageTransition>
           </ProtectedRoute>
         )}
       />
@@ -320,7 +361,9 @@ export default function App() {
         path="/customer-service/university/:id"
         element={(
           <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-            <UniversityDetails />
+            <PageTransition className="page-transition-slide">
+              <UniversityDetails />
+            </PageTransition>
           </ProtectedRoute>
         )}
       />
@@ -329,7 +372,9 @@ export default function App() {
         path="/customer-service/subscription-plan/:id"
         element={
           <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-            <SubscriptionPlanDetails />
+            <PageTransition className="page-transition-up">
+              <SubscriptionPlanDetails />
+            </PageTransition>
           </ProtectedRoute>
         }
       />
@@ -338,7 +383,9 @@ export default function App() {
   path="/customer-service/requests" 
   element={
     <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-      <SubscriptionRequests />
+      <PageTransition>
+        <SubscriptionRequests />
+      </PageTransition>
     </ProtectedRoute>
   } 
 />
@@ -346,7 +393,9 @@ export default function App() {
         path={ROUTES.ADD_PLAN} 
         element={
           <ProtectedRoute allowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-            <AddPlan />
+            <PageTransition className="page-transition-up">
+              <AddPlan />
+            </PageTransition>
           </ProtectedRoute>
         }
       />

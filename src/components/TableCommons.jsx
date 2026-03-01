@@ -18,15 +18,15 @@ export function getSortIcon(field, currentField, dir) {
   )
 }
 
-export const SkeletonRow = ({ index }) => (
+export const SkeletonRow = ({ index, cols = 5 }) => (
   <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
-    {[18, 37, 18, 18, 9].map((w, i) => (
+    {Array.from({ length: cols }).map((_, i) => (
       <td key={i} style={{ padding: '18px 20px' }}>
         <div style={{
           height: '14px',
           borderRadius: '6px',
           backgroundColor: '#F3F4F6',
-          width: i === 4 ? '24px' : `${60 + (index * 7 + i * 13) % 30}%`,
+          width: i === cols - 1 ? '24px' : `${60 + (index * 7 + i * 13) % 30}%`,
           animation: 'shimmer 1.5s ease-in-out infinite',
           animationDelay: `${index * 0.07}s`
         }} />

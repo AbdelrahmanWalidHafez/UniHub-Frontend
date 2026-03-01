@@ -179,9 +179,11 @@ export default function UniversityDetails() {
                   <div style={{ display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, minWidth: 120, marginLeft: '50px' }}>
                     {logoUrl ? (
-                      <img src={logoUrl} alt="Logo" style={{ width: 112, height: 112, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }} />
+                      <div style={{ width: 112, height: 112, borderRadius: '50%', padding: 4, background: '#F8FAFC', border: '1px solid #E5E7EB', boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>
+                        <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                      </div>
                     ) : (
-                      <div style={{ width: 112, height: 112, borderRadius: '50%', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 28, fontWeight: 700 }}>{(university?.universityName || '?').charAt(0).toUpperCase()}</div>
+                      <div style={{ width: 112, height: 112, borderRadius: '50%', background: '#F3F4F6', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 28, fontWeight: 700, boxShadow: '0 6px 18px rgba(0,0,0,0.08)' }}>{(university?.universityName || '?').charAt(0).toUpperCase()}</div>
                     )}
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'center', width: '100%' }}>
                       {university?.accreditation_key && (

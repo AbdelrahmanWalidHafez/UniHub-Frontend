@@ -7,6 +7,8 @@ export const ROUTES = {
   SUBSCRIPTION_PLAN_DETAILS: '/customer-service/subscription-plan/:id',
   DASHBOARD: '/dashboard',
   UNIVERSITY_ADMIN: '/university-admin',
+  USER_DETAIL: '/university-admin/users/:id',
+  USER_CREATE: '/university-admin/users/new',
   SUBSCRIPTION_REQUEST: '/subscription-request',
   FORGOT_PASSWORD: '/forgot-password',
 }

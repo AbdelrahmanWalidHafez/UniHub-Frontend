@@ -76,10 +76,19 @@ export async function apiCall(url, options = {}) {
 		}
 
 		let data = null
-		const contentType = response.headers.get('content-type')
-		if (contentType && contentType.includes('application/json')) {
+		let responseText = ''
+		const contentType = response.headers.get('content-type') || ''
+		try {
+			responseText = await response.text()
+		} catch (parseError) {
+			if (ENABLE_LOGGING) {
+				console.error('Failed to read response body:', parseError)
+			}
+		}
+
+		if (responseText && contentType.includes('application/json')) {
 			try {
-				data = await response.json()
+				data = JSON.parse(responseText)
 			} catch (parseError) {
 				if (ENABLE_LOGGING) {
 					console.error('Failed to parse JSON response:', parseError)
@@ -88,7 +97,18 @@ export async function apiCall(url, options = {}) {
 		}
 
 		if (!response.ok) {
-			const errorMessage = data?.message || data?.error || `API Error: ${response.status} ${response.statusText}`
+			const trimmedText = responseText ? responseText.trim() : ''
+			const isHtmlText = trimmedText.startsWith('<!DOCTYPE') || trimmedText.startsWith('<html')
+			const firstDetailedError = Array.isArray(data?.errors) && data.errors.length > 0
+				? (data.errors[0]?.message || data.errors[0])
+				: ''
+			const errorMessage =
+				firstDetailedError ||
+				data?.message ||
+				data?.error ||
+				data?.details ||
+				(!isHtmlText && trimmedText ? trimmedText : '') ||
+				`API Error: ${response.status} ${response.statusText}`
 			throw new Error(errorMessage)
 		}
 
