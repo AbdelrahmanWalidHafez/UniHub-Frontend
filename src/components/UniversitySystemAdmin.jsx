@@ -4,6 +4,7 @@ import { ROLES, getRoleName } from '../constants/roles'
 import { Link, useNavigate } from 'react-router-dom'
 import { ROUTES } from '../constants/routes'
 import { get, getFileAsBlob, post } from '../utils/api'
+import { useAuth } from '../contexts/AuthContext'
 import FileViewerModal from './FileViewerModal'
 import { formatInCairo, parseAsCairo } from '../utils/timezone'
 import Pricing from './Pricing'
@@ -22,6 +23,7 @@ function stringToColor(str) {
 }
 
 export default function UniversitySystemAdmin() {
+  const { clearAuth } = useAuth()
   const user = getUser()
   const firstName = user?.first_name || user?.firstName || user?.email || 'U'
   const initial = (firstName && firstName[0]) || 'U'
@@ -92,9 +94,9 @@ export default function UniversitySystemAdmin() {
     try {
       await logout()
     } finally {
-      navigate(ROUTES.HOME)
-      // force reload so App reads cleared auth state
-      window.location.reload()
+      clearAuth()
+      setMenuOpen(false)
+      navigate(ROUTES.HOME, { replace: true })
     }
   }
 
