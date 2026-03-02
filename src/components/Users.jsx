@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { get, post, put, deleteRequest } from '../utils/api'
-import { getUser } from '../utils/auth'
+import { getUser, getAccessToken } from '../utils/auth'
 import { ROLES, getRoleName } from '../constants/roles'
 import ConfirmationModal from './ConfirmationModal'
 import { SkeletonRow, formatDate, getSortIcon } from './TableCommons'
@@ -379,15 +379,15 @@ export default function Users() {
     setImportResult(null)
 
     try {
+      const accessToken = getAccessToken()
       const formData = new FormData()
       formData.append('file', importFile)
 
       const response = await fetch('http://localhost:8083/api/v1/account-management/import', {
         method: 'POST',
         body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken') || ''}`
-        }
+        headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {},
+        credentials: 'include'
       })
 
       let data = null
@@ -457,14 +457,16 @@ export default function Users() {
     setBatchDeleteLoading(true)
 
     try {
+      const accessToken = getAccessToken()
       const userIds = Array.from(selectedUsers)
       const response = await fetch('http://localhost:8083/api/v1/account-management/delete-batch', {
         method: 'DELETE',
         body: JSON.stringify(userIds),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken') || ''}`
-        }
+          ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+        },
+        credentials: 'include'
       })
 
       if (!response.ok) {
