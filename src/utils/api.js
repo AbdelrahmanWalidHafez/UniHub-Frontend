@@ -38,6 +38,7 @@ export async function apiCall(url, options = {}) {
 			...defaultHeaders,
 			...fetchOptions.headers,
 		},
+		credentials: 'include', // Include HttpOnly cookies
 	}
 
 	const controller = new AbortController()
@@ -63,6 +64,7 @@ export async function apiCall(url, options = {}) {
 					try {
 						response = await fetch(fullUrl, {
 							...finalOptions,
+							credentials: 'include',
 							signal: retryController.signal,
 						})
 					} finally {
@@ -249,6 +251,7 @@ export async function getFileAsBlob(url, options = {}) {
       ...defaultHeaders,
       ...fetchOptions.headers,
     },
+    credentials: 'include', // Include HttpOnly cookies
   }
 
   const controller = new AbortController()
@@ -274,6 +277,7 @@ export async function getFileAsBlob(url, options = {}) {
           try {
             const retryResponse = await fetch(fullUrl, {
               ...finalOptions,
+              credentials: 'include',
               signal: retryController.signal,
             })
             return await retryResponse.blob()

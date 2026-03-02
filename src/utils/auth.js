@@ -3,69 +3,64 @@ import { AUTH_API_BASE_URL, AUTH_REQUEST_TIMEOUT, LOGOUT_TIMEOUT, TOKEN_REFRESH_
 let refreshPromise = null
 let isRefreshing = false
 
-export function setTokens(accessToken, refreshToken) {
-	try {
-		if (!accessToken || !refreshToken) {
-			throw new Error('Tokens cannot be null or undefined')
-		}
-		localStorage.setItem('accessToken', accessToken)
-		localStorage.setItem('refreshToken', refreshToken)
-	} catch (error) {
-		if (ENABLE_LOGGING) {
-			console.error('Failed to store tokens:', error)
-		}
-		throw new Error('Failed to store authentication tokens')
-	}
+// Module-level storage for auth context functions (injected by AuthProvider)
+let getAccessTokenFn = null
+let setAccessTokenFn = null
+let getUserFn = null
+let setUserFn = null
+let clearAuthFn = null
+
+// Initialize auth functions from AuthContext
+export function initAuthFunctions({ getAccessToken, setAccessToken, getUser, setUser, clearAuth }) {
+	getAccessTokenFn = getAccessToken
+	setAccessTokenFn = setAccessToken
+	getUserFn = getUser
+	setUserFn = setUser
+	clearAuthFn = clearAuth
 }
 
 export function getAccessToken() {
-	try {
-		return localStorage.getItem('accessToken')
-	} catch (error) {
-		if (ENABLE_LOGGING) {
-			console.error('Failed to get access token:', error)
-		}
-		return null
-	}
+	return getAccessTokenFn ? getAccessTokenFn() : null
 }
 
-export function getRefreshToken() {
-	try {
-		return localStorage.getItem('refreshToken')
-	} catch (error) {
-		if (ENABLE_LOGGING) {
-			console.error('Failed to get refresh token:', error)
-		}
-		return null
+export function setAccessToken(token) {
+	if (setAccessTokenFn) {
+		setAccessTokenFn(token)
 	}
 }
 
 export function clearAuth() {
-	try {
-		localStorage.removeItem('accessToken')
-		localStorage.removeItem('refreshToken')
+	if (clearAuthFn) {
+		clearAuthFn()
+	} else {
+		// Fallback for edge cases
 		localStorage.removeItem('user')
 		localStorage.removeItem('userInfo')
-	} catch (error) {
-		if (ENABLE_LOGGING) {
-			console.error('Failed to clear auth data:', error)
-		}
 	}
 }
 
 export function setUser(user) {
-	try {
-		if (user) {
-			localStorage.setItem('user', JSON.stringify(user))
-		}
-	} catch (error) {
-		if (ENABLE_LOGGING) {
-			console.error('Failed to store user:', error)
+	if (setUserFn) {
+		setUserFn(user)
+	} else {
+		// Fallback for edge cases
+		try {
+			if (user) {
+				localStorage.setItem('user', JSON.stringify(user))
+			}
+		} catch (error) {
+			if (ENABLE_LOGGING) {
+				console.error('Failed to store user:', error)
+			}
 		}
 	}
 }
 
 export function getUser() {
+	if (getUserFn) {
+		return getUserFn()
+	}
+	// Fallback for edge cases
 	try {
 		const user = localStorage.getItem('user')
 		return user ? JSON.parse(user) : null
@@ -75,15 +70,6 @@ export function getUser() {
 		}
 		return null
 	}
-}
-
-function extractToken(tokenObj) {
-	if (!tokenObj) return null
-	if (typeof tokenObj === 'string') return tokenObj
-	if (tokenObj.token) return tokenObj.token
-	if (tokenObj.access_token) return tokenObj.access_token
-	if (tokenObj.refresh_token) return tokenObj.refresh_token
-	return null
 }
 
 function isTokenExpired(token) {
@@ -132,6 +118,7 @@ export async function login(email, password) {
 				email,
 				password,
 			}),
+			credentials: 'include', // Include HttpOnly cookies
 			signal: controller.signal,
 		})
 
@@ -148,23 +135,28 @@ export async function login(email, password) {
 		}
 
 		const data = await response.json()
-		const accessToken = extractToken(data.access_token)
-		const refreshToken = extractToken(data.refresh_token)
-
-		if (!accessToken || !refreshToken) {
+		
+		// Extract access token from nested structure
+		// Response: { access_token: { access_token: "jwt", token_type: "Bearer", expires_in: 3600 } }
+		const accessTokenObj = data.access_token || data.accessToken
+		if (!accessTokenObj) {
+			throw new Error('Invalid token response from server')
+		}
+		
+		const accessToken = accessTokenObj.access_token || accessTokenObj.accessToken
+		if (!accessToken) {
 			throw new Error('Invalid token response from server')
 		}
 
-		setTokens(accessToken, refreshToken)
+		// Store access token in context (refresh token is in HttpOnly cookie)
+		setAccessToken(accessToken)
+		
 		if (data.user) {
 			setUser(data.user)
 		}
 
 		return {
-			tokens: {
-				accessToken,
-				refreshToken,
-			},
+			accessToken,
 			user: data.user,
 		}
 	} catch (error) {
@@ -186,23 +178,17 @@ export async function refreshTokens() {
 	isRefreshing = true
 	refreshPromise = (async () => {
 		try {
-			const refreshToken = getRefreshToken()
-			if (!refreshToken) {
-				throw new Error('No refresh token available')
-			}
-
 			const refreshUrl = `${AUTH_API_BASE_URL}/refresh`
 			const controller = new AbortController()
 			const timeoutId = setTimeout(() => controller.abort(), AUTH_REQUEST_TIMEOUT)
 
+			// Refresh token is sent automatically via HttpOnly cookie
 			const response = await fetch(refreshUrl, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({
-					refresh_token: refreshToken,
-				}),
+				credentials: 'include', // Include HttpOnly cookies
 				signal: controller.signal,
 			})
 
@@ -220,24 +206,29 @@ export async function refreshTokens() {
 			}
 
 			const data = await response.json()
-			const newAccessToken = extractToken(data.access_token)
-			const newRefreshToken = extractToken(data.refresh_token)
-
-			if (!newAccessToken || !newRefreshToken) {
+			
+			// Extract new access token from nested structure
+			const accessTokenObj = data.access_token || data.accessToken
+			if (!accessTokenObj) {
+				clearAuth()
+				throw new Error('Invalid token response from server')
+			}
+			
+			const newAccessToken = accessTokenObj.access_token || accessTokenObj.accessToken
+			if (!newAccessToken) {
 				clearAuth()
 				throw new Error('Invalid token response from server')
 			}
 
-			setTokens(newAccessToken, newRefreshToken)
+			// Store new access token (refresh token is updated in HttpOnly cookie by backend)
+			setAccessToken(newAccessToken)
+			
 			if (data.user) {
 				setUser(data.user)
 			}
 
 			return {
-				tokens: {
-					accessToken: newAccessToken,
-					refreshToken: newRefreshToken,
-				},
+				accessToken: newAccessToken,
 				user: data.user,
 			}
 		} finally {
@@ -250,13 +241,7 @@ export async function refreshTokens() {
 }
 
 export async function logout() {
-	const refreshToken = getRefreshToken()
 	const accessToken = getAccessToken()
-
-	if (!refreshToken) {
-		clearAuth()
-		return
-	}
 
 	try {
 		const logoutUrl = `${AUTH_API_BASE_URL}/logout`
@@ -271,12 +256,11 @@ export async function logout() {
 			headers['Authorization'] = `Bearer ${accessToken}`
 		}
 
+		// Refresh token is sent automatically via HttpOnly cookie
 		await fetch(logoutUrl, {
 			method: 'POST',
 			headers,
-			body: JSON.stringify({
-				refresh_token: refreshToken,
-			}),
+			credentials: 'include', // Include HttpOnly cookies
 			signal: controller.signal,
 		})
 
@@ -322,6 +306,7 @@ export async function getUserInfo() {
 				'Content-Type': 'application/json',
 				'Authorization': `Bearer ${currentToken}`,
 			},
+			credentials: 'include', // Include HttpOnly cookies
 			signal: controller.signal,
 		})
 

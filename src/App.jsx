@@ -24,7 +24,8 @@ import CheckoutSuccess from './components/CheckoutSuccess'
 import CheckoutFailure from './components/CheckoutFailure'
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
-import { isAuthenticated, getUser, logout } from './utils/auth'
+import { logout } from './utils/auth'
+import { useAuth } from './contexts/AuthContext'
 
 // Page transition wrapper component
 const PageTransition = ({ children, className = 'page-transition-wrapper' }) => {
@@ -37,14 +38,9 @@ const PageTransition = ({ children, className = 'page-transition-wrapper' }) => 
 }
 
 export default function App() {
-  const [user, setUser] = useState(getUser())
-  const [authenticated, setAuthenticated] = useState(isAuthenticated())
+  const { user, setUser, accessToken, clearAuth } = useAuth()
+  const authenticated = !!accessToken
   const navigate = useNavigate()
-
-  useEffect(() => {
-    setUser(getUser())
-    setAuthenticated(isAuthenticated())
-  }, [])
 
   useEffect(() => {
     const sections = Array.from(document.querySelectorAll('main > section'))
@@ -176,8 +172,7 @@ export default function App() {
     if (authenticated) {
       try {
         await logout()
-        setUser(null)
-        setAuthenticated(false)
+        clearAuth()
         navigate(ROUTES.HOME)
       } catch (err) {
         if (import.meta.env.DEV) {
@@ -195,7 +190,6 @@ export default function App() {
 
   const handleLoginSuccess = (userData) => {
     setUser(userData)
-    setAuthenticated(true)
     const roleName = getRoleName(userData)
     if (roleName === ROLES.CUSTOMER_SERVICE) {
       navigate(ROUTES.CUSTOMER_SERVICE)
@@ -207,8 +201,7 @@ export default function App() {
   }
 
   const handleLogout = () => {
-    setUser(null)
-    setAuthenticated(false)
+    clearAuth()
     navigate(ROUTES.HOME)
   }
 

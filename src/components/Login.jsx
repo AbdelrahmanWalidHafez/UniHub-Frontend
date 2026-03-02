@@ -2,10 +2,12 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { login } from '../utils/auth'
 import { authGet } from '../utils/api'
+import { useAuth } from '../contexts/AuthContext'
 import { ENABLE_LOGGING } from '../utils/config'
 import { ROUTES } from '../constants/routes'
 
 export default function Login({ onLoginSuccess }) {
+	const { setAccessToken } = useAuth()
 	const [form, setForm] = useState({ email: '', password: '' })
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
@@ -23,7 +25,7 @@ export default function Login({ onLoginSuccess }) {
 	// Only require non-empty values for submission. Other format checks removed.
 	const valid = form.email && form.email.trim() !== '' && form.password && form.password.trim() !== ''
 
-	async function fetchUserInfo(accessToken) {
+	async function fetchUserInfo() {
 		try {
 			const userInfo = await authGet('user-info')
 			return userInfo
@@ -43,12 +45,12 @@ export default function Login({ onLoginSuccess }) {
 
 		try {
 			const result = await login(form.email, form.password)
-			const accessToken = result.tokens.accessToken
+			// Login now stores the access token in the auth context automatically
+			// and refresh token is in HttpOnly cookie
 			setForm({ email: '', password: '' })
 
-			const userInfo = await fetchUserInfo(accessToken)
+			const userInfo = await fetchUserInfo()
 			localStorage.setItem('userInfo', JSON.stringify(userInfo))
-			localStorage.setItem('user', JSON.stringify(userInfo))
 
 			if (ENABLE_LOGGING) {
 				console.debug('Login success, user:', userInfo?.email ?? userInfo?.name)
