@@ -9,6 +9,7 @@ import { formatInCairo, parseAsCairo } from '../utils/timezone'
 import Pricing from './Pricing'
 import Colleges from './Colleges'
 import Users from './Users'
+import Usage from './Usage'
 import './universityAdmin.css'
 
 function stringToColor(str) {
@@ -302,6 +303,10 @@ export default function UniversitySystemAdmin() {
           ) : activeNav === 'users' ? (
             <div key="users-tab" className="page-transition-up">
               <Users />
+            </div>
+          ) : activeNav === 'usage' ? (
+            <div key="usage-tab" className="page-transition-up">
+              <Usage />
             </div>
           ) : (
             <div key={`university-tab-${activeNav}`} className="page-transition-up">
