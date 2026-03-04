@@ -137,6 +137,10 @@ export default function Login({ onLoginSuccess }) {
 						<div className="login-forgot">
 						Forgot your password? <Link to={ROUTES.FORGOT_PASSWORD} className="change-password-link">Change password</Link>
 						</div>
+
+						<div className="login-forgot">
+						Is your account active? <Link to={ROUTES.ACTIVATE_ACCOUNT} className="change-password-link">Activate here</Link>
+						</div>
 					</div>
 				</div>
 			</div>
