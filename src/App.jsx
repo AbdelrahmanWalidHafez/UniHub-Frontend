@@ -12,6 +12,7 @@ import AddPlan from './components/AddPlan'
 import SubscriptionRequest from './components/SubscriptionRequest'
 import ErrorBoundary from './components/ErrorBoundary'
 import ForgotPassword from './components/ForgotPassword'
+import ActivateAccount from './components/ActivateAccount'
 import ProtectedRoute from './components/ProtectedRoute'
 import RequestDetails from './components/RequestDetails'
 import SubscriptionPlanDetails from './components/SubscriptionPlanDetails'
@@ -273,6 +274,10 @@ export default function App() {
       <Route
         path={ROUTES.FORGOT_PASSWORD}
         element={<ForgotPassword />}
+      />
+      <Route
+        path={ROUTES.ACTIVATE_ACCOUNT}
+        element={<ActivateAccount />}
       />
       <Route
         path={ROUTES.CUSTOMER_SERVICE}

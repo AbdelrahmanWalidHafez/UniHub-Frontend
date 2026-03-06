@@ -11,4 +11,5 @@ export const ROUTES = {
   USER_CREATE: '/university-admin/users/new',
   SUBSCRIPTION_REQUEST: '/subscription-request',
   FORGOT_PASSWORD: '/forgot-password',
+  ACTIVATE_ACCOUNT: '/activate-account',
 }
