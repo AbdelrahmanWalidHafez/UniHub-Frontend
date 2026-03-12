@@ -291,7 +291,7 @@ export default function Colleges() {
     setDetailLoading(true)
     setModalMessage({ type: '', text: '' })
     try {
-      const data = await get(`universitymanagement/api/v1/colleges/system-admin/get-college/${id}`)
+      const data = await get(`universitymanagement/api/v1/colleges/public/get-college/${id}`)
       if (!data) {
         setDetail(null)
       } else {
@@ -330,7 +330,7 @@ export default function Colleges() {
       await put(`universitymanagement/api/v1/colleges/system-admin/update-college/${detail.collegeId}`, payload)
       // Refresh list and details
       await fetchColleges(1)
-      const refreshed = await get(`universitymanagement/api/v1/colleges/system-admin/get-college/${detail.collegeId}`)
+      const refreshed = await get(`universitymanagement/api/v1/colleges/public/get-college/${detail.collegeId}`)
       if (refreshed) {
         const updated = {
           ...refreshed,

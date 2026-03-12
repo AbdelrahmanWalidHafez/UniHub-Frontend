@@ -274,7 +274,7 @@ export default function UniversitySystemAdmin() {
                 <button
                   type="button"
                   className="user-menu-item"
-                  onClick={() => { setMenuOpen(false); navigate(ROUTES.DASHBOARD) }}
+                  onClick={() => { setMenuOpen(false); navigate(ROUTES.ACCOUNT) }}
                 >
                   <span className="user-menu-icon"><img src="/user.png" alt="Account"/></span>
                   <span>Account</span>

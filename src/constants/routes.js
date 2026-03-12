@@ -12,4 +12,5 @@ export const ROUTES = {
   SUBSCRIPTION_REQUEST: '/subscription-request',
   FORGOT_PASSWORD: '/forgot-password',
   ACTIVATE_ACCOUNT: '/activate-account',
+  ACCOUNT: '/account',
 }
