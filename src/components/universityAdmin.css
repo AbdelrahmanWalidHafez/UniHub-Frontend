@@ -1,0 +1,98 @@
+.uni-admin-root{display:flex;min-height:100vh;font-family:Inter, system-ui, Arial, sans-serif}
+.uni-admin-sidenav{width:220px;background:#fff;padding:28px 18px;box-shadow:none;min-height:100vh}
+.sidenav-top{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.sidenav-logo{width:42px;height:42px;object-fit:cover;border-radius:50%;border:1px solid #E5E7EB;background:#F8FAFC;padding:2px;box-sizing:border-box}
+.sidenav-logo-placeholder{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+.sidenav-title{font-weight:700;font-size:16px;text-transform:capitalize}
+.sidenav-links{display:flex;flex-direction:column;gap:8px;margin-top:80px}
+.snav-item{background:transparent;border:0;padding:12px 10px;text-align:left;border-radius:8px;font-weight:700;cursor:pointer;transition:background .18s ease,color .18s ease,transform .12s ease}
+.snav-item:hover{background:rgba(157,217,87,0.12);color:#9DD957;transform:translateY(-2px)}
+.snav-item.active{background:rgba(157,217,87,0.12);color:#9DD957;font-weight:700;transition:background .18s ease,color .18s ease,transform .12s ease}
+.snav-item.active:hover{background:rgba(157,217,87,0.18);transform:translateY(-2px)}
+.uni-admin-main{flex:1;display:flex;flex-direction:column;background:#fff}
+.uni-admin-header{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:none;background:#fff}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-api-docs .api-docs-link{color:#222;text-decoration:none;padding:0.35rem 0.5rem;border-radius:6px;transition:color .18s ease,background .18s ease,transform .12s ease;font-weight:700}
+.header-right .header-api-docs{margin-right:20px}
+.header-univ-logo{width:40px;height:40px;object-fit:contain}
+.header-univ-name{font-weight:800}
+.header-center{font-weight:900;text-transform:capitalize;font-size:20px}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-right{display:flex;align-items:center}
+.user-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px}
+.user-menu{position:absolute;top:72px;right:24px;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.12);min-width:160px;z-index:1400;overflow:hidden}
+.user-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;border:0;background:transparent;cursor:pointer;text-align:left}
+.user-menu-item:hover{background:rgba(0,0,0,0.04);transform:none}
+.user-menu-icon{width:34px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
+.user-menu-icon img{width:20px;height:20px;display:block}
+.uni-admin-content{padding:24px 32px;background:#efefef;flex:1;border-top-left-radius:87px;border-top-right-radius:87px;border-bottom-left-radius:0;border-bottom-right-radius:0;margin:12px 0 0 18px}
+.univ-details-card{background:transparent;padding:20px 12px 8px 12px;overflow-y:auto;max-height:calc(100vh - 220px);scrollbar-gutter:stable}
+.univ-details-card{
+	/* promote to own layer to reduce repaint during scroll */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+	will-change: transform;
+	-webkit-overflow-scrolling: touch;
+	scroll-behavior: smooth;
+}
+.univ-details-card .card{border-radius:26px;padding:18px;background:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.06);flex:1}
+.univ-details-card .info-card{background:#fff;padding:22px}
+.univ-details-card .docs-card{background:#fff;padding:22px}
+.cards-row{display:flex;gap:28px;align-items:flex-start}
+
+/* Info grid and scrollable card */
+.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px 36px}
+.info-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(15,23,42,0.02)}
+.info-label-inline{font-size:12px;color:#9CA3AF;font-weight:700;text-transform:uppercase}
+.info-value-inline{font-weight:700;color:#111;font-size:14px}
+.placeholder{display:inline-block;width:56%;height:12px;background:#EEF2F6;border-radius:6px}
+.info-label{font-size:12px;color:#9CA3AF;font-weight:700;text-transform:uppercase;margin-bottom:6px}
+.info-value{font-weight:600;color:#111}
+.card.info-card{padding-right:12px}
+
+/* Make section titles (left green bar) */
+.section-title{font-weight:800;margin-bottom:14px;padding-left:12px;border-left:4px solid #c8ffbd;font-size:16px}
+.section-title{display:flex;align-items:center;justify-content:space-between}
+.section-title span{display:inline-block}
+.section-chevron{font-size:20px;color:#6B7280;margin-right:6px}
+.univ-details-card::-webkit-scrollbar{width:12px}
+.univ-details-card::-webkit-scrollbar-track{background:transparent}
+.univ-details-card::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.24);border-radius:8px}
+.univ-details-card::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,0.32)}
+.univ-details-card{ -ms-overflow-style: auto; scrollbar-width: thin; }
+.card{background:#fff;border-radius:18px;padding:26px;flex:1;box-shadow:0 2px 0 rgba(0,0,0,0.02)}
+.info-card h3,.docs-card h3{border-left:4px solid #c8ffbd;padding-left:10px}
+.docs-card{max-width:360px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.doc-seal{width:160px;height:auto;margin-bottom:12px}
+.btn-outline{border:1px solid #ddd;background:transparent;padding:8px 14px;border-radius:20px}
+.subscription-card{margin-top:14px;background:#fff;padding:12px;border-radius:22px}
+/* Subscription / Metadata formatting */
+.subscription-card{margin-top:22px;background:#fff;padding:18px;border-radius:22px}
+.subscription-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 24px;align-items:start}
+.sub-label{font-size:12px;color:#9CA3AF;font-weight:700;text-transform:uppercase;letter-spacing:0.02em}
+.sub-value{font-weight:800;color:#111;font-size:14px}
+.metadata-card{margin-top:18px;background:#fff;padding:18px;border-radius:22px}
+
+/* small visual tweak for docs card title placement */
+.docs-card > .section-title{align-self:flex-start}
+@media(max-width:900px){.uni-admin-sidenav{display:none}.uni-admin-root{flex-direction:column}.uni-admin-header{height:64px}}
+
+/* hide sidenav when toggled (used by UniHubLayout) */
+.uni-admin-root.sidenav-hidden .uni-admin-sidenav{display:none}
+.uni-admin-root.sidenav-hidden .uni-admin-main{flex:1}
+
+/* Expanded subscription animation */
+.expanded-anim{animation: fadeInUp 760ms cubic-bezier(0.16, 1, 0.3, 1) both}
+@keyframes fadeInUp{
+	from{opacity:0;transform:translateY(-8px) translateZ(0)}
+	to{opacity:1;transform:translateY(0) translateZ(0)}
+}
+
+.expanded-exit{animation: fadeOutDown 620ms cubic-bezier(0.16, 1, 0.3, 1) both}
+@keyframes fadeOutDown{
+	from{opacity:1;transform:translateY(0) translateZ(0)}
+	to{opacity:0;transform:translateY(-8px) translateZ(0)}
+}
+
+/* Compact pricing wrapper to reduce displayed plan sizes */
+.pricing-compact{transform:scale(0.92);transform-origin:top center;transition:transform 180ms ease;display:flex;justify-content:center}
