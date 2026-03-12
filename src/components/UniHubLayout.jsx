@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { logout } from '../utils/auth'
 import { getRoleName, ROLES } from '../constants/roles'
+import { ROUTES } from '../constants/routes'
 import { get, getFileAsBlob } from '../utils/api'
 import AnnouncementPage from './AnnouncementPage'
 import './universityAdmin.css'
@@ -68,6 +69,8 @@ export default function UniHubLayout() {
   const roleName = getRoleName(user)
   const isSystemAdmin = roleName === ROLES.SYSTEM_ADMIN
   const isSecretary = String(roleName || '').toLowerCase().includes('secretary') || roleName === 'ROLE_SECRETARY'
+  const isInstructor = String(roleName || '').toLowerCase().includes('instructor') || roleName === 'ROLE_INSTRUCTOR'
+  const isStudent = String(roleName || '').toLowerCase().includes('student') || roleName === 'ROLE_STUDENT'
   const menuRef = useRef(null)
   const avatarRef = useRef(null)
   const navigate = useNavigate()
@@ -122,7 +125,9 @@ export default function UniHubLayout() {
               ) : (
                 <button onClick={() => setActiveNav('classroom')} className={`snav-item ${activeNav === 'classroom' ? 'active' : ''}`}>Classroom</button>
               )}
-              {/* <button onClick={() => setActiveNav('lumos')} className={`snav-item ${activeNav === 'lumos' ? 'active' : ''}`}>Lumos AI</button> */}
+              {(isInstructor || isStudent) && (
+                <button onClick={() => setActiveNav('lumos')} className={`snav-item ${activeNav === 'lumos' ? 'active' : ''}`}>Lumos AI</button>
+              )}
               <button onClick={() => setActiveNav('task-manager')} className={`snav-item ${activeNav === 'task-manager' ? 'active' : ''}`}>Task Manager</button>
               <button onClick={() => setActiveNav('calendar')} className={`snav-item ${activeNav === 'calendar' ? 'active' : ''}`}>Calendar</button>
               <button onClick={() => setActiveNav('chats')} className={`snav-item ${activeNav === 'chats' ? 'active' : ''}`}>Chats</button>
@@ -172,7 +177,7 @@ export default function UniHubLayout() {
 
             {menuOpen ? (
               <div className="user-menu" ref={menuRef} role="menu">
-                <button type="button" className="user-menu-item" onClick={() => { setMenuOpen(false); navigate('/account') }}>
+                <button type="button" className="user-menu-item" onClick={() => { setMenuOpen(false); navigate(ROUTES.ACCOUNT) }}>
                   <span className="user-menu-icon"><img src="/user.png" alt="Account"/></span>
                   <span>Account</span>
                 </button>

@@ -22,6 +22,7 @@ import UniversityDetails from './components/UniversityDetails'
 import UniversitySystemAdmin from './components/UniversitySystemAdmin'
 import UniHubLayout from './components/UniHubLayout'
 import UserDetail from './components/UserDetail'
+import Account from './components/Account'
 import CheckoutSuccess from './components/CheckoutSuccess'
 import CheckoutFailure from './components/CheckoutFailure'
 import { ROUTES } from './constants/routes'
@@ -172,19 +173,8 @@ export default function App() {
 
   async function handleUserIconClick() {
     if (authenticated) {
-      try {
-        await logout()
-        clearAuth()
-        navigate(ROUTES.HOME)
-      } catch (err) {
-        if (import.meta.env.DEV) {
-          console.error('Logout failed', err)
-        }
-        try {
-          window.alert('Logout failed. Please try again.')
-        } catch (e) {
-        }
-      }
+      // Navigate to account page for authenticated users
+      navigate(ROUTES.ACCOUNT)
     } else {
       navigate(ROUTES.LOGIN)
     }
@@ -417,9 +407,19 @@ export default function App() {
       <Route
         path={ROUTES.DASHBOARD}
         element={(
-          <ProtectedRoute disallowedRoles={[ROLES.CUSTOMER_SERVICE]}>
+          <ProtectedRoute allowedRoles={[ 'ROLE_SECRETARY', 'ROLE_INSTRUCTOR', 'ROLE_STUDENT' ]}>
             <PageTransition>
               <UniHubLayout />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path={ROUTES.ACCOUNT}
+        element={(
+          <ProtectedRoute>
+            <PageTransition>
+              <Account />
             </PageTransition>
           </ProtectedRoute>
         )}
