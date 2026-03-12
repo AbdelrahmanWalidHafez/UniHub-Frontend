@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function ConfirmationModal({ action, onConfirm, onCancel }) {
+export default function ConfirmationModal({ action, onConfirm, onCancel, title: customTitle, message: customMessage, noBlur = false }) {
   const getActionDetails = () => {
     switch (action) {
       case 'approve':
@@ -75,15 +75,16 @@ export default function ConfirmationModal({ action, onConfirm, onCancel }) {
   }
 
   const d = getActionDetails()
+  const title = customTitle || d.title
+  const message = customMessage || d.message
 
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(15, 23, 30, 0.55)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
+        backgroundColor: noBlur ? 'rgba(0,0,0,0.35)' : 'rgba(15, 23, 30, 0.55)',
+        ...(noBlur ? {} : { backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -138,7 +139,7 @@ export default function ConfirmationModal({ action, onConfirm, onCancel }) {
                 color: '#111827',
                 lineHeight: 1.2
               }}>
-                {d.title}
+                {title}
               </h3>
               <p style={{
                 margin: 0,
@@ -146,7 +147,7 @@ export default function ConfirmationModal({ action, onConfirm, onCancel }) {
                 color: '#6B7280',
                 lineHeight: '1.6'
               }}>
-                {d.message}
+                {message}
               </p>
             </div>
           </div>
