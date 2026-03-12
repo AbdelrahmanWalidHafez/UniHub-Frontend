@@ -11,8 +11,15 @@ export async function apiCall(url, options = {}) {
 		fullUrl = `${baseUrl}/${cleanPath}`
 	}
 
-	const defaultHeaders = {
-		'Content-Type': 'application/json',
+	const defaultHeaders = {}
+	// Only set JSON content-type by default when body is not FormData
+	try {
+		if (!(fetchOptions && fetchOptions.body instanceof FormData)) {
+			defaultHeaders['Content-Type'] = 'application/json'
+		}
+	} catch (e) {
+		// in some environments fetchOptions.body may be a blob-like; default to JSON
+		defaultHeaders['Content-Type'] = 'application/json'
 	}
 
 	if (!isPublic) {
@@ -139,6 +146,15 @@ export async function post(url, body, options = {}) {
 		...options,
 		method: 'POST',
 		body: JSON.stringify(body),
+	})
+}
+
+// Use this helper for multipart/form-data posts (FormData)
+export async function formPost(url, formData, options = {}) {
+	return apiCall(url, {
+		...options,
+		method: 'POST',
+		body: formData,
 	})
 }
 

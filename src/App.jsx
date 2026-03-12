@@ -20,6 +20,7 @@ import SubscriptionRequests from './components/SubscriptionRequests'
 import InquiryDetails from './components/InquiryDetails'
 import UniversityDetails from './components/UniversityDetails'
 import UniversitySystemAdmin from './components/UniversitySystemAdmin'
+import UniHubLayout from './components/UniHubLayout'
 import UserDetail from './components/UserDetail'
 import CheckoutSuccess from './components/CheckoutSuccess'
 import CheckoutFailure from './components/CheckoutFailure'
@@ -219,35 +220,51 @@ export default function App() {
       <Route
         path={ROUTES.HOME}
         element={(
-          authenticated
-            ? (() => {
-              const roleName = getRoleName(user)
-              if (roleName === ROLES.CUSTOMER_SERVICE) return <Navigate to={ROUTES.CUSTOMER_SERVICE} replace />
-              if (roleName === ROLES.SYSTEM_ADMIN) return <Navigate to={ROUTES.UNIVERSITY_ADMIN} replace />
-              return <Navigate to={ROUTES.DASHBOARD} replace />
-            })()
-            : (
-              <>
-                <NavBar
-                  appName="unihub"
-                  logoSrc="/logo.png"
-                  onUserIconClick={handleUserIconClick}
-                  onLogoClick={() => window.scrollTo(0, 0)}
-                  cartTo={ROUTES.SUBSCRIPTION_REQUEST}
-                  onCartClick={goToSubscriptionRequest}
-                  isAuthenticated={authenticated}
-                />
-                <main>
-                  <About />
-                  <Solutions />
-                  <Pricing
-                    onSelectPlan={goToSubscriptionRequestWithPlan}
-                  />
-                  <SuccessPartners />
-                  <Contact />
-                </main>
-              </>
-            )
+          <>
+            <NavBar
+              appName="unihub"
+              logoSrc="/logo.png"
+              onUserIconClick={handleUserIconClick}
+              onLogoClick={() => window.scrollTo(0, 0)}
+              cartTo={ROUTES.SUBSCRIPTION_REQUEST}
+              onCartClick={goToSubscriptionRequest}
+              isAuthenticated={authenticated}
+            />
+            <main>
+              <About />
+              <Solutions />
+              <Pricing
+                onSelectPlan={goToSubscriptionRequestWithPlan}
+              />
+              <SuccessPartners />
+              <Contact />
+            </main>
+          </>
+        )}
+      />
+      <Route
+        path="/"
+        element={(
+          <>
+            <NavBar
+              appName="unihub"
+              logoSrc="/logo.png"
+              onUserIconClick={handleUserIconClick}
+              onLogoClick={() => window.scrollTo(0, 0)}
+              cartTo={ROUTES.SUBSCRIPTION_REQUEST}
+              onCartClick={goToSubscriptionRequest}
+              isAuthenticated={authenticated}
+            />
+            <main>
+              <About />
+              <Solutions />
+              <Pricing
+                onSelectPlan={goToSubscriptionRequestWithPlan}
+              />
+              <SuccessPartners />
+              <Contact />
+            </main>
+          </>
         )}
       />
       <Route
@@ -401,11 +418,9 @@ export default function App() {
         path={ROUTES.DASHBOARD}
         element={(
           <ProtectedRoute disallowedRoles={[ROLES.CUSTOMER_SERVICE]}>
-            <div style={{ padding: '20px' }}>
-              <h1>Dashboard</h1>
-              <p>Welcome back, {user?.name || 'User'}!</p>
-              <button type="button" onClick={handleLogout}>Logout</button>
-            </div>
+            <PageTransition>
+              <UniHubLayout />
+            </PageTransition>
           </ProtectedRoute>
         )}
       />

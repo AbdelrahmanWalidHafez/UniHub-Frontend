@@ -51,6 +51,15 @@ export function AuthProvider({ children }) {
               setAccessToken(token)
               if (data.user) {
                 setUser(data.user)
+              } else {
+                // If refresh returned a token but not user payload, fetch user-info
+                try {
+                  const { getUserInfo } = await import('../utils/auth')
+                  const info = await getUserInfo()
+                  if (info) setUser(info)
+                } catch (err) {
+                  // ignore - user will be null until explicit login
+                }
               }
             }
           }

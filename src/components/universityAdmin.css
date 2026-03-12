@@ -17,6 +17,7 @@
 .header-univ-logo{width:40px;height:40px;object-fit:contain}
 .header-univ-name{font-weight:800}
 .header-center{font-weight:900;text-transform:capitalize;font-size:20px}
+.header-left{display:flex;align-items:center;gap:12px}
 .header-right{display:flex;align-items:center}
 .user-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px}
 .user-menu{position:absolute;top:72px;right:24px;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.12);min-width:160px;z-index:1400;overflow:hidden}
@@ -75,6 +76,10 @@
 /* small visual tweak for docs card title placement */
 .docs-card > .section-title{align-self:flex-start}
 @media(max-width:900px){.uni-admin-sidenav{display:none}.uni-admin-root{flex-direction:column}.uni-admin-header{height:64px}}
+
+/* hide sidenav when toggled (used by UniHubLayout) */
+.uni-admin-root.sidenav-hidden .uni-admin-sidenav{display:none}
+.uni-admin-root.sidenav-hidden .uni-admin-main{flex:1}
 
 /* Expanded subscription animation */
 .expanded-anim{animation: fadeInUp 760ms cubic-bezier(0.16, 1, 0.3, 1) both}

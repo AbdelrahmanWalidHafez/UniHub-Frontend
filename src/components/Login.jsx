@@ -11,6 +11,7 @@ export default function Login({ onLoginSuccess }) {
 	const [form, setForm] = useState({ email: '', password: '' })
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
+	const [showPassword, setShowPassword] = useState(false)
 
 	function handleChange(e) {
 		const { name, value } = e.target
@@ -103,16 +104,46 @@ export default function Login({ onLoginSuccess }) {
 								</div>
 							</label>
 
-							<label>
+							<label style={{ display: 'block' }}>
 								Password
-								<input
-									name="password"
-									type="password"
-									value={form.password}
-									onChange={handleChange}
-									placeholder="password"
-									aria-invalid={form.password.trim() === ''}
-								/>
+								<div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+									<input
+										name="password"
+										type={showPassword ? 'text' : 'password'}
+										value={form.password}
+										onChange={handleChange}
+										onClick={() => setShowPassword((v) => !v)}
+										placeholder="password"
+										aria-invalid={form.password.trim() === ''}
+										style={{ paddingRight: 44, width: '100%', boxSizing: 'border-box', minHeight: 44, lineHeight: 'normal', display: 'block' }}
+									/>
+									<button
+										type="button"
+										onClick={(e) => { e.preventDefault(); setShowPassword((v) => !v); }}
+										style={{
+											marginLeft: -38,
+											background: 'none',
+											border: 'none',
+											cursor: 'pointer',
+											padding: 0,
+											color: '#555',
+											fontSize: 18,
+											display: 'flex',
+											alignItems: 'center',
+											height: 44,
+											width: 34,
+											justifyContent: 'center',
+											zIndex: 2
+										}}
+										aria-label={showPassword ? 'Hide password' : 'Show password'}
+									>
+										{showPassword ? (
+										  <img src="/hidden.png" alt="Hide password" width={22} height={22} style={{ display: 'block' }} />
+										) : (
+										  <img src="/eye.png" alt="Show password" width={22} height={22} style={{ display: 'block' }} />
+										)}
+									</button>
+								</div>
 								<div className="field-help">
 									{form.password.trim() === '' ? 'Password is required' : ''}
 								</div>

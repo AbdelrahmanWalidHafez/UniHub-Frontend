@@ -246,13 +246,7 @@ export default function UniversitySystemAdmin() {
           >
             Video Chats
           </button>
-          <button 
-            onClick={() => setActiveNav('announcements')}
-            className={`snav-item ${activeNav === 'announcements' ? 'active' : ''}`}
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            Announcements
-          </button>
+          {/* Announcements removed for System Admin navigation */}
         </nav>
       </aside>
 
@@ -261,9 +255,7 @@ export default function UniversitySystemAdmin() {
           <div className="header-left"></div>
           <div className="header-center">UniHub</div>
           <div className="header-right">
-            <nav className="nav-links header-api-docs">
-              <a href="/api-docs" className="api-docs-link">API Docs</a>
-            </nav>
+            {/* API Docs link removed for system admin */}
             <div
               className="user-avatar"
               style={{ backgroundColor: avatarColor, color: '#fff', cursor: 'pointer' }}
