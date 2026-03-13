@@ -9,7 +9,87 @@
 .snav-item:hover{background:rgba(157,217,87,0.12);color:#9DD957;transform:translateY(-2px)}
 .snav-item.active{background:rgba(157,217,87,0.12);color:#9DD957;font-weight:700;transition:background .18s ease,color .18s ease,transform .12s ease}
 .snav-item.active:hover{background:rgba(157,217,87,0.18);transform:translateY(-2px)}
-.uni-admin-main{flex:1;display:flex;flex-direction:column;background:#fff}
+.lumos-snav{position:relative}
+
+/* Lumos submenu matches nav animations and appearance */
+.lumos-submenu{
+	position:absolute;
+	left:100%;
+	top:0;
+	margin-left:4px;
+	background:#fff;
+	border-radius:8px;
+	box-shadow:0 10px 30px rgba(0,0,0,0.08);
+	padding:8px;
+	min-width:160px;
+	z-index:1400;
+	display:flex;
+	flex-direction:column;
+	gap:6px;
+	opacity:0;
+	transform:translateY(6px) scale(.98);
+	pointer-events: none;
+	transition: opacity 700ms cubic-bezier(.2,.9,.2,1), transform 700ms cubic-bezier(.2,.9,.2,1);
+}
+
+/* Fade out animation for closing submenu */
+.lumos-submenu.closing {
+  opacity: 0 !important;
+  transform: translateY(6px) scale(.98) !important;
+  pointer-events: none !important;
+  transition: opacity 400ms cubic-bezier(.2,.9,.2,1), transform 400ms cubic-bezier(.2,.9,.2,1);
+}
+
+/* show submenu on hover or when explicitly opened */
+.lumos-snav:hover .lumos-submenu,
+.lumos-submenu.is-open {
+	opacity:1;
+	transform:none;
+	pointer-events: auto;
+	animation: lumosSubEnter 700ms cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+.lumos-submenu-btn{background:transparent;border:0;text-align:left;padding:8px 10px;cursor:pointer;border-radius:6px;transition:background .28s ease,transform .18s ease}
+.lumos-submenu-btn:hover{background:rgba(0,0,0,0.04);transform:translateY(-2px)}
+
+@keyframes lumosSubEnter{
+	to{opacity:1;transform:none}
+}
+
+.sidenav-links .lumos-snav .lumos-submenu{
+	position:static !important;
+	left:auto !important;
+	top:auto !important;
+	margin-left:0 !important;
+	background:transparent !important;
+	box-shadow:none !important;
+	padding:0 0 0 12px !important;
+	min-width:auto !important;
+	z-index:auto !important;
+	display:flex !important;
+	flex-direction:column;
+	gap:6px;
+	max-height:0 !important;
+	overflow:hidden !important;
+	opacity:0 !important;
+	transform:none !important;
+	pointer-events:none !important;
+	transition: max-height 0.4s cubic-bezier(.4,0,.2,1), opacity 0.35s ease, padding 0.4s ease !important;
+	animation:none !important;
+}
+
+.sidenav-links .lumos-snav .lumos-submenu.is-open{
+	max-height:200px !important;
+	opacity:1 !important;
+	pointer-events:auto !important;
+	padding:4px 0 6px 12px !important;
+}
+
+.sidenav-links .lumos-submenu-btn{padding-left:14px; border-radius:6px; font-weight:700}
+
+/* small indent for nested submenu items to look like subcategories */
+.sidenav-links .lumos-submenu-btn::before{content:"";display:inline-block;width:8px}
+.uni-admin-main{flex:1;display:flex;flex-direction:column;background:#fff;min-height:0;overflow:hidden;height:100vh}
 .uni-admin-header{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:none;background:#fff}
 .header-left{display:flex;align-items:center;gap:12px}
 .header-api-docs .api-docs-link{color:#222;text-decoration:none;padding:0.35rem 0.5rem;border-radius:6px;transition:color .18s ease,background .18s ease,transform .12s ease;font-weight:700}
@@ -25,8 +105,8 @@
 .user-menu-item:hover{background:rgba(0,0,0,0.04);transform:none}
 .user-menu-icon{width:34px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
 .user-menu-icon img{width:20px;height:20px;display:block}
-.uni-admin-content{padding:24px 32px;background:#efefef;flex:1;border-top-left-radius:87px;border-top-right-radius:87px;border-bottom-left-radius:0;border-bottom-right-radius:0;margin:12px 0 0 18px}
-.univ-details-card{background:transparent;padding:20px 12px 8px 12px;overflow-y:auto;max-height:calc(100vh - 220px);scrollbar-gutter:stable}
+.uni-admin-content{padding:24px 32px;background:#efefef;flex:1;min-height:0;display:flex;flex-direction:column;border-top-left-radius:87px;border-top-right-radius:87px;border-bottom-left-radius:0;border-bottom-right-radius:0;margin:12px 0 0 18px;overflow:hidden}
+.univ-details-card{background:transparent;padding:20px 12px 40px 12px;overflow-y:auto;max-height:calc(100vh - 220px)}
 .univ-details-card{
 	/* promote to own layer to reduce repaint during scroll */
 	-webkit-transform: translateZ(0);
@@ -75,7 +155,13 @@
 
 /* small visual tweak for docs card title placement */
 .docs-card > .section-title{align-self:flex-start}
-@media(max-width:900px){.uni-admin-sidenav{display:none}.uni-admin-root{flex-direction:column}.uni-admin-header{height:64px}}
+@media(max-width:760px){.uni-admin-sidenav{display:none}.uni-admin-root{flex-direction:column}.uni-admin-header{height:64px}}
+
+/* When JS detects browser zoom-out, `.no-responsive` forces desktop layout overrides */
+.no-responsive .uni-admin-sidenav{display:block !important}
+.no-responsive .uni-admin-root{flex-direction:row !important}
+.no-responsive .uni-admin-header{height:72px !important}
+.no-responsive .uni-admin-content{margin:24px 32px !important}
 
 /* hide sidenav when toggled (used by UniHubLayout) */
 .uni-admin-root.sidenav-hidden .uni-admin-sidenav{display:none}
@@ -96,3 +182,14 @@
 
 /* Compact pricing wrapper to reduce displayed plan sizes */
 .pricing-compact{transform:scale(0.92);transform-origin:top center;transition:transform 180ms ease;display:flex;justify-content:center}
+
+/* Scale whole admin layout on narrow screens to match ~75% zoom */
+@media (max-width:760px) {
+	.uni-admin-root{
+		transform: scale(0.75);
+		transform-origin: 0 0;
+		width: 133.3333%; /* compensate for scale so it fills viewport */
+	}
+	/* ensure box sizing stays consistent after scaling */
+	.uni-admin-root *, .uni-admin-root *:before, .uni-admin-root *:after{box-sizing:border-box}
+}

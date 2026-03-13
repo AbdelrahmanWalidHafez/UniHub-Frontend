@@ -25,6 +25,7 @@ import UserDetail from './components/UserDetail'
 import Account from './components/Account'
 import CheckoutSuccess from './components/CheckoutSuccess'
 import CheckoutFailure from './components/CheckoutFailure'
+import LumosAI from './components/LumosAI'
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
 import { logout } from './utils/auth'
@@ -263,6 +264,15 @@ export default function App() {
           <SubscriptionRequest
             onBackToLogin={() => navigate(ROUTES.HOME)}
           />
+        )}
+      />
+
+      <Route
+        path={ROUTES.LUMOS_AI}
+        element={(
+          <PageTransition>
+            <LumosAI />
+          </PageTransition>
         )}
       />
       <Route

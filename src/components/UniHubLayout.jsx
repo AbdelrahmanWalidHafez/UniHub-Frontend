@@ -8,6 +8,7 @@ import { get, getFileAsBlob } from '../utils/api'
 import AnnouncementPage from './AnnouncementPage'
 import './universityAdmin.css'
 import './unihub.css'
+import LumosAI from './LumosAI'
 
 function stringToColor(str) {
   let hash = 0
@@ -64,26 +65,53 @@ export default function UniHubLayout() {
   }, [user])
 
   const [menuOpen, setMenuOpen] = useState(false)
+  const [lumosMenuClosing, setLumosMenuClosing] = useState(false)
   const [activeNav, setActiveNav] = useState('announcements')
   const [sidenavHidden, setSidenavHidden] = useState(false)
+  const [lumosMenuOpen, setLumosMenuOpen] = useState(false)
+  const [lumosNewChat, setLumosNewChat] = useState(false)
   const roleName = getRoleName(user)
   const isSystemAdmin = roleName === ROLES.SYSTEM_ADMIN
   const isSecretary = String(roleName || '').toLowerCase().includes('secretary') || roleName === 'ROLE_SECRETARY'
   const isInstructor = String(roleName || '').toLowerCase().includes('instructor') || roleName === 'ROLE_INSTRUCTOR'
   const isStudent = String(roleName || '').toLowerCase().includes('student') || roleName === 'ROLE_STUDENT'
   const menuRef = useRef(null)
+  const lumosMenuRef = useRef(null)
   const avatarRef = useRef(null)
   const navigate = useNavigate()
+  const [zoomScale, setZoomScale] = useState(1)
+
+  useEffect(() => {
+    function updateZoom() {
+      try {
+        const v = window.visualViewport
+        const scale = v && typeof v.scale === 'number' ? v.scale : (window.devicePixelRatio || 1)
+        setZoomScale(Number((scale).toFixed(2)))
+      } catch (e) {
+        setZoomScale(1)
+      }
+    }
+    updateZoom()
+    window.addEventListener('resize', updateZoom)
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', updateZoom)
+    return () => {
+      window.removeEventListener('resize', updateZoom)
+      if (window.visualViewport) window.visualViewport.removeEventListener('resize', updateZoom)
+    }
+  }, [])
 
   useEffect(() => {
     function onDocClick(e) {
       if (menuOpen && menuRef.current && !menuRef.current.contains(e.target) && avatarRef.current && !avatarRef.current.contains(e.target)) {
         setMenuOpen(false)
       }
+      if (lumosMenuOpen && lumosMenuRef.current && !lumosMenuRef.current.contains(e.target)) {
+        setLumosMenuOpen(false)
+      }
     }
     document.addEventListener('click', onDocClick)
     return () => document.removeEventListener('click', onDocClick)
-  }, [menuOpen])
+  }, [menuOpen, lumosMenuOpen])
 
   async function handleLogout() {
     try {
@@ -95,8 +123,11 @@ export default function UniHubLayout() {
     }
   }
 
+  const zoomStyle = zoomScale && zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: '0 0', width: `${100 / zoomScale}%` } : undefined
+  const forceDesktop = zoomScale && zoomScale < 1
+
   return (
-    <div className={`uni-admin-root unihub-root ${sidenavHidden ? 'sidenav-hidden' : ''}`}>
+    <div className={`uni-admin-root unihub-root ${sidenavHidden ? 'sidenav-hidden' : ''} ${forceDesktop ? 'no-responsive' : ''}`} style={zoomStyle}>
       <aside className="uni-admin-sidenav">
 
         <nav className="nav-links sidenav-links" aria-label="Main navigation" style={{ marginTop: 120, position: 'relative' }}>
@@ -125,8 +156,33 @@ export default function UniHubLayout() {
               ) : (
                 <button onClick={() => setActiveNav('classroom')} className={`snav-item ${activeNav === 'classroom' ? 'active' : ''}`}>Classroom</button>
               )}
-              {(isInstructor || isStudent) && (
-                <button onClick={() => setActiveNav('lumos')} className={`snav-item ${activeNav === 'lumos' ? 'active' : ''}`}>Lumos AI</button>
+                {(isInstructor || isStudent) && (
+                <div
+                  className="lumos-snav"
+                  ref={lumosMenuRef}
+                  onMouseEnter={() => {
+                    if (window.lumosMenuTimer) clearTimeout(window.lumosMenuTimer);
+                    if (window.lumosMenuCloseTimer) clearTimeout(window.lumosMenuCloseTimer);
+                    window.lumosMenuTimer = setTimeout(() => {
+                      setLumosMenuOpen(true);
+                      setLumosMenuClosing(false);
+                    }, 200);
+                  }}
+                  onMouseLeave={() => {
+                    if (window.lumosMenuTimer) clearTimeout(window.lumosMenuTimer);
+                    setLumosMenuClosing(true);
+                    window.lumosMenuCloseTimer = setTimeout(() => {
+                      setLumosMenuOpen(false);
+                      setLumosMenuClosing(false);
+                    }, 600);
+                  }}
+                >
+                  <button onClick={() => setLumosMenuOpen((s) => !s)} className={`snav-item ${activeNav === 'lumos' ? 'active' : ''}`}>Lumos AI</button>
+                  <div className={`lumos-submenu${lumosMenuOpen ? ' is-open' : ''}${lumosMenuClosing ? ' closing' : ''}`} role="menu">
+                    <button className="lumos-submenu-btn snav-item" onClick={() => { setLumosMenuOpen(false); setLumosNewChat(false); setActiveNav('lumos') }}>Continue chat</button>
+                    <button className="lumos-submenu-btn snav-item" onClick={() => { setLumosMenuOpen(false); setLumosNewChat(true); setActiveNav('lumos') }}>Start new chat</button>
+                  </div>
+                </div>
               )}
               <button onClick={() => setActiveNav('task-manager')} className={`snav-item ${activeNav === 'task-manager' ? 'active' : ''}`}>Task Manager</button>
               <button onClick={() => setActiveNav('calendar')} className={`snav-item ${activeNav === 'calendar' ? 'active' : ''}`}>Calendar</button>
@@ -192,10 +248,14 @@ export default function UniHubLayout() {
         </header>
 
         <main className="uni-admin-content">
-          <section className="univ-details-card" style={{ position: 'relative' }}>
+          <section className={`univ-details-card${activeNav === 'lumos' ? ' lumos-active' : ''}`} style={{ position: 'relative' }}>
             {activeNav === 'announcements' || activeNav === 'activity-management' ? (
               <div className="page-transition-up" style={{ paddingTop: 8 }}>
                 <AnnouncementPage secretary={activeNav === 'activity-management'} />
+              </div>
+            ) : activeNav === 'lumos' ? (
+              <div className="lumos-inline-wrapper">
+                <LumosAI newChat={lumosNewChat} />
               </div>
             ) : (
               <div className="card" style={{ minHeight: 140 }}>

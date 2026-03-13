@@ -13,4 +13,5 @@ export const ROUTES = {
   FORGOT_PASSWORD: '/forgot-password',
   ACTIVATE_ACCOUNT: '/activate-account',
   ACCOUNT: '/account',
+  LUMOS_AI: '/lumos-ai',
 }

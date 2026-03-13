@@ -1,3 +1,20 @@
+/* Fade-out animation for Lumos header, brand, and capabilities */
+.lumos-fade-out {
+  opacity: 0;
+  transform: translateY(24px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 0.4s cubic-bezier(.4,0,.2,1), transform 0.4s cubic-bezier(.4,0,.2,1);
+}
+.lumos-inline-wrapper{background:transparent;box-shadow:none;padding:0;margin:0;display:flex;align-items:center;justify-content:center}
+.lumos-page{min-height:calc(100vh - var(--nav-height) - 24px);display:flex;flex-direction:column;gap:12px;padding:24px 24px 34px;max-width:980px;margin:0 auto;align-items:center;justify-content:center}
+.lumos-body{flex:1;display:flex}
+/* empty state: center brand and capabilities */
+.lumos-body.lumos-empty-state{align-items:center;justify-content:center}
+/* chat state: top-left aligned so messages appear at top of area */
+.lumos-body.lumos-has-messages{align-items:flex-start;justify-content:flex-start;padding-top:12px}
+
+/* Make sure page container allows the fixed element to display over it */
+.lumos-page { overflow: visible !important; }
 :root{
   --nav-height: 64px;
   --nav-bg: #ffffff;
@@ -39,6 +56,47 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helveti
   z-index:1200;
   box-shadow:0 6px 18px rgba(0,0,0,0.06);
 }
+.lumos-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.lumos-letters { display: inline-flex; gap: 6px; align-items: center; }
+/* Each letter shows a small gradient-filled tile with the letter on top (always visible) */
+.lumos-letters span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-weight: 800;
+  color: #102027; /* readable dark letter color */
+  padding: 6px 8px;
+  min-width: 20px;
+  border-radius: 6px;
+  transition: transform 160ms ease, filter 160ms ease;
+  text-transform: uppercase;
+}
+.lumos-letters span:nth-child(1) { background: linear-gradient(45deg, #FFD56B 0%, #EFD36A 40%, #C6E86A 100%); }
+.lumos-letters span:nth-child(2) { background: linear-gradient(-45deg, #C6E86A 0%, #9FE36D 40%, #6BD76B 100%); }
+.lumos-letters span:nth-child(3) { background: linear-gradient(25deg, #FFD56B 0%, #D4EE6B 50%, #9FE36D 100%); }
+.lumos-letters span:nth-child(4) { background: linear-gradient(-25deg, #9FE36D 0%, #CFF07A 50%, #FFD56B 100%); }
+.lumos-letters span:nth-child(5) { background: linear-gradient(60deg, #FFD56B 0%, #E6F58A 50%, #C6E86A 100%); }
+.lumos-letters span:hover { transform: translateY(-3px) scale(1.06); filter: drop-shadow(0 6px 10px rgba(0,0,0,0.08)); }
+.lumos-ai {
+  /* Match slogan color/appearance but keep current title font-size */
+  color: black; /* same as .lumos-slogan */
+  opacity: 1; /* full opacity to match slogan */
+  font-weight: 700;
+}
+
+.lumos-header { margin-bottom: 12px; display: flex; justify-content: center; }
+
+/* Nudge Lumos branding (logo, title, capability pills) slightly to the right */
+.lumos-header,
+.lumos-brand,
+.lumos-capabilities,
+.lumos-title {
+  transform: translateX(18px);
+}
+
+/* Add spacing between capability pills and the textarea in empty state */
+.lumos-capabilities { margin-bottom: 18px; }
 
 .nav-left{display:flex;align-items:center;gap:1rem}
 .nav-links{display:flex;gap:1rem}
@@ -65,6 +123,9 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helveti
 
 @media (max-width:640px){
   .nav-links{display:none}
+  .navbar{padding:0 1rem}
+  .app-name{font-size:1rem}
+  .logo-img{height:30px;width:30px}
 }
 
 /* Simple, clean hero (no background change, no CTAs/icons) */
@@ -341,6 +402,52 @@ main{padding-top:calc(var(--nav-height) + 12px)}
 .subscription-grid .PhoneInputInput[aria-invalid="true"] {
   border-color: #ef4444;
   background: #fef2f2;
+
+/* Lumos responsive overrides */
+@media (max-width: 500px) {
+  .lumos-page { padding: 12px 10px; max-width: 100%; }
+  .lumos-body.lumos-empty-state { padding: 8px 6px; }
+
+  .lumos-input-chat { width: 100%; max-width: 100%; padding: 0 8px; }
+  .lumos-bubble { padding: 8px 10px; border-radius: 18px; }
+  .lumos-bubble-input {
+    width: calc(100% - 56px) !important;
+    min-width: auto !important;
+    max-width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 200px !important;
+    padding: 8px 56px 8px 12px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  .lumos-send-button { right: 10px; width: 36px !important; height: 36px !important; }
+
+  .lumos-letters span { padding: 4px 6px; border-radius: 6px; font-size: 12px; }
+  .lumos-title { font-size: 18px; }
+  .lumos-capabilities { gap: 8px; padding: 8px 6px; flex-wrap: wrap; justify-content: center; }
+  .lumos-capability { padding: 6px 10px; font-size: 13px; }
+
+  .lumos-chat { padding: 8px 10px; }
+
+  .lumos-input-chat { position: sticky; bottom: 12px; background: transparent; z-index: 20; }
+  /* Reduce header/title size and ensure it doesn't overlap logo */
+  .lumos-header { margin-bottom: 10px; width: 100%; display: flex; justify-content: center; }
+  .lumos-title { font-size: 16px; gap: 4px; }
+  .lumos-letters { gap: 4px; }
+  /* Prevent logo from overlapping header: remove negative top margin on small screens */
+  .lumos-logo { margin: 0 auto 8px auto; width: 180px; max-width: 48vw; }
+}
+
+.lumos-header { position: relative; top: 0; }
+
+@media (max-width: 420px) {
+  .lumos-bubble-input { height: 44px !important; padding-right: 48px; }
+  .lumos-send-button { width: 34px !important; height: 34px !important; }
+  .lumos-letters span { padding: 3px 6px; font-size: 11px; }
+  .lumos-capability { font-size: 12px; padding: 6px 8px; }
+}
+
 }
 
 .subscription-grid .PhoneInputInput {
@@ -514,6 +621,72 @@ main{padding-top:calc(var(--nav-height) + 12px)}
   margin-top: 4px;
   max-width: 100%;
   padding: 8px 12px;
+/* Responsive adjustments for Lumos on small screens */
+@media (max-width: 640px) {
+  .lumos-page { padding:12px 12px 160px; max-width:100%; min-height: calc(100vh - var(--nav-height) - 12px); }
+
+  /* reduce title / letter sizes and spacing */
+  .lumos-title { font-size: 18px; justify-content:center; }
+  .lumos-letters span { padding:4px 6px; min-width:18px; font-size:12px; }
+
+  /* center branding on mobile */
+  .lumos-header,
+  .lumos-brand,
+  .lumos-capabilities,
+  .lumos-title { transform: translateX(0); }
+
+  /* stack brand elements and center them */
+  .lumos-brand { display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .lumos-logo { width:120px; height:auto; max-width:40vw; }
+
+  /* capabilities wrap and center */
+  .lumos-capabilities { margin-bottom:16px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .lumos-capability { padding:8px 12px; font-size:0.95rem; }
+
+  /* chat area padding reduced and reserve space for fixed input */
+  .lumos-chat { padding:12px 12px 260px 12px; gap:10px; align-items:flex-end; }
+  .lumos-chat .msg { max-width:86%; font-size:1rem; }
+
+  /* ensure portal input fits within screen edges */
+  .lumos-input-chat { left: 12px !important; right: 12px !important; transform: none !important; width: auto !important; max-width: none !important; bottom: 12px !important; }
+  .lumos-bubble-input { font-size: 0.98rem; }
+}
+
+/* Additional small-screen tightening to avoid oversized logo and spacing */
+@media (max-width: 760px) {
+  .lumos-page { padding: 10px 12px 120px; max-width: 100%; }
+  .lumos-brand { margin-top: 0; }
+  .lumos-logo { width: 120px !important; max-width: 40vw !important; margin: 0 auto 8px auto !important; display: block !important; }
+  .lumos-header { top: 0 !important; margin-bottom: 6px !important; }
+  .lumos-slogan { font-size: 0.95rem !important; }
+  .lumos-capability { padding: 6px 10px !important; font-size: 0.92rem !important; box-shadow: 0 6px 14px rgba(218,170,0,0.05) !important; }
+  .lumos-capabilities { gap: 8px !important; margin-bottom: 12px !important; }
+  .lumos-chat { padding-bottom: 200px !important; }
+  .lumos-input-chat { bottom: 12px !important; left: 12px !important; right: 12px !important; transform: none !important; width: auto !important; }
+  .lumos-bubble-input { font-size: 0.95rem !important; padding: 8px 44px 8px 12px !important; height: 48px !important; }
+  .lumos-send-button, .lumos-send { width: 40px !important; height: 40px !important; }
+}
+
+/* Laptop screen adjustments: scale Lumos elements for typical laptop widths */
+@media (max-width: 1500px) {
+  .lumos-page { padding: 16px 20px 160px; max-width: 920px; }
+  .lumos-logo { width: 240px !important; max-width: 40vw !important; margin: 0 auto 8px auto !important; }
+  .lumos-slogan { font-size: 1rem !important; }
+  .lumos-capability { padding: 8px 12px !important; font-size: 0.95rem !important; }
+  .lumos-capabilities { gap: 10px !important; }
+  .lumos-chat { padding-bottom: 180px !important; }
+  .lumos-bubble-input { font-size: 0.98rem !important; }
+}
+
+@media (max-width: 1280px) {
+  .lumos-page { padding: 14px 18px 150px; max-width: 860px; }
+  .lumos-logo { width: 200px !important; max-width: 36vw !important; }
+  .lumos-slogan { font-size: 0.98rem !important; }
+  .lumos-capability { padding: 7px 10px !important; font-size: 0.92rem !important; }
+  .lumos-capabilities { gap: 8px !important; }
+  .lumos-chat { padding-bottom: 160px !important; }
+  .lumos-bubble-input { font-size: 0.95rem !important; }
+}
   border-radius: 8px;
   background: linear-gradient(135deg, rgba(11, 95, 255, 0.02) 0%, rgba(100, 50, 255, 0.01) 100%);
   color: #000;
@@ -614,6 +787,413 @@ main{padding-top:calc(var(--nav-height) + 12px)}
   gap: 12px;
   padding: 12px 8px;
 }
+
+/* Lumos active: card becomes a flex column so input stays at bottom */
+.univ-details-card.lumos-active {
+  flex: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  max-height: none !important;
+  padding-bottom: 0 !important;
+}
+
+/* Lumos inline wrapper fills the card */
+.lumos-inline-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+/* Lumos page fills the wrapper, input sits at bottom via flex */
+.lumos-inline-wrapper .lumos-page {
+  flex: 1 !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  padding: 16px 16px 0 !important;
+  overflow: hidden !important;
+}
+/* Scrollable body fills space between header and input */
+.lumos-inline-wrapper .lumos-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+/* Chat list fills the body so it scrolls inside it */
+.lumos-inline-wrapper .lumos-chat {
+  flex: 1;
+}
+/* Input bar — ChatGPT-style design */
+.lumos-input-bar {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 8px 0 20px;
+  display: flex;
+  justify-content: center;
+}
+.lumos-input-inner {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: #f4f4f4;
+  border-radius: 16px;
+  padding: 12px 12px 12px 16px;
+  transition: box-shadow 0.15s;
+}
+.lumos-input-inner:focus-within {
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.12);
+}
+.lumos-input-textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 15px;
+  line-height: 1.6;
+  resize: none;
+  max-height: 180px;
+  overflow-y: auto;
+  color: #0f172a;
+  font-family: inherit;
+  padding: 2px 0;
+}
+.lumos-input-textarea::placeholder { color: #8e8ea0; }
+.lumos-input-send {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: #000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+.lumos-input-send:hover:not(:disabled) { background: #1a1a1a; transform: scale(1.05); }
+.lumos-input-send:disabled { background: #c7c7c7; cursor: default; }
+.lumos-input-send img { width: 18px; height: 18px; display: block; filter: brightness(0) invert(1); }
+.lumos-input-send--recording { background: #e53e3e !important; animation: lumos-pulse 1s ease-in-out infinite; }
+@keyframes lumos-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+
+/* Streaming cursor blink */
+.lumos-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: #1a1a2e;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: lumos-blink 0.7s step-end infinite;
+}
+@keyframes lumos-blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+.lumos-thinking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.lumos-thinking-text {
+  font-size: 0.9rem;
+  color: #666;
+  font-style: italic;
+  animation: lumos-thinking-fade 1.8s ease-in-out infinite;
+}
+@keyframes lumos-thinking-fade {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.lumos-thinking-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.lumos-thinking-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #aaa;
+  animation: lumos-dot-bounce 1.2s ease-in-out infinite;
+}
+.lumos-thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.lumos-thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes lumos-dot-bounce {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+
+/* Lumos AI chat styles (top-level) */
+.lumos-page {
+  min-height: calc(100vh - var(--nav-height) - 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  max-width: 980px;
+  margin: 0 auto;
+}
+.lumos-page {
+  /* prevent document scrolling caused by Lumos content; let inner area scroll when necessary */
+  overflow: hidden;
+}
+/* When the chat has messages, stop centering the page so content flows from top */
+.lumos-page.lumos-page--has-messages {
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  padding-top: 12px !important;
+}
+.lumos-header h2{
+  margin:0;
+  font-size:2.2rem;
+  color:var(--app-color);
+  font-weight:900;
+  text-align:center;
+}
+.lumos-body{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Hide the visible scrollbar inside the Lumos card but keep scrolling functional */
+.lumos-body, .lumos-chat {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.lumos-body::-webkit-scrollbar, .lumos-chat::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.lumos-empty{
+  display:flex;flex-direction:column;align-items:center;gap:18px
+}
+.lumos-capabilities{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:760px}
+.lumos-capability{background:#fff7cc;color:#8a6a00;padding:10px 14px;border-radius:999px;font-weight:700;box-shadow:0 8px 20px rgba(218,170,0,0.06);transition:background 0.15s,transform 0.1s}
+.lumos-capability:hover{background:#ffeea0;transform:translateY(-2px)}
+.lumos-brand{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:0}
+.lumos-logo{width:300px;height:auto;max-width:60vw;display:block;margin:0 auto 4px auto}
+.lumos-slogan{font-family:ARP,Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;font-weight:700;color:#384149;font-size:1.05rem;text-align:center;margin-top:8px}
+.lumos-chat{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  width:100%;
+  padding:8px 16px;
+}
+
+/* Message row layout */
+.lumos-msg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  position: relative;
+}
+
+/* User row: avatar on right, bubble right-aligned, actions to the left of bubble */
+.lumos-msg-row--user {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+/* AI row: text on left, copy button to the right of text */
+.lumos-msg-row--ai {
+  flex-direction: row;
+  justify-content: flex-start;
+  padding: 4px 0;
+}
+
+/* User avatar circle */
+.lumos-avatar--user {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--brand-lime, #B9FF66);
+  color: #102027;
+  font-weight: 800;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+/* WhatsApp-style green bubble for user */
+.lumos-bubble--user {
+  flex: 0 0 auto !important;
+  background: #dcf8c6;
+  color: #102027;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5;
+  padding: 10px 14px;
+  border-radius: 18px 18px 4px 18px;
+  width: fit-content;
+  max-width: 65%;
+  word-break: break-word;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Copy toast notification */
+.lumos-copy-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: #1a1a2e;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 9999;
+  white-space: nowrap;
+}
+.lumos-copy-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* AI plain text — no bubble */
+.lumos-ai-text {
+  color: #1a1a2e;
+  font-size: 1rem;
+  line-height: 1.65;
+  max-width: 72%;
+  word-break: break-word;
+  padding: 2px 4px;
+}
+
+/* Markdown content inside AI messages */
+.lumos-ai-markdown p { margin: 0 0 8px; }
+.lumos-ai-markdown p:last-child { margin-bottom: 0; }
+.lumos-ai-markdown ul, .lumos-ai-markdown ol { margin: 6px 0 8px 20px; padding: 0; }
+.lumos-ai-markdown li { margin-bottom: 3px; }
+.lumos-ai-markdown strong { font-weight: 700; }
+.lumos-ai-markdown em { font-style: italic; }
+.lumos-ai-markdown h1,.lumos-ai-markdown h2,.lumos-ai-markdown h3 { font-weight: 700; margin: 12px 0 6px; line-height: 1.3; }
+.lumos-ai-markdown h1 { font-size: 1.25rem; }
+.lumos-ai-markdown h2 { font-size: 1.1rem; }
+.lumos-ai-markdown h3 { font-size: 1rem; }
+
+/* Inline code */
+.lumos-inline-code {
+  background: #e8eaf0;
+  color: #d63384;
+  font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  font-size: 0.88em;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Code block wrapper */
+.lumos-code-block {
+  background: #1e1e2e;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 10px 0;
+  font-size: 0.88rem;
+  width: 100%;
+}
+.lumos-code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 14px;
+  background: #2a2a3e;
+}
+.lumos-code-lang {
+  color: #a0aec0;
+  font-size: 0.78rem;
+  font-family: monospace;
+  text-transform: lowercase;
+}
+.lumos-code-copy {
+  background: transparent;
+  border: 1px solid #4a5568;
+  color: #a0aec0;
+  font-size: 0.75rem;
+  padding: 2px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.lumos-code-copy:hover { background: #4a5568; color: #fff; }
+.lumos-code-block > div { margin: 0 !important; border-radius: 0 !important; }
+
+/* Action buttons (copy/retry) */
+.lumos-msg-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.lumos-msg-actions--user {
+  align-self: center;
+  margin-bottom: 2px;
+}
+.lumos-msg-actions--ai {
+  align-self: center;
+  margin-left: 6px;
+}
+.lumos-action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s;
+}
+.lumos-action-btn:hover { background: rgba(0,0,0,0.06); }
+.lumos-action-btn img { width: 16px; height: 16px; display: block; opacity: 0.55; }
+.lumos-action-btn:hover img { opacity: 0.85; }
+.lumos-input{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  padding:12px;
+  border-top:1px solid #eee;
+  background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));
+  position:sticky;
+  bottom:12px;
+  z-index:20;
+  border-radius:12px;
+  box-shadow:0 -8px 24px rgba(10,20,30,0.06);
+  width:calc(100% - 48px);
+  max-width:900px;
+}
+.modern-textarea{width:100%;min-height:44px;max-height:220px;resize:none;padding:12px 14px;border-radius:12px;border:1px solid rgba(15,23,42,0.06);background:#fff;box-shadow:0 6px 18px rgba(2,6,23,0.06);font-size:0.98rem;line-height:1.4;outline:none;transition:box-shadow .18s ease, border-color .12s ease, transform .12s ease}
+.modern-textarea::placeholder{color:#9AA3A8}
+.modern-textarea:focus{box-shadow:0 18px 40px rgba(2,6,23,0.08);border-color:var(--accent);transform:translateY(-2px)}
+.lumos-send{background:var(--accent);border:none;padding:10px;border-radius:10px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.lumos-send[disabled]{opacity:0.6;cursor:default}
+
+.lumos-submenu{animation:navDrop .16s cubic-bezier(.2,.9,.2,1)}
+@keyframes navDrop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .file-modal .likes-list-item + .likes-list-item {
   border-top: 1px solid #F3F4F6;
 }
@@ -804,6 +1384,56 @@ main{padding-top:calc(var(--nav-height) + 12px)}
 .comments-bubble-input { width: 100%; border: none; background: transparent; outline: none; font-size: 14px; }
 .comments-send { margin-left: 8px; padding: 8px 12px; border-radius: 8px; border: none; background: var(--brand-lime-dark); color: #000; cursor: pointer; font-weight:700 }
 .comments-send:disabled { opacity: 0.6; cursor: default; }
+
+/* Lumos-specific input styles (separate from comments) */
+.lumos-input-chat { display: flex; gap: 8px; align-items: center; padding: 12px 16px; }
+.lumos-avatar { width: 40px; height: 40px; border-radius: 50%; background: transparent; }
+.lumos-bubble {
+  position: relative;
+  flex: 1 1 auto;
+  background: #ffffff; /* ChatGPT-like white input */
+  padding: 10px 14px;
+  border-radius: 24px;
+  border: 1px solid #e6e6e6;
+  box-shadow: 0 2px 10px rgba(2,6,23,0.04);
+}
+.lumos-bubble-input {
+  width: 786px !important; /* fixed width per requirement */
+  height: 56px !important; /* fixed height per requirement */
+  min-width: 786px !important;
+  max-width: 786px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+  border: none;
+  background: transparent;
+  outline: none;
+  box-sizing: border-box;
+  font-size: 15px;
+  padding: 8px 56px 8px 12px; /* space for inline button */
+  line-height: 1.5;
+  resize: none;
+  color: #0f172a;
+  overflow: hidden;
+}
+.lumos-send-button {
+  position: absolute;
+  right: 14px; /* position inside the fixed-width input */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: var(--brand-lime-dark);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 44px;
+}
+.lumos-send-button img { width: 20px; height: 20px; }
+.lumos-send-button:disabled { opacity: 0.6; cursor: default; background: #eef2f6; color: #9aa3a8; }
 
 /* Reply styles */
 .reply-block { margin-top: 8px; padding-left: 56px; }
