@@ -282,9 +282,9 @@ export async function streamPost(url, body, { onChunk, signal } = {}) {
     for (const event of events) {
       for (const line of event.split('\n')) {
         if (line.startsWith('data:')) {
-          const text = line.slice(5) // Spring sends "data: token" with a leading space
+          const text = line.slice(5).replace(/\\n/g, '\n') // keep leading space (word separator)
           if (text.trim() === '[DONE]') continue
-          if (onChunk) onChunk(text)
+          if (onChunk) onChunk(text === '' ? '\n' : text)
         }
       }
     }
@@ -293,7 +293,7 @@ export async function streamPost(url, body, { onChunk, signal } = {}) {
   if (buffer) {
     for (const line of buffer.split('\n')) {
       if (line.startsWith('data:')) {
-        const text = line.slice(5)
+        const text = line.slice(5).replace(/\\n/g, '\n')
         if (text.trim() !== '[DONE]' && onChunk) onChunk(text)
       }
     }

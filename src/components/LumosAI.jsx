@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { streamPost, get, deleteRequest } from '../utils/api'
 import ReactMarkdown from 'react-markdown'
@@ -139,8 +140,10 @@ function AiMessage({ text, streaming, onRetry, prevUserText, onCopy }) {
 }
 
 
-export default function LumosAI({ newChat }) {
+export default function LumosAI({ newChat: newChatProp }) {
   const { user } = useAuth()
+  const location = useLocation()
+  const newChat = newChatProp || location.state?.newChat
   const userEmail = user?.email || ''
   const userInitial = (user?.first_name || user?.firstName || user?.name || userEmail || 'U')[0].toUpperCase()
 
@@ -155,7 +158,7 @@ export default function LumosAI({ newChat }) {
   const bodyRef = useRef(null)
   const abortRef = useRef(null)
   const mediaRef = useRef(null)
-  const chunksRef = useRef([])
+
 
   const capabilities = [
     'Summarize material',
@@ -167,16 +170,17 @@ export default function LumosAI({ newChat }) {
     'And more...'
   ]
 
-  // Load chat history on mount
+  // Load chat history on mount, but skip if this is a "new chat" navigation
   useEffect(() => {
     if (!userEmail) return
+    if (newChat) return  // new chat — history was/will be cleared, don't load old messages
     get('ai/api/v1/chat/history').then(data => {
       if (!Array.isArray(data) || data.length === 0) return
       const loaded = data
         .filter(m => m.messageType === 'USER' || m.messageType === 'ASSISTANT')
         .map(m => ({
           from: m.messageType === 'USER' ? 'user' : 'ai',
-          text: typeof m.text === 'string' ? m.text : (m.content || '')
+          text: (typeof m.text === 'string' ? m.text : (m.content || '')).replace(/\\n/g, '\n')
         }))
       if (loaded.length > 0) setMessages(loaded)
     }).catch(() => {})
@@ -273,23 +277,26 @@ export default function LumosAI({ newChat }) {
       return
     }
     navigator.mediaDevices?.getUserMedia({ audio: true }).then(stream => {
-      chunksRef.current = []
+      const chunks = []
       // Pick best MIME type Whisper supports; fallback to browser default
-      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
+      const mimeType = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus']
         .find(t => MediaRecorder.isTypeSupported(t)) || ''
       const mr = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
       mediaRef.current = mr
-      mr.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      mr.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data) }
       mr.onstop = async () => {
         stream.getTracks().forEach(t => t.stop())
         setRecording(false)
+        if (chunks.length === 0) return
         const actualType = mr.mimeType || 'audio/webm'
-        const ext = actualType.includes('mp4') ? 'mp4' : actualType.includes('ogg') ? 'ogg' : 'webm'
-        const blob = new Blob(chunksRef.current, { type: actualType })
+        const ext = actualType.includes('ogg') ? 'ogg' : actualType.includes('mp4') ? 'mp4' : 'webm'
+        // Re-encode all chunks into a single clean blob via FileReader to avoid fragmented WebM
+        const rawBlob = new Blob(chunks, { type: actualType })
+        const arrayBuffer = await rawBlob.arrayBuffer()
+        const blob = new Blob([arrayBuffer], { type: actualType })
         const formData = new FormData()
         formData.append('message', blob, `voice.${ext}`)
 
-        // Add user placeholder and start streaming AI response
         const voiceText = '🎤 Voice message'
         setMessages(m => [...m, { from: 'user', text: voiceText }])
         setStreaming(true)

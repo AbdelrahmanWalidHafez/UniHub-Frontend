@@ -24,12 +24,18 @@ export default function ProtectedRoute({ children, allowedRoles = null, disallow
     if (roleName === ROLES.CUSTOMER_SERVICE) {
       return <Navigate to={ROUTES.CUSTOMER_SERVICE} replace />
     }
+    if (roleName === ROLES.SYSTEM_ADMIN) {
+      return <Navigate to={ROUTES.UNIVERSITY_ADMIN} replace />
+    }
     return <Navigate to={ROUTES.DASHBOARD} replace />
   }
 
   if (Array.isArray(allowedRoles) && allowedRoles.length > 0 && !allowedRoles.includes(roleName)) {
     if (roleName === ROLES.CUSTOMER_SERVICE) {
       return <Navigate to={ROUTES.CUSTOMER_SERVICE} replace />
+    }
+    if (roleName === ROLES.SYSTEM_ADMIN) {
+      return <Navigate to={ROUTES.UNIVERSITY_ADMIN} replace />
     }
     return <Navigate to={ROUTES.DASHBOARD} replace />
   }
