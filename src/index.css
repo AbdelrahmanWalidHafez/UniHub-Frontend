@@ -887,6 +887,16 @@ main{padding-top:calc(var(--nav-height) + 12px)}
 .lumos-input-send img { width: 18px; height: 18px; display: block; filter: brightness(0) invert(1); }
 .lumos-input-send--recording { background: #e53e3e !important; animation: lumos-pulse 1s ease-in-out infinite; }
 @keyframes lumos-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+.lumos-input-stop { background: #1a1a1a !important; }
+.lumos-input-stop:hover { background: #333 !important; }
+.lumos-stop-icon {
+  display: block;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 2px;
+  margin: auto;
+}
 
 /* Streaming cursor blink */
 .lumos-cursor {

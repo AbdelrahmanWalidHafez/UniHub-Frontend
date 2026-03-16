@@ -158,6 +158,49 @@ export default function LumosAI({ newChat: newChatProp }) {
   const bodyRef = useRef(null)
   const abortRef = useRef(null)
   const mediaRef = useRef(null)
+  const typewriterQueueRef = useRef('')
+  const typewriterTimerRef = useRef(null)
+
+  function startTypewriter() {
+    if (typewriterTimerRef.current) return
+    typewriterTimerRef.current = setInterval(() => {
+      if (typewriterQueueRef.current.length === 0) return
+      // Take up to 6 chars per tick for a fast but visible effect
+      const chunk = typewriterQueueRef.current.slice(0, 6)
+      typewriterQueueRef.current = typewriterQueueRef.current.slice(6)
+      setMessages(m => {
+        const copy = [...m]
+        const last = copy[copy.length - 1]
+        if (last && last.from === 'ai') {
+          copy[copy.length - 1] = { ...last, text: last.text + chunk }
+        }
+        return copy
+      })
+    }, 16)
+  }
+
+  function stopTypewriter() {
+    clearInterval(typewriterTimerRef.current)
+    typewriterTimerRef.current = null
+    // Flush remaining queue instantly
+    if (typewriterQueueRef.current.length > 0) {
+      const remaining = typewriterQueueRef.current
+      typewriterQueueRef.current = ''
+      setMessages(m => {
+        const copy = [...m]
+        const last = copy[copy.length - 1]
+        if (last && last.from === 'ai') {
+          copy[copy.length - 1] = { ...last, text: last.text + remaining }
+        }
+        return copy
+      })
+    }
+  }
+
+  function handleStop() {
+    abortRef.current?.abort()
+    stopTypewriter()
+  }
 
 
   const capabilities = [
@@ -197,9 +240,8 @@ export default function LumosAI({ newChat: newChatProp }) {
   // Stream a text message to the AI
   async function streamMessage(text) {
     setStreaming(true)
-    // Add a placeholder AI message that we'll append chunks to
+    typewriterQueueRef.current = ''
     setMessages(m => [...m, { from: 'ai', text: '', streaming: true }])
-
     abortRef.current = new AbortController()
     const params = new URLSearchParams({ message: text })
 
@@ -207,17 +249,21 @@ export default function LumosAI({ newChat: newChatProp }) {
       await streamPost('ai/api/v1/chat/message', params, {
         signal: abortRef.current.signal,
         onChunk: chunk => {
-          setMessages(m => {
-            const copy = [...m]
-            const last = copy[copy.length - 1]
-            if (last && last.from === 'ai') {
-              copy[copy.length - 1] = { ...last, text: last.text + chunk }
-            }
-            return copy
-          })
+          typewriterQueueRef.current += chunk
+          startTypewriter()
         }
       })
+      // Wait for typewriter to finish flushing
+      await new Promise(resolve => {
+        const check = setInterval(() => {
+          if (typewriterQueueRef.current.length === 0) {
+            clearInterval(check)
+            resolve()
+          }
+        }, 20)
+      })
     } catch (err) {
+      stopTypewriter()
       if (err.name !== 'AbortError') {
         setMessages(m => {
           const copy = [...m]
@@ -229,7 +275,7 @@ export default function LumosAI({ newChat: newChatProp }) {
         })
       }
     } finally {
-      // Mark streaming done on the last AI message
+      stopTypewriter()
       setMessages(m => {
         const copy = [...m]
         const last = copy[copy.length - 1]
@@ -289,16 +335,11 @@ export default function LumosAI({ newChat: newChatProp }) {
         setRecording(false)
         if (chunks.length === 0) return
         const actualType = mr.mimeType || 'audio/webm'
-        const ext = actualType.includes('ogg') ? 'ogg' : actualType.includes('mp4') ? 'mp4' : 'webm'
-        // Re-encode all chunks into a single clean blob via FileReader to avoid fragmented WebM
-        const rawBlob = new Blob(chunks, { type: actualType })
-        const arrayBuffer = await rawBlob.arrayBuffer()
-        const blob = new Blob([arrayBuffer], { type: actualType })
+        const blob = new Blob(chunks, { type: actualType })
         const formData = new FormData()
-        formData.append('message', blob, `voice.${ext}`)
+        formData.append('message', blob, 'voice.mp3')
 
-        const voiceText = '🎤 Voice message'
-        setMessages(m => [...m, { from: 'user', text: voiceText }])
+        setMessages(m => [...m, { from: 'user', text: '🎤 Voice message' }])
         setStreaming(true)
         setMessages(m => [...m, { from: 'ai', text: '', streaming: true }])
         abortRef.current = new AbortController()
@@ -425,17 +466,26 @@ export default function LumosAI({ newChat: newChatProp }) {
             rows={1}
             disabled={streaming}
           />
-          <button
-            className={`lumos-input-send${recording ? ' lumos-input-send--recording' : ''}`}
-            onClick={input.trim() ? handleSend : handleMicClick}
-            disabled={streaming && !recording}
-            aria-label={input.trim() ? 'send' : recording ? 'stop recording' : 'voice'}
-          >
-            {input.trim()
-              ? <img src="/sendmessage.png" alt="send" />
-              : <img src="/microphone.png" alt="voice" />
-            }
-          </button>
+          {streaming ? (
+            <button
+              className="lumos-input-send lumos-input-stop"
+              onClick={handleStop}
+              aria-label="stop"
+            >
+              <span className="lumos-stop-icon" />
+            </button>
+          ) : (
+            <button
+              className={`lumos-input-send${recording ? ' lumos-input-send--recording' : ''}`}
+              onClick={input.trim() ? handleSend : handleMicClick}
+              aria-label={input.trim() ? 'send' : recording ? 'stop recording' : 'voice'}
+            >
+              {input.trim()
+                ? <img src="/sendmessage.png" alt="send" />
+                : <img src="/microphone.png" alt="voice" />
+              }
+            </button>
+          )}
         </div>
       </div>
 
