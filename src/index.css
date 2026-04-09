@@ -34,6 +34,7 @@
   #splash .splash-logo{width:160px;max-width:60vw}
 }
 
+html{scroll-behavior:smooth}
 *{box-sizing:border-box}
 body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;overflow-x:hidden;background-image:url('/background2.jpeg');background-repeat:no-repeat;background-size:cover;background-position:center top;background-attachment:fixed;background-color:#fff}
 body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;overflow-x:hidden;background-image:url('/background2.jpeg');background-repeat:no-repeat;background-size:cover;background-position:center top;background-attachment:fixed;background-color:#fff}
