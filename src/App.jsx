@@ -1,30 +1,32 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import About from './components/About'
 import Solutions from './components/Solutions'
-import Pricing from './components/Pricing'
 import Contact from './components/Contact'
 import SuccessPartners from './components/SuccessPartners'
-import Login from './components/Login'
-import CustomerServiceLanding from './components/CustomerServiceLanding'
-import AddPlan from './components/AddPlan'
-import SubscriptionRequest from './components/SubscriptionRequest'
 import ErrorBoundary from './components/ErrorBoundary'
-import ForgotPassword from './components/ForgotPassword'
-import ActivateAccount from './components/ActivateAccount'
 import ProtectedRoute from './components/ProtectedRoute'
-import RequestDetails from './components/RequestDetails'
-import SubscriptionPlanDetails from './components/SubscriptionPlanDetails'
-import SubscriptionRequests from './components/SubscriptionRequests'
-import InquiryDetails from './components/InquiryDetails'
-import UniversityDetails from './components/UniversityDetails'
-import UniversitySystemAdmin from './components/UniversitySystemAdmin'
-import UniHubLayout from './components/UniHubLayout'
-import UserDetail from './components/UserDetail'
-import Account from './components/Account'
-import CheckoutSuccess from './components/CheckoutSuccess'
-import CheckoutFailure from './components/CheckoutFailure'
+
+const Pricing = lazy(() => import('./components/Pricing'))
+const Login = lazy(() => import('./components/Login'))
+const CustomerServiceLanding = lazy(() => import('./components/CustomerServiceLanding'))
+const AddPlan = lazy(() => import('./components/AddPlan'))
+const SubscriptionRequest = lazy(() => import('./components/SubscriptionRequest'))
+const ForgotPassword = lazy(() => import('./components/ForgotPassword'))
+const ActivateAccount = lazy(() => import('./components/ActivateAccount'))
+const RequestDetails = lazy(() => import('./components/RequestDetails'))
+const SubscriptionPlanDetails = lazy(() => import('./components/SubscriptionPlanDetails'))
+const SubscriptionRequests = lazy(() => import('./components/SubscriptionRequests'))
+const InquiryDetails = lazy(() => import('./components/InquiryDetails'))
+const UniversityDetails = lazy(() => import('./components/UniversityDetails'))
+const UniversitySystemAdmin = lazy(() => import('./components/UniversitySystemAdmin'))
+const UniHubLayout = lazy(() => import('./components/UniHubLayout'))
+const UserDetail = lazy(() => import('./components/UserDetail'))
+const Account = lazy(() => import('./components/Account'))
+const CheckoutSuccess = lazy(() => import('./components/CheckoutSuccess'))
+const CheckoutFailure = lazy(() => import('./components/CheckoutFailure'))
+const LumosAI = lazy(() => import('./components/LumosAI'))
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
 import { logout } from './utils/auth'
@@ -44,6 +46,7 @@ export default function App() {
   const { user, setUser, accessToken, clearAuth } = useAuth()
   const authenticated = !!accessToken
   const navigate = useNavigate()
+  const showLumos = ['student', 'instructor'].some(r => String(getRoleName(user)).toLowerCase().includes(r))
 
   useEffect(() => {
     const sections = Array.from(document.querySelectorAll('main > section'))
@@ -173,8 +176,7 @@ export default function App() {
 
   async function handleUserIconClick() {
     if (authenticated) {
-      // Navigate to account page for authenticated users
-      navigate(ROUTES.ACCOUNT)
+      try { await logout() } finally { clearAuth(); navigate(ROUTES.LOGIN) }
     } else {
       navigate(ROUTES.LOGIN)
     }
@@ -206,6 +208,7 @@ export default function App() {
   }, [navigate])
 
   return (
+    <Suspense fallback={null}>
     <Routes>
       <Route
         path={ROUTES.HOME}
@@ -219,6 +222,7 @@ export default function App() {
               cartTo={ROUTES.SUBSCRIPTION_REQUEST}
               onCartClick={goToSubscriptionRequest}
               isAuthenticated={authenticated}
+              showLumos={showLumos}
             />
             <main>
               <About />
@@ -244,6 +248,7 @@ export default function App() {
               cartTo={ROUTES.SUBSCRIPTION_REQUEST}
               onCartClick={goToSubscriptionRequest}
               isAuthenticated={authenticated}
+              showLumos={showLumos}
             />
             <main>
               <About />
@@ -263,6 +268,17 @@ export default function App() {
           <SubscriptionRequest
             onBackToLogin={() => navigate(ROUTES.HOME)}
           />
+        )}
+      />
+
+      <Route
+        path={ROUTES.LUMOS_AI}
+        element={(
+          <ProtectedRoute allowedRoles={['ROLE_STUDENT', 'ROLE_INSTRUCTOR']}>
+            <PageTransition>
+              <LumosAI />
+            </PageTransition>
+          </ProtectedRoute>
         )}
       />
       <Route
@@ -425,6 +441,7 @@ export default function App() {
         )}
       />
     </Routes>
+    </Suspense>
   )
 }
 

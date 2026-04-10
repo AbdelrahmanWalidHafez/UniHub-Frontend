@@ -232,6 +232,74 @@ export async function authPatch(endpoint, data, options = {}) {
     body: JSON.stringify(data),
   })
 }
+// Streaming POST — calls onChunk(text) for each streamed chunk, returns when done
+export async function streamPost(url, body, { onChunk, signal } = {}) {
+  const { getAccessToken, shouldRefreshToken, refreshTokens } = await import('./auth')
+  const { API_GATEWAY_BASE_URL } = await import('./config')
+
+  let fullUrl = url
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    const cleanPath = url.startsWith('/') ? url.slice(1) : url
+    const baseUrl = API_GATEWAY_BASE_URL.endsWith('/') ? API_GATEWAY_BASE_URL.slice(0, -1) : API_GATEWAY_BASE_URL
+    fullUrl = `${baseUrl}/${cleanPath}`
+  }
+
+  const headers = {}
+  let accessToken = getAccessToken()
+  if (accessToken && shouldRefreshToken()) {
+    try { await refreshTokens(); accessToken = getAccessToken() } catch (_) {}
+  }
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`
+
+  // body can be FormData (voice) or URLSearchParams (text)
+  if (!(body instanceof FormData)) {
+    headers['Content-Type'] = 'application/x-www-form-urlencoded'
+  }
+
+  const response = await fetch(fullUrl, {
+    method: 'POST',
+    headers,
+    body,
+    credentials: 'include',
+    signal,
+  })
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    throw new Error(text || `Error ${response.status}`)
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    // SSE events are separated by double newline
+    const events = buffer.split('\n\n')
+    buffer = events.pop() // keep incomplete event in buffer
+    for (const event of events) {
+      for (const line of event.split('\n')) {
+        if (line.startsWith('data:')) {
+          const text = line.slice(5).replace(/\\n/g, '\n') // keep leading space (word separator)
+          if (text.trim() === '[DONE]') continue
+          if (onChunk) onChunk(text === '' ? '\n' : text)
+        }
+      }
+    }
+  }
+  // flush remaining buffer
+  if (buffer) {
+    for (const line of buffer.split('\n')) {
+      if (line.startsWith('data:')) {
+        const text = line.slice(5).replace(/\\n/g, '\n')
+        if (text.trim() !== '[DONE]' && onChunk) onChunk(text)
+      }
+    }
+  }
+}
+
 export async function getFileAsBlob(url, options = {}) {
   const { public: isPublic = false, ...fetchOptions } = options
 

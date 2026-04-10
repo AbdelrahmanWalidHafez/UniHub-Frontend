@@ -1,9 +1,12 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { ROUTES } from '../constants/routes'
 import { getAccessToken } from '../utils/auth'
 
-export default function NavBar({ appName = 'App Name', logoSrc = '', onUserIconClick, onLogoClick, onCartClick, cartTo, isAuthenticated }) {
+export default function NavBar({ appName = 'App Name', logoSrc = '', onUserIconClick, onLogoClick, onCartClick, cartTo, isAuthenticated, showLumos = false }) {
 	const authenticated = isAuthenticated !== undefined ? isAuthenticated : !!getAccessToken()
+	const navigate = useNavigate()
+	const [lumosOpen, setLumosOpen] = React.useState(false)
 
 	return (
 		<header className="navbar">
@@ -35,6 +38,26 @@ export default function NavBar({ appName = 'App Name', logoSrc = '', onUserIconC
 					<a href="#success-partners">Success partners</a>
 					<a href="#contact">Contact Us</a>
 					<a href="#contact">Our Location</a>
+
+					{/* Lumos AI tab with submenu — only for students/instructors */}
+				{showLumos && (
+					<div className="lumos-nav" style={{ position: 'relative' }}>
+						<button
+							className="lumos-toggle"
+							onClick={(e) => { e.preventDefault(); setLumosOpen(!lumosOpen) }}
+							style={{ background: 'transparent', border: 'none', padding: '0.35rem 0.5rem', cursor: 'pointer' }}
+						>
+							Lumos AI
+						</button>
+						{lumosOpen && (
+							<div className="lumos-submenu" style={{ position: 'absolute', right: 0, top: 'calc(var(--nav-height) + 8px)', background: '#fff', borderRadius: 8, boxShadow: '0 10px 30px rgba(0,0,0,0.08)', padding: '8px', minWidth: 160, zIndex: 1400 }}>
+								<button className="lumos-submenu-btn" onClick={() => { setLumosOpen(false); navigate(ROUTES.LUMOS_AI) }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', border: 'none', background: 'transparent', cursor: 'pointer' }}>Continue chat</button>
+								<button className="lumos-submenu-btn" onClick={() => { setLumosOpen(false); navigate(ROUTES.LUMOS_AI, { state: { newChat: Date.now() } }) }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', border: 'none', background: 'transparent', cursor: 'pointer' }}>Start new chat</button>
+							</div>
+						)}
+					</div>
+				)}
+
 				</nav>
 
 				<div className="nav-icons">

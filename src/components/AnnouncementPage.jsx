@@ -1484,15 +1484,15 @@ export default function AnnouncementPage({ secretary = false }) {
                       )
                     })()}
 
-                    {/* Post status at the bottom for activity management */}
-                    {!showMyPosts && (() => {
+                    {/* Post status at the bottom for activity management - only show when secretary uses status filter */}
+                    {!showMyPosts && secretary && secretaryStatusFilter && (() => {
                       const raw = p.raw || {}
                       const st = raw.status || raw.status_name || raw.state || p.status || ''
                       const s = String(st || '').toUpperCase()
                       let label = s
                       let bg = '#E5E7EB'
                       let color = '#111'
-                      if (s === 'ACCEPTED' || s === 'APPROVED') { label = 'Accepted'; bg = '#ECFDF5'; color = '#059669' }
+                      if (s === 'ACCEPTED' || s === 'APPROVED') { label = 'Accepted'; bg = '#DBEAFE'; color = '#0369A1' }
                       else if (s === 'PENDING') { label = 'Pending'; bg = '#FFFBEB'; color = '#B45309' }
                       else if (s === 'REJECTED' || s === 'REJECT') { label = 'Rejected'; bg = '#FEF2F2'; color = '#B91C1C' }
                       else if (s === 'DRAFT') { label = 'Draft'; bg = '#F3F4F6'; color = '#6B7280' }
@@ -1514,7 +1514,6 @@ export default function AnnouncementPage({ secretary = false }) {
                           </button>
                         </div>
                         <div className="action-item"><img className="action-icon" src="/comment.png" alt="comment"/> <button type="button" onClick={() => openCommentsModal(p.id)} style={{ background: 'transparent', border: 'none', padding: 0, margin: 0, cursor: 'pointer', color: 'inherit' }} aria-label={`View comments for post ${p.id}`}><span>{p.comments}</span></button></div>
-                        <div className="action-item"><img className="action-icon" src="/share.png" alt="share"/></div>
                       </div>
                       {secretary ? (
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -1543,7 +1542,7 @@ export default function AnnouncementPage({ secretary = false }) {
                             let label = s
                             let bg = '#E5E7EB'
                             let color = '#111'
-                            if (s === 'ACCEPTED' || s === 'APPROVED') { label = 'Accepted'; bg = '#ECFDF5'; color = '#059669' }
+                            if (s === 'ACCEPTED' || s === 'APPROVED') { label = 'Accepted'; bg = '#DBEAFE'; color = '#0369A1' }
                             else if (s === 'PENDING') { label = 'Pending'; bg = '#FFFBEB'; color = '#B45309' }
                             else if (s === 'REJECTED' || s === 'REJECT') { label = 'Rejected'; bg = '#FEF2F2'; color = '#B91C1C' }
                             else if (s === 'DRAFT') { label = 'Draft'; bg = '#F3F4F6'; color = '#6B7280' }
