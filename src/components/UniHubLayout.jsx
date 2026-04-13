@@ -154,7 +154,7 @@ export default function UniHubLayout() {
               {isSecretary ? (
                 <button onClick={() => setActiveNav('activity-management')} className={`snav-item ${activeNav === 'activity-management' ? 'active' : ''}`}>Activity Management</button>
               ) : (
-                <button onClick={() => setActiveNav('classroom')} className={`snav-item ${activeNav === 'classroom' ? 'active' : ''}`}>Classroom</button>
+                <button onClick={() => navigate('/classroom-list')} className={`snav-item`}>Classroom</button>
               )}
                 {(isInstructor || isStudent) && (
                 <div
@@ -221,12 +221,27 @@ export default function UniHubLayout() {
               <div className="header-right" style={{ alignItems: 'center', gap: 12, display: 'flex' }}>
                 <div
                   className="user-avatar"
-                  style={{ backgroundColor: avatarColor, color: '#fff', cursor: 'pointer' }}
+                  style={{ 
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: '#fff', 
+                    cursor: 'pointer',
+                    width: 56,
+                    height: 56,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 600,
+                    fontSize: 18,
+                    transition: 'transform 0.2s ease'
+                  }}
                   title={firstName}
                   onClick={() => setMenuOpen((s) => !s)}
                   ref={avatarRef}
                   aria-haspopup="true"
                   aria-expanded={menuOpen}
+                  onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
                 >
                   {initial.toUpperCase()}
                 </div>

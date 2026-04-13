@@ -27,6 +27,8 @@ const Account = lazy(() => import('./components/Account'))
 const CheckoutSuccess = lazy(() => import('./components/CheckoutSuccess'))
 const CheckoutFailure = lazy(() => import('./components/CheckoutFailure'))
 const LumosAI = lazy(() => import('./components/LumosAI'))
+const ClassroomDetail = lazy(() => import('./components/ClassroomDetail'))
+const Classroom = lazy(() => import('./components/Classroom'))
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
 import { logout } from './utils/auth'
@@ -436,6 +438,26 @@ export default function App() {
           <ProtectedRoute>
             <PageTransition>
               <Account />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path={ROUTES.CLASSROOM}
+        element={(
+          <ProtectedRoute allowedRoles={['ROLE_SECRETARY', 'ROLE_INSTRUCTOR', 'ROLE_STUDENT']}>
+            <PageTransition>
+              <ClassroomDetail />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/classroom-list"
+        element={(
+          <ProtectedRoute allowedRoles={['ROLE_SECRETARY', 'ROLE_INSTRUCTOR', 'ROLE_STUDENT']}>
+            <PageTransition>
+              <Classroom />
             </PageTransition>
           </ProtectedRoute>
         )}

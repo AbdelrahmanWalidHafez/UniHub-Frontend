@@ -14,4 +14,5 @@ export const ROUTES = {
   ACTIVATE_ACCOUNT: '/activate-account',
   ACCOUNT: '/account',
   LUMOS_AI: '/lumos-ai',
+  CLASSROOM: '/classroom/:id',
 }
