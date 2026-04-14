@@ -158,6 +158,15 @@ export async function formPost(url, formData, options = {}) {
 	})
 }
 
+// Use this helper for multipart/form-data puts (FormData)
+export async function formPut(url, formData, options = {}) {
+	return apiCall(url, {
+		...options,
+		method: 'PUT',
+		body: formData,
+	})
+}
+
 export async function put(url, body, options = {}) {
 	return apiCall(url, {
 		...options,

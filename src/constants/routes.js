@@ -15,4 +15,5 @@ export const ROUTES = {
   ACCOUNT: '/account',
   LUMOS_AI: '/lumos-ai',
   CLASSROOM: '/classroom/:id',
+  CLASSROOM_MATERIAL: '/classroom/:id/material/:materialId',
 }

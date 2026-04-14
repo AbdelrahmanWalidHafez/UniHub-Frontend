@@ -27,7 +27,7 @@ export default function Classroom() {
   const [error, setError] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [joinModalOpen, setJoinModalOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState('teaching')
+  const [activeTab, setActiveTab] = useState(isStudent ? 'enrolled' : 'teaching')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [plusMenuOpen, setPlusMenuOpen] = useState(false)
@@ -376,6 +376,14 @@ export default function Classroom() {
                   </div>
                 )}
               </div>
+
+            <button
+              className="nav-item"
+              onClick={() => { window.location.href = 'http://localhost:3000/dashboard' }}
+            >
+              <img src="/dashboard.png" alt="Dashboard" className="nav-icon" />
+              <span>Dashboard</span>
+            </button>
           </nav>
         </div>
 

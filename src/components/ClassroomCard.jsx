@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 export default function ClassroomCard({ classroom, isInstructor, isArchived = false, onArchive, onUnarchive, onDelete, onLeave }) {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const classroomId = classroom.class_id || classroom.tid || classroom.id
   const classroomName = classroom.class_title || classroom.name || classroom.className || 'Untitled Class'
@@ -71,14 +72,19 @@ export default function ClassroomCard({ classroom, isInstructor, isArchived = fa
     setMenuOpen(false)
   }
 
-  const handleDelete = async (e) => {
+  const handleDelete = (e) => {
     e.stopPropagation()
+    setMenuOpen(false)
+    setShowConfirm(true)
+  }
+
+  const handleConfirmAction = async () => {
     if (isInstructor && onDelete) {
       await onDelete(classroomId)
     } else if (!isInstructor && onLeave) {
       await onLeave(classroomId)
     }
-    setMenuOpen(false)
+    setShowConfirm(false)
   }
 
   // Lighten color for gradient
@@ -93,6 +99,7 @@ export default function ClassroomCard({ classroom, isInstructor, isArchived = fa
   }
 
   return (
+    <>
     <div className="classroom-card" onClick={handleCardClick}>
       <div
         className="card-header"
@@ -131,5 +138,29 @@ export default function ClassroomCard({ classroom, isInstructor, isArchived = fa
         </button>
       </div>
     </div>
+
+    {showConfirm && (
+      <div className="cc-confirm-overlay" onClick={() => setShowConfirm(false)}>
+        <div className="cc-confirm-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="cc-confirm-icon">
+            <img src="/delete.png" alt={isInstructor ? 'Delete' : 'Leave'} />
+          </div>
+          <h3 className="cc-confirm-title">{isInstructor ? 'Delete Classroom' : 'Leave Classroom'}</h3>
+          <p className="cc-confirm-message">
+            Are you sure you want to {isInstructor ? 'delete' : 'leave'} <strong>"{classroomName}"</strong>?
+            {isInstructor ? ' This action cannot be undone.' : ' You can rejoin with the class code.'}
+          </p>
+          <div className="cc-confirm-actions">
+            <button className="cc-confirm-cancel" onClick={() => setShowConfirm(false)}>
+              Cancel
+            </button>
+            <button className="cc-confirm-submit" onClick={handleConfirmAction}>
+              {isInstructor ? 'Delete' : 'Leave'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
 }

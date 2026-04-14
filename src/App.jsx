@@ -453,6 +453,16 @@ export default function App() {
         )}
       />
       <Route
+        path={ROUTES.CLASSROOM_MATERIAL}
+        element={(
+          <ProtectedRoute allowedRoles={['ROLE_SECRETARY', 'ROLE_INSTRUCTOR', 'ROLE_STUDENT']}>
+            <PageTransition>
+              <ClassroomDetail />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
         path="/classroom-list"
         element={(
           <ProtectedRoute allowedRoles={['ROLE_SECRETARY', 'ROLE_INSTRUCTOR', 'ROLE_STUDENT']}>

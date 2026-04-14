@@ -32,6 +32,19 @@ function timeAgo(input) {
   return years === 1 ? '1 year ago' : `${years} years ago`
 }
 
+// S3 keys use literal + signs — encode them as %2B so the browser doesn't mangle them
+const safeUrl = (url) => {
+  try {
+    const [base, query] = url.split('?')
+    const parts = base.split('/')
+    const filename = parts.pop()
+    parts.push(filename.replace(/\+/g, '%2B'))
+    return parts.join('/') + (query ? '?' + query : '')
+  } catch {
+    return url
+  }
+}
+
 // Top-level memoized attachment renderer to keep a stable component identity
 const AttachmentRendererMemo = React.memo(function AttachmentRendererMemo({ url, type, name, openLightbox }) {
   const [decided, setDecided] = useState(() => {
@@ -93,7 +106,7 @@ const AttachmentRendererMemo = React.memo(function AttachmentRendererMemo({ url,
     const timeoutId = setTimeout(() => { try { ctrl.abort() } catch (e) {} }, 10000)
     ;(async () => {
       try {
-        const res = await fetch(url, { method: 'GET', mode: 'cors', signal: ctrl.signal })
+        const res = await fetch(safeUrl(url), { method: 'GET', mode: 'cors', credentials: 'omit', signal: ctrl.signal })
         if (!res.ok) throw new Error('Failed to fetch PDF: ' + res.status)
         const blob = await res.blob()
         const bUrl = URL.createObjectURL(blob)
@@ -161,7 +174,9 @@ const AttachmentRendererMemo = React.memo(function AttachmentRendererMemo({ url,
 
     return (
       <div style={{ margin: '24px 0' }}>
-        <FilePreviewCard title={name || url.split('/').pop() || 'PDF file'} fileUrl={url} />
+        <a href={safeUrl(url)} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block', cursor: 'pointer' }}>
+          <FilePreviewCard title={name || url.split('/').pop() || 'PDF file'} fileUrl={safeUrl(url)} cacheKey={safeUrl(url)} />
+        </a>
       </div>
     );
   }

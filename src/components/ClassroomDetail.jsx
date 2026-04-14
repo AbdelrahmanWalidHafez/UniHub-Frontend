@@ -3,11 +3,14 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { getRoleName } from '../constants/roles'
 import { logout } from '../utils/auth'
-import { get } from '../utils/api'
+import { get, deleteRequest } from '../utils/api'
+import AnnouncementModal from './AnnouncementModal'
+import MaterialCard from './MaterialCard'
+import MaterialDetailPage from './MaterialDetailPage'
 import './classroom.css'
 
 export default function ClassroomDetail() {
-  const { id } = useParams()
+  const { id, materialId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
   const { user, clearAuth } = useAuth()
@@ -35,8 +38,25 @@ export default function ClassroomDetail() {
   const [loadingPeople, setLoadingPeople] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
+  const [materials, setMaterials] = useState([])
+  const [loadingMaterials, setLoadingMaterials] = useState(false)
+  const [materialsPage, setMaterialsPage] = useState(1)
+  const [hasMoreMaterials, setHasMoreMaterials] = useState(false)
+  const sentinelRef = useRef(null)
+  const [assignments, setAssignments] = useState([])
+  const [loadingAssignments, setLoadingAssignments] = useState(false)
+  const [assignmentsPage, setAssignmentsPage] = useState(1)
+  const [hasMoreAssignments, setHasMoreAssignments] = useState(false)
+  const assignmentSentinelRef = useRef(null)
+  const [announcementModalOpen, setAnnouncementModalOpen] = useState(false)
+  const [editingMaterial, setEditingMaterial] = useState(null)
+  const [forceAssignment, setForceAssignment] = useState(false)
+  const [detailRefreshKey, setDetailRefreshKey] = useState(0)
+  const [materialTitle, setMaterialTitle] = useState('')
   const menuRef = useRef(null)
   const avatarRef = useRef(null)
+
+  const isMaterialDetailRoute = !!materialId
 
   // Map image numbers to actual filenames in public folder
   const getImageFilename = (num) => {
@@ -71,7 +91,6 @@ export default function ClassroomDetail() {
   const entryCode = classroom?.entry_code || classroom?.code || ''
   const imageNum = classroom?.image_num || 1
   const instructorId = classroom?.created_by || classroom?.instructor_id
-  const bgColor = classroom?.color || generateColorFromId(instructorId)
   const backgroundImageUrl = getImageFilename(imageNum)
 
   // Fetch classrooms for sidebar
@@ -121,8 +140,8 @@ export default function ClassroomDetail() {
     }
   }, [isInstructor, isStudent])
 
-  const handleNavigateToClassroom = (classroom) => {
-    navigate(`/classroom/${classroom.class_id || classroom.id}`, { state: { classroom } })
+  const handleNavigateToClassroom = (cls) => {
+    navigate(`/classroom/${cls.class_id || cls.id}`, { state: { classroom: cls } })
   }
 
   async function handleLogout() {
@@ -142,13 +161,11 @@ export default function ClassroomDetail() {
       // Fetch owner only on first page
       if (pageNum === 1) {
         const ownerResponse = await get(`classroom/api/v1/classroom/get-owner/${id}`)
-        console.log('Owner response:', ownerResponse)
         setOwner(ownerResponse)
       }
-      
+
       // Fetch members with pagination
       const membersResponse = await get(`classroom/api/v1/classroom/get-members/${id}?page_num=${pageNum}`)
-      console.log('Members response:', membersResponse)
       const membersList = membersResponse.members || []
       setMembers(membersList)
       // If we got exactly 10 members, there might be more pages
@@ -159,6 +176,86 @@ export default function ClassroomDetail() {
       setLoadingPeople(false)
     }
   }, [id])
+
+  // Fetch materials for the stream tab — show all types
+  const fetchMaterials = useCallback(async (pageNum = 1) => {
+    if (!id) return
+    try {
+      setLoadingMaterials(true)
+      const response = await get(`classroom/api/v1/material/get-all-materials/${id}?page_num=${pageNum}`)
+      const materialsList = response?.materials || []
+      setMaterials(prev => pageNum === 1 ? materialsList : [...prev, ...materialsList])
+      setHasMoreMaterials(materialsList.length === 5)
+      setMaterialsPage(pageNum)
+    } catch (err) {
+      console.error('Error fetching materials:', err)
+    } finally {
+      setLoadingMaterials(false)
+    }
+  }, [id])
+
+  const fetchAssignments = useCallback(async (pageNum = 1) => {
+    if (!id) return
+    try {
+      setLoadingAssignments(true)
+      const response = await get(`classroom/api/v1/material/get-all-assignments/${id}?page_num=${pageNum}`)
+      // Keep raw list for pagination check, then filter to assignments only
+      const rawList = response?.materials || []
+      const list = rawList.filter(m => (m.material_type || '').toLowerCase() === 'assignment')
+      setAssignments(prev => pageNum === 1 ? list : [...prev, ...list])
+      // Use raw count for pagination so filtering doesn't cut pages short
+      setHasMoreAssignments(rawList.length === 5)
+      setAssignmentsPage(pageNum)
+    } catch (err) {
+      console.error('Error fetching assignments:', err)
+    } finally {
+      setLoadingAssignments(false)
+    }
+  }, [id])
+
+  // Handle edit material
+  const handleEditMaterial = (material) => {
+    setEditingMaterial(material)
+    setForceAssignment((material.material_type || '').toLowerCase() === 'assignment')
+    setAnnouncementModalOpen(true)
+  }
+
+  // Handle viewing material in full display (navigate to detail route)
+  const handleViewMaterial = (material) => {
+    if (!material) return
+    const mid = material.mid || material.material_id || material.id || material.m_id
+    if (!mid) return
+    navigate(`/classroom/${id}/material/${mid}`, { state: { classroom } })
+  }
+
+  // Handle delete material
+  const handleDeleteMaterial = async (materialIdToDelete) => {
+    try {
+      await deleteRequest(`classroom/api/v1/material/instructor/delete/${materialIdToDelete}`)
+      // Refresh materials list
+      if (activeTab === 'classwork') {
+        setAssignments([])
+        fetchAssignments(1)
+      } else {
+        fetchMaterials()
+      }
+    } catch (err) {
+      console.error('Error deleting material:', err)
+      alert('Failed to delete material: ' + err.message)
+    }
+  }
+
+  // Handle successful material creation/update
+  const handleMaterialSuccess = () => {
+    setEditingMaterial(null)
+    setDetailRefreshKey(k => k + 1)
+    if (activeTab === 'classwork') {
+      setAssignments([])
+      fetchAssignments(1)
+    } else {
+      fetchMaterials()
+    }
+  }
 
   const handleNextPage = () => {
     setCurrentPage(prev => prev + 1)
@@ -175,17 +272,76 @@ export default function ClassroomDetail() {
   }, [fetchClassrooms])
 
   useEffect(() => {
+    let cancelled = false
+    if (!materialId) {
+      setMaterialTitle('')
+      return () => { cancelled = true }
+    }
+    get(`classroom/api/v1/material/get-material/${materialId}`)
+      .then((res) => {
+        if (cancelled) return
+        setMaterialTitle(res?.head_line || res?.headLine || '')
+      })
+      .catch(() => {
+        if (!cancelled) setMaterialTitle('')
+      })
+    return () => { cancelled = true }
+  }, [materialId])
+
+  useEffect(() => {
     if (activeTab === 'people') {
       fetchPeopleData(currentPage)
+    } else if (activeTab === 'stream') {
+      fetchMaterials()
+    } else if (activeTab === 'classwork') {
+      setAssignments([])
+      setAssignmentsPage(1)
+      setHasMoreAssignments(false)
+      fetchAssignments(1)
     }
-  }, [activeTab, currentPage, fetchPeopleData])
+  }, [activeTab, currentPage, fetchPeopleData, fetchMaterials, fetchAssignments])
 
   useEffect(() => {
     // Reset page when switching to people tab
     if (activeTab === 'people') {
       setCurrentPage(1)
     }
+    // Reset materials pagination when switching away and back
+    if (activeTab === 'stream') {
+      setMaterialsPage(1)
+      setHasMoreMaterials(false)
+    }
   }, [activeTab])
+
+  // Infinite scroll — observe sentinel at bottom of materials list
+  useEffect(() => {
+    if (!sentinelRef.current) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreMaterials && !loadingMaterials) {
+          fetchMaterials(materialsPage + 1)
+        }
+      },
+      { threshold: 0, rootMargin: '200px' }
+    )
+    observer.observe(sentinelRef.current)
+    return () => observer.disconnect()
+  }, [hasMoreMaterials, loadingMaterials, materialsPage, fetchMaterials])
+
+  // Infinite scroll — assignments
+  useEffect(() => {
+    if (!assignmentSentinelRef.current) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreAssignments && !loadingAssignments) {
+          fetchAssignments(assignmentsPage + 1)
+        }
+      },
+      { threshold: 0, rootMargin: '200px' }
+    )
+    observer.observe(assignmentSentinelRef.current)
+    return () => observer.disconnect()
+  }, [hasMoreAssignments, loadingAssignments, assignmentsPage, fetchAssignments])
 
   useEffect(() => {
     function onDocClick(e) {
@@ -215,9 +371,12 @@ export default function ClassroomDetail() {
         <div className="navbar-title">
           <img src="/classroom-icon.png" alt="Classroom" className="navbar-icon" />
           <h1>Classroom</h1>
-          {classroomName && <span className="navbar-separator"> > {classroomName}</span>}
+          {classroomName && <span className="navbar-separator">{' > '}{classroomName}</span>}
+          {isMaterialDetailRoute && materialTitle && (
+            <span className="navbar-separator">{' > '}{materialTitle}</span>
+          )}
         </div>
-        
+
         <div className="navbar-actions">
           <div
             className="user-avatar"
@@ -274,11 +433,11 @@ export default function ClassroomDetail() {
                 >
                   <img src="/teacher.png" alt="Teaching" className="nav-icon" />
                   <span>Teaching</span>
-                  <span 
+                  <span
                     className={`expand-icon ${expandTeaching ? 'expanded' : ''}`}
                     onClick={(e) => {
-                      e.stopPropagation();
-                      setExpandTeaching(!expandTeaching);
+                      e.stopPropagation()
+                      setExpandTeaching(!expandTeaching)
                     }}
                   >›</span>
                 </button>
@@ -306,11 +465,11 @@ export default function ClassroomDetail() {
               >
                 <img src="/graduate-hat.png" alt="Enrolled" className="nav-icon" />
                 <span>Enrolled</span>
-                <span 
+                <span
                   className={`expand-icon ${expandEnrolled ? 'expanded' : ''}`}
                   onClick={(e) => {
-                    e.stopPropagation();
-                    setExpandEnrolled(!expandEnrolled);
+                    e.stopPropagation()
+                    setExpandEnrolled(!expandEnrolled)
                   }}
                 >›</span>
               </button>
@@ -337,11 +496,11 @@ export default function ClassroomDetail() {
               >
                 <img src="/archive .png" alt="Archived" className="nav-icon" />
                 <span>Archived</span>
-                <span 
+                <span
                   className={`expand-icon ${expandArchived ? 'expanded' : ''}`}
                   onClick={(e) => {
-                    e.stopPropagation();
-                    setExpandArchived(!expandArchived);
+                    e.stopPropagation()
+                    setExpandArchived(!expandArchived)
                   }}
                 >›</span>
               </button>
@@ -359,167 +518,278 @@ export default function ClassroomDetail() {
                 </div>
               )}
             </div>
+
+            <button
+              className="nav-item"
+              onClick={() => { window.location.href = 'http://localhost:3000/dashboard' }}
+            >
+              <img src="/dashboard.png" alt="Dashboard" className="nav-icon" />
+              <span>Dashboard</span>
+            </button>
           </nav>
         </div>
 
         {/* Main Content Wrapper */}
-        <div className="classroom-content-main">
-          {/* Classroom Header with Image and Tabs */}
-          <div className="classroom-detail-hero">
-            <img 
-              src={backgroundImageUrl} 
-              alt={classroomName}
-              className="classroom-detail-image"
-            />
-            
-            {/* Title Overlay */}
-            <div className="classroom-hero-overlay">
-              <h1 className="classroom-hero-title">{classroomName}</h1>
-              {section && <p className="classroom-hero-section">{section}</p>}
+        <div className={`classroom-content-main${isMaterialDetailRoute ? ' material-detail-full' : ''}`}>
+          {isMaterialDetailRoute ? (
+            <div className="classroom-material-detail-wrapper">
+              <MaterialDetailPage
+                materialId={materialId}
+                isInstructor={isInstructor}
+                refreshKey={detailRefreshKey}
+                onBack={() => navigate(`/classroom/${id}`, { state: { classroom } })}
+                onEdit={(m) => {
+                  handleEditMaterial(m)
+                }}
+                onDelete={async (materialIdToDelete) => {
+                  await handleDeleteMaterial(materialIdToDelete)
+                  navigate(`/classroom/${id}`, { state: { classroom } })}
+                }
+              />
             </div>
-            
-            {/* Tabs Bar Overlay */}
-            <div className="classroom-tabs">
-              <button
-                className={`tab-item ${activeTab === 'stream' ? 'active' : ''}`}
-                onClick={() => setActiveTab('stream')}
-              >
-                Stream
-              </button>
-              <button
-                className={`tab-item ${activeTab === 'classwork' ? 'active' : ''}`}
-                onClick={() => setActiveTab('classwork')}
-              >
-                Classwork
-              </button>
-              <button
-                className={`tab-item ${activeTab === 'people' ? 'active' : ''}`}
-                onClick={() => setActiveTab('people')}
-              >
-                People
-              </button>
-            </div>
-          </div>
+          ) : (
+            <>
+              {/* Classroom Header with Image and Tabs */}
+              <div className="classroom-detail-hero">
+                <img
+                  src={backgroundImageUrl}
+                  alt={classroomName}
+                  className="classroom-detail-image"
+                />
 
-          {/* Classroom Info Section - Code Card Only */}
-          {activeTab !== 'people' && (
-            <div className="classroom-header-section">
-              {/* Left Side - Code Card and Announce Button */}
-              <div className="classroom-header-left">
-                <div className="entry-code-card">
-                  <div className="code-header">Class code</div>
-                  <div className="code-display">{entryCode}</div>
+                {/* Title Overlay */}
+                <div className="classroom-hero-overlay">
+                  <h1 className="classroom-hero-title">{classroomName}</h1>
+                  {section && <p className="classroom-hero-section">{section}</p>}
                 </div>
-              {isInstructor && (
-                <button className="announce-btn">
-                  <img src="/pen.png" alt="Announce" className="announce-icon" />
-                  <span>Announce something</span>
-                </button>
-              )}
-            </div>
 
-            {/* Right Side - Stream Empty Card */}
-            {activeTab === 'stream' && (
-              <div className="stream-empty-card-header">
-                <img src="/training.png" alt="Stream" className="stream-empty-image" />
-                <h3 className="stream-empty-title">This is where you can talk to your class</h3>
-                <p className="stream-empty-description">
-                  {isInstructor 
-                    ? 'Use the stream to share announcements, post assignments and respond to student questions'
-                    : 'Stay tuned until your teacher posts an announcement to the stream and respond to student questions'
-                  }
-                </p>
-              </div>
-            )}
-            </div>
-          )}
-
-          {/* Tab Content */}
-          <div className="classroom-tab-content">
-            {activeTab === 'stream' && (
-              <div className="tab-section">
-                {/* Stream content will appear here */}
-              </div>
-            )}
-
-            {activeTab === 'classwork' && (
-              <div className="tab-section">
-                <div className="empty-state">
-                  <p>No assignments yet</p>
+                {/* Tabs Bar Overlay */}
+                <div className="classroom-tabs">
+                  <button
+                    className={`tab-item ${activeTab === 'stream' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('stream')}
+                  >
+                    Stream
+                  </button>
+                  <button
+                    className={`tab-item ${activeTab === 'classwork' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('classwork')}
+                  >
+                    Classwork
+                  </button>
+                  <button
+                    className={`tab-item ${activeTab === 'people' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('people')}
+                  >
+                    People
+                  </button>
                 </div>
               </div>
-            )}
 
-            {activeTab === 'people' && (
-              <div className="tab-section">
-                <div className="people-list">
-                  {/* Teachers Section */}
-                  <div className="people-section">
-                    <h3 className="people-section-title">Teachers</h3>
-                    {loadingPeople ? (
-                      <p>Loading...</p>
-                    ) : owner ? (
-                      <div className="people-item">
-                        <div className="people-avatar" style={{ backgroundColor: '#7c3aed' }}>
-                          {(owner.owner_email || owner.email)?.[0]?.toUpperCase() || 'T'}
-                        </div>
-                        <span className="people-name">{owner.owner_email || owner.email}</span>
-                      </div>
-                    ) : (
-                      <p>No teacher found</p>
-                    )}
-                  </div>
-
-                  {/* Classmates Section */}
-                  <div className="people-section">
-                    <div className="people-section-header">
-                      <h3 className="people-section-title">Classmates</h3>
-                      <span className="people-count">{members.length} students</span>
+              {/* Classroom Info Section - Code Card Only */}
+              {activeTab !== 'people' && (
+                <div className="classroom-header-section">
+                  {/* Left Side - Code Card and Announce Button */}
+                  <div className="classroom-header-left">
+                    <div className="entry-code-card">
+                      <div className="code-header">Class code</div>
+                      <div className="code-display">{entryCode}</div>
                     </div>
-                    {loadingPeople ? (
-                      <p>Loading...</p>
-                    ) : members.length > 0 ? (
-                      <div className="people-items">
-                        {members.map((member, index) => (
-                          <div key={index} className="people-item">
-                            <div className="people-avatar" style={{ backgroundColor: generateColorFromId(member.rid || member.record_id) }}>
-                              {(member.member_email || member.email)?.[0]?.toUpperCase() || 'S'}
-                            </div>
-                            <span className="people-name">{member.member_email || member.email}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p>No classmates yet</p>
-                    )}
-                    {members.length > 0 && (
-                      <div className="pagination-controls">
-                        <button 
-                          className="pagination-btn" 
-                          onClick={handlePreviousPage}
-                          disabled={currentPage === 1}
-                          title="Previous page"
-                        >
-                          ←
-                        </button>
-                        <span className="pagination-info">Page {currentPage}</span>
-                        <button 
-                          className="pagination-btn" 
-                          onClick={handleNextPage}
-                          disabled={!hasMore}
-                          title="Next page"
-                        >
-                          →
-                        </button>
-                      </div>
+                    {isInstructor && (
+                      <button
+                        className="announce-btn"
+                        onClick={() => {
+                          setEditingMaterial(null)
+                          setForceAssignment(activeTab === 'classwork')
+                          setAnnouncementModalOpen(true)
+                        }}
+                      >
+                        <img src="/pen.png" alt="Announce" className="announce-icon" />
+                        <span>{activeTab === 'classwork' ? 'Create assignment' : 'Announce something'}</span>
+                      </button>
                     )}
                   </div>
+
+                  {/* Right Side - Stream Empty Card or Featured Material + Additional Materials */}
+                  {activeTab === 'classwork' && (
+                    <div className="classroom-header-right">
+                      {loadingAssignments && assignments.length === 0 ? (
+                        <div className="loading-state">Loading...</div>
+                      ) : assignments.length === 0 ? (
+                        <div className="stream-empty-card-header">
+                          <img src="/training.png" alt="Classwork" className="stream-empty-image" />
+                          <h3 className="stream-empty-title">This is where you see the created assignments</h3>
+                          <p className="stream-empty-description">
+                            {isInstructor
+                              ? 'Use the stream to post assignments and respond to student questions'
+                              : 'Your assignments will appear here once your teacher posts them'
+                            }
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          {assignments.map((assignment, idx) => (
+                            <MaterialCard
+                              key={assignment.mid || assignment.material_id || assignment.id}
+                              material={assignment}
+                              isInstructor={isInstructor}
+                              onEdit={handleEditMaterial}
+                              onDelete={handleDeleteMaterial}
+                              onViewDetail={handleViewMaterial}
+                              index={idx}
+                            />
+                          ))}
+                          <div ref={assignmentSentinelRef} style={{ height: 1 }} />
+                          {loadingAssignments && assignmentsPage > 1 && (
+                            <div style={{ textAlign: 'center', padding: '12px', color: '#888', fontSize: 14 }}>Loading more...</div>
+                          )}
+                          {!hasMoreAssignments && assignmentsPage > 1 && !loadingAssignments && (
+                            <div style={{ textAlign: 'center', padding: '16px', color: '#aaa', fontSize: 13 }}>No more assignments to show</div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {activeTab === 'stream' && (
+                    <div className="classroom-header-right">
+                      {materials.length === 0 ? (
+                        <div className="stream-empty-card-header">
+                          <img src="/training.png" alt="Stream" className="stream-empty-image" />
+                          <h3 className="stream-empty-title">This is where you can talk to your class</h3>
+                          <p className="stream-empty-description">
+                            {isInstructor
+                              ? 'Use the stream to share announcements, post assignments and respond to student questions'
+                              : 'Stay tuned until your teacher posts an announcement to the stream and respond to students'
+                            }
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          {materials.map((material, idx) => (
+                            <MaterialCard
+                              key={material.mid || material.material_id || material.id}
+                              material={material}
+                              isInstructor={isInstructor}
+                              onEdit={handleEditMaterial}
+                              onDelete={handleDeleteMaterial}
+                              onViewDetail={handleViewMaterial}
+                              index={idx}
+                            />
+                          ))}
+                          {/* Infinite scroll sentinel */}
+                          <div ref={sentinelRef} style={{ height: 1 }} />
+                          {loadingMaterials && (
+                            <div style={{ textAlign: 'center', padding: '12px', color: '#888', fontSize: 14 }}>Loading more...</div>
+                          )}
+                          {!hasMoreMaterials && materialsPage > 1 && !loadingMaterials && (
+                            <div style={{ textAlign: 'center', padding: '16px', color: '#aaa', fontSize: 13 }}>No more announcements to show</div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
+              )}
+
+              {/* Tab Content */}
+              <div className="classroom-tab-content">
+                {activeTab === 'stream' && (
+                  <div className="tab-section">
+                    {/* Materials now display in header section */}
+                  </div>
+                )}
+
+                {activeTab === 'classwork' && (
+                  <div className="tab-section">
+                  </div>
+                )}
+
+                {activeTab === 'people' && (
+                  <div className="tab-section">
+                    <div className="people-list">
+                      {/* Teachers Section */}
+                      <div className="people-section">
+                        <h3 className="people-section-title">Teachers</h3>
+                        {loadingPeople ? (
+                          <p>Loading...</p>
+                        ) : owner ? (
+                          <div className="people-item">
+                            <div className="people-avatar" style={{ backgroundColor: '#7c3aed' }}>
+                              {(owner.owner_email || owner.email)?.[0]?.toUpperCase() || 'T'}
+                            </div>
+                            <span className="people-name">{owner.owner_email || owner.email}</span>
+                          </div>
+                        ) : (
+                          <p>No teacher found</p>
+                        )}
+                      </div>
+
+                      {/* Classmates Section */}
+                      <div className="people-section">
+                        <div className="people-section-header">
+                          <h3 className="people-section-title">Classmates</h3>
+                          <span className="people-count">{members.length} students</span>
+                        </div>
+                        {loadingPeople ? (
+                          <p>Loading...</p>
+                        ) : members.length > 0 ? (
+                          <div className="people-items">
+                            {members.map((member, index) => (
+                              <div key={index} className="people-item">
+                                <div className="people-avatar" style={{ backgroundColor: generateColorFromId(member.rid || member.record_id) }}>
+                                  {(member.member_email || member.email)?.[0]?.toUpperCase() || 'S'}
+                                </div>
+                                <span className="people-name">{member.member_email || member.email}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p>No classmates yet</p>
+                        )}
+                        {members.length > 0 && (
+                          <div className="pagination-controls">
+                            <button
+                              className="pagination-btn"
+                              onClick={handlePreviousPage}
+                              disabled={currentPage === 1}
+                              title="Previous page"
+                            >
+                              ←
+                            </button>
+                            <span className="pagination-info">Page {currentPage}</span>
+                            <button
+                              className="pagination-btn"
+                              onClick={handleNextPage}
+                              disabled={!hasMore}
+                              title="Next page"
+                            >
+                              →
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Announcement Modal */}
+      <AnnouncementModal
+        isOpen={announcementModalOpen}
+        onClose={() => {
+          setAnnouncementModalOpen(false)
+          setEditingMaterial(null)
+          setForceAssignment(false)
+        }}
+        classroomId={id}
+        onSuccess={handleMaterialSuccess}
+        material={editingMaterial}
+        forceAssignment={forceAssignment}
+      />
     </div>
   )
 }
