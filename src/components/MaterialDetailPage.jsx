@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { get, post, put, deleteRequest } from '../utils/api'
+import { get, post, put, deleteRequest, formPost, formPut } from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
+import { getRoleName } from '../constants/roles'
 import bookIcon from '/book.png'
 import announcementIcon from '/announcement.png'
 import assignmentIcon from '/assignment.png'
 import FilePreviewCard from './FilePreviewCard'
+import SubmissionsPage from './SubmissionsPage'
 import './material-detail-page.css'
 import './material-card.css'
 
@@ -345,11 +347,395 @@ function CommentSection({ materialId, isInstructor, userEmail }) {
   )
 }
 
+/* ── Submission Card ────────────────────────────────── */
+function SubmissionCard({ materialId, dueDate: propDueDate }) {
+  const [aid, setAid]                   = useState(null)   // real assignment UUID
+  const [dueDate, setDueDate]           = useState(propDueDate)
+  const [submission, setSubmission]     = useState(null)
+  const [loadingSub, setLoadingSub]     = useState(true)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [isEditing, setIsEditing]       = useState(false)
+  const [stagedFiles, setStagedFiles]   = useState([])
+  const [filesToDelete, setFilesToDelete] = useState([])
+  const [submitting, setSubmitting]     = useState(false)
+  const [deleting, setDeleting]         = useState(false)
+  const [showUnsubmitConfirm, setShowUnsubmitConfirm] = useState(false)
+  const [error, setError]               = useState('')
+  const fileInputRef = useRef(null)
+
+  useEffect(() => {
+    if (propDueDate) setDueDate(propDueDate)
+  }, [propDueDate])
+
+  const isPastDue = dueDate ? new Date() > new Date(dueDate) : false
+
+  // Step 1: resolve the assignment UUID from the material ID
+  useEffect(() => {
+    if (!materialId) { setLoadingSub(false); return }
+    get(`classroom/api/v1/material/get-assignment/${materialId}`)
+      .then(res => {
+        setAid(res?.assignment_id || res?.aid)
+        // If dueDate wasn't provided via props, try to get it from the assignment response
+        if (!propDueDate && (res?.due_date || res?.dueDate)) {
+          setDueDate(res?.due_date || res?.dueDate)
+        }
+      })
+      .catch(() => setLoadingSub(false))
+  }, [materialId])
+
+  const fetchSubmission = useCallback(async () => {
+    if (!aid) { setLoadingSub(false); return }
+    setLoadingSub(true)
+    try {
+      const res = await get(`classroom/api/v1/submissions/student/get-submission/${aid}`)
+      setSubmission(res || null)
+    } catch {
+      setSubmission(null)
+    } finally {
+      setLoadingSub(false)
+    }
+  }, [aid])
+
+  useEffect(() => { fetchSubmission() }, [fetchSubmission])
+
+  const submissionUrls = submission?.submission_urls || submission?.file_urls || submission?.files || []
+  const hasSubmission = !!submission && (submissionUrls.length > 0 || !!submission?.sid)
+  // staged = files picked in the modal, waiting for the user to click Submit
+  const hasStagedFiles = stagedFiles.length > 0
+
+  const statusLabel = hasSubmission ? 'Handed in'
+    : isPastDue ? 'Missing'
+    : 'Not submitted'
+  const statusClass = hasSubmission ? 'status-handed-in'
+    : isPastDue ? 'status-missing'
+    : 'status-not-submitted'
+
+  // Called when user confirms in the modal — just stages files, closes modal
+  function handleAddWork() {
+    if (stagedFiles.length === 0 && !isEditing) { setError('Please select at least one file.'); return }
+    setError('')
+    setShowAddModal(false)
+  }
+
+  // Called when user clicks "Submit your work" on the card (after staging)
+  async function handleSubmit() {
+    if (stagedFiles.length === 0 && !isEditing) { setError('Please add at least one file.'); return }
+    if (isPastDue && !isEditing) { setError('Cannot submit: the deadline has passed.'); return }
+    setSubmitting(true); setError('')
+    try {
+      if (isEditing) {
+        const remainingExisting = submissionUrls.filter(u => !filesToDelete.includes(u))
+        // If all existing removed and no new files → full unsubmit
+        if (remainingExisting.length === 0 && stagedFiles.length === 0) {
+          await deleteRequest(`classroom/api/v1/submissions/student/delete/${submission?.sid}`)
+          setSubmission(null)
+        } else {
+          const fd = new FormData()
+          stagedFiles.forEach(f => fd.append('files', f))
+          if (filesToDelete.length > 0) {
+            fd.append('ToDeleteFiles', new Blob([JSON.stringify(filesToDelete)], { type: 'application/json' }))
+          }
+          await formPut(`classroom/api/v1/submissions/student/edit/${submission?.sid}`, fd)
+          await fetchSubmission()
+        }
+        setFilesToDelete([])
+      } else {
+        const fd = new FormData()
+        stagedFiles.forEach(f => fd.append('files', f))
+        await formPost(`classroom/api/v1/submissions/student/submit/${aid}`, fd)
+        await fetchSubmission()
+      }
+      setStagedFiles([])
+      setIsEditing(false)
+    } catch (e) {
+      setError(e.message || 'Submission failed.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleUnsubmit() {
+    setDeleting(true); setError('')
+    try {
+      await deleteRequest(`classroom/api/v1/submissions/student/delete/${submission?.sid}`)
+      setSubmission(null)
+      setStagedFiles([])
+      setFilesToDelete([])
+    } catch (e) {
+      setError(e.message || 'Failed to unsubmit.')
+    } finally {
+      setDeleting(false)
+      setShowUnsubmitConfirm(false)
+    }
+  }
+
+  function openEdit() {
+    setIsEditing(true)
+    setStagedFiles([])
+    setFilesToDelete([])
+    setError('')
+    setShowAddModal(true)
+  }
+
+  function removeStagedFile(i) {
+    setStagedFiles(prev => prev.filter((_, j) => j !== i))
+  }
+
+  function toggleDeleteExisting(url) {
+    setFilesToDelete(prev =>
+      prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]
+    )
+  }
+
+  function cancelStaged() {
+    setStagedFiles([])
+    setFilesToDelete([])
+    setIsEditing(false)
+    setError('')
+  }
+
+  if (loadingSub) {
+    return <div className="sub-card"><div className="sub-loading">Loading…</div></div>
+  }
+
+  return (
+    <>
+      <div className="sub-card">
+        {/* Header band */}
+        <div className="sub-card-header">
+          <span className="sub-card-title">Your work</span>
+          <div className="sub-card-badges">
+            {hasSubmission && (
+              <span className={`sub-status-badge ${submission?.grade === -1 ? 'sub-grade-ungraded' : 'sub-grade-graded'}`}>
+                Grade: {submission?.grade === -1 ? 'U' : submission?.grade}
+              </span>
+            )}
+            <span className={`sub-status-badge ${statusClass}`}>
+              {statusLabel}
+            </span>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="sub-card-body">
+          {/* Submitted files */}
+          {hasSubmission && submissionUrls.filter(u => !filesToDelete.includes(u)).length > 0 && (
+            <div className="sub-files">
+              {submissionUrls.filter(u => !filesToDelete.includes(u)).map((url, i) => {
+                const name = (() => { try { return decodeURIComponent(url.split('?')[0].split('/').pop().replace(/\+/g, ' ')) } catch { return url.split('/').pop() } })()
+                const ext  = url.split('?')[0].split('.').pop().toUpperCase()
+                return (
+                  <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="sub-file-row">
+                    <div className="sub-file-icon">
+                      <svg width="18" height="22" viewBox="0 0 20 24" fill="none">
+                        <path d="M4 3h9l4 4v14a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z" fill="#1a73e8" opacity="0.7"/>
+                        <path d="M13 3v4h4" fill="none" stroke="#1a73e8" strokeWidth="1.5"/>
+                      </svg>
+                    </div>
+                    <div className="sub-file-info">
+                      <span className="sub-file-name">{name}</span>
+                      <span className="sub-file-type">{ext}</span>
+                    </div>
+                    <span className="sub-file-open">↗</span>
+                  </a>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Staged files (picked but not yet submitted) */}
+          {hasStagedFiles && (
+            <div className="sub-files">
+              {stagedFiles.map((f, i) => (
+                <div key={i} className="sub-file-row sub-file-row-staged">
+                  <div className="sub-file-icon">
+                    <svg width="18" height="22" viewBox="0 0 20 24" fill="none">
+                      <path d="M4 3h9l4 4v14a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z" fill="#9DD957" opacity="0.8"/>
+                      <path d="M13 3v4h4" fill="none" stroke="#7CB342" strokeWidth="1.5"/>
+                    </svg>
+                  </div>
+                  <div className="sub-file-info">
+                    <span className="sub-file-name">{f.name}</span>
+                    <span className="sub-file-type staged-label">Ready to submit</span>
+                  </div>
+                  <button className="sub-file-remove-btn" onClick={() => removeStagedFile(i)}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Empty state — only when nothing staged and nothing submitted */}
+          {!hasSubmission && !hasStagedFiles && (
+            <div className="sub-empty">
+              <span className="sub-empty-icon">{isPastDue ? <img src="/redwarning.png" alt="Warning" style={{ width: '36px', height: '36px' }} /> : '📎'}</span>
+              {isPastDue
+                ? <span className="sub-missing-text">Not submitted — marked as missing</span>
+                : <span className="sub-empty-text">No files added yet</span>
+              }
+            </div>
+          )}
+
+          {error && <div className="sub-error">{error}</div>}
+
+          {/* Actions */}
+          <div className="sub-actions">
+            {/* Not submitted, nothing staged yet → show Add work (disabled if past due) */}
+            {!hasSubmission && !hasStagedFiles && (
+              <button 
+                className="sub-btn sub-btn-primary" 
+                onClick={() => { setIsEditing(false); setStagedFiles([]); setError(''); setShowAddModal(true) }}
+                disabled={isPastDue}
+              >
+                Add work
+              </button>
+            )}
+            {/* New submission — files staged */}
+            {!hasSubmission && hasStagedFiles && (
+              <>
+                <button className="sub-btn sub-btn-primary" onClick={handleSubmit} disabled={submitting}>
+                  {submitting ? 'Submitting…' : 'Submit your work'}
+                </button>
+                <button className="sub-btn sub-btn-outline" onClick={() => setShowAddModal(true)}>+ Add more</button>
+                <button className="sub-btn sub-btn-danger-outline" onClick={cancelStaged}>Cancel</button>
+              </>
+            )}
+            {/* Editing existing submission */}
+            {hasSubmission && isEditing && (
+              <>
+                <button className="sub-btn sub-btn-primary" onClick={handleSubmit} disabled={submitting}>
+                  {submitting ? 'Saving…' : 'Save changes'}
+                </button>
+                <button className="sub-btn sub-btn-outline" onClick={() => setShowAddModal(true)}>+ Add more</button>
+                <button className="sub-btn sub-btn-danger-outline" onClick={cancelStaged}>Cancel</button>
+              </>
+            )}
+            {/* Already submitted, not editing */}
+            {hasSubmission && !isEditing && !isPastDue && (
+              <>
+                <button className="sub-btn sub-btn-outline" onClick={openEdit}>Edit</button>
+                <button className="sub-btn sub-btn-danger-outline" onClick={() => setShowUnsubmitConfirm(true)} disabled={deleting}>
+                  {deleting ? 'Removing…' : 'Unsubmit'}
+                </button>
+              </>
+            )}
+            {hasSubmission && isPastDue && !isEditing && (
+              <>
+                <button className="sub-btn sub-btn-outline" onClick={openEdit} disabled>Edit</button>
+                <button className="sub-btn sub-btn-danger-outline" disabled>
+                  Unsubmit
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Add work modal — just a file picker, no submit */}
+      {showAddModal && createPortal(
+        <div className="sub-modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="sub-modal" onClick={e => e.stopPropagation()}>
+            <div className="sub-modal-header">
+              <h3 className="sub-modal-title">{isEditing ? 'Edit your work' : 'Add work'}</h3>
+              <button className="sub-modal-close" onClick={() => setShowAddModal(false)}>{'\u00D7'}</button>
+            </div>
+
+            {/* Existing submitted files — removable in edit mode */}
+            {isEditing && submissionUrls.length > 0 && (
+              <div className="sub-modal-section">
+                <div className="sub-modal-label">Submitted files</div>
+                {submissionUrls.map((url, i) => {
+                  const name = (() => { try { return decodeURIComponent(url.split('?')[0].split('/').pop().replace(/\+/g, ' ')) } catch { return url.split('/').pop() } })()
+                  const marked = filesToDelete.includes(url)
+                  return (
+                    <div key={i} className={`sub-modal-file${marked ? ' sub-modal-file-remove' : ''}`}>
+                      <span className="sub-modal-file-name">📎 {name}</span>
+                      <button className="sub-modal-remove-btn" onClick={() => toggleDeleteExisting(url)}>
+                        {marked ? 'Keep' : 'Remove'}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* File picker */}
+            <div className="sub-modal-section">
+              <div className="sub-modal-label">Add new files</div>
+              <div
+                className="sub-dropzone"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={e => e.preventDefault()}
+                onDrop={e => { e.preventDefault(); setStagedFiles(prev => [...prev, ...Array.from(e.dataTransfer.files)]) }}
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9DD957" strokeWidth="1.5">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span>Click or drag files here</span>
+                <input ref={fileInputRef} type="file" multiple hidden onChange={e => setStagedFiles(prev => [...prev, ...Array.from(e.target.files)])} />
+              </div>
+              {stagedFiles.length > 0 && (
+                <div className="sub-modal-new-files">
+                  {stagedFiles.map((f, i) => (
+                    <div key={i} className="sub-modal-file">
+                      <span className="sub-modal-file-name">{f.name}</span>
+                      <button className="sub-modal-remove-btn" onClick={() => removeStagedFile(i)}>Remove</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {error && <div className="sub-error" style={{ marginBottom: 12 }}>{error}</div>}
+
+            <div className="sub-modal-footer">
+              <button className="sub-btn sub-btn-outline" onClick={() => setShowAddModal(false)}>Cancel</button>
+              <button className="sub-btn sub-btn-primary" onClick={handleAddWork} disabled={stagedFiles.length === 0 && !isEditing}>
+                {isEditing ? 'Done' : 'Add'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Unsubmit confirmation modal */}
+      {showUnsubmitConfirm && createPortal(
+        <div className="sub-modal-overlay" onClick={() => setShowUnsubmitConfirm(false)}>
+          <div className="sub-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
+            <div className="sub-modal-header">
+              <h3 className="sub-modal-title">Unsubmit work?</h3>
+              <button className="sub-modal-close" onClick={() => setShowUnsubmitConfirm(false)}>{'\u00D7'}</button>
+            </div>
+            <div className="sub-modal-section" style={{ paddingBottom: 8 }}>
+              <p style={{ fontSize: 14, color: '#3c4043', lineHeight: 1.6, margin: 0 }}>
+                Your submitted files will be removed and your assignment will be marked as <strong>not submitted</strong>. You can resubmit later if the deadline hasn't passed.
+              </p>
+            </div>
+            {error && <div className="sub-error" style={{ margin: '0 24px 8px' }}>{error}</div>}
+            <div className="sub-modal-footer">
+              <button className="sub-btn sub-btn-outline" onClick={() => setShowUnsubmitConfirm(false)}>Cancel</button>
+              <button className="sub-btn sub-btn-danger-outline" onClick={handleUnsubmit} disabled={deleting}>
+                {deleting ? 'Removing…' : 'Unsubmit'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  )
+}
+
 export default function MaterialDetailPage({ materialId, isInstructor, refreshKey, onBack, onEdit, onDelete }) {
   const { user } = useAuth()
   const userEmail = user?.email || ''
+  const roleName  = getRoleName(user)
+  const isStudent = String(roleName || '').toLowerCase().includes('student')
 
   const [material, setMaterial] = useState(null)
+  const [assignmentDueDate, setAssignmentDueDate] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [showMenu, setShowMenu] = useState(false)
@@ -360,14 +746,31 @@ export default function MaterialDetailPage({ materialId, isInstructor, refreshKe
     setLoading(true)
     setError(null)
     setMaterial(null)
+    setAssignmentDueDate('')
     get(`classroom/api/v1/material/get-material/${materialId}`)
-      .then(res => setMaterial(res))
+      .then(res => {
+        setMaterial(res)
+      })
       .catch(err => setError(err.message || 'Failed to load material'))
       .finally(() => setLoading(false))
   }, [materialId, refreshKey])
 
   const type = (material?.material_type || '').toLowerCase()
+  const isAssignment = type === 'assignment'
+
+  useEffect(() => {
+    if (!materialId || !isAssignment) return
+    get(`classroom/api/v1/material/get-assignment/${materialId}`)
+      .then(res => {
+        const nextDueDate = res?.due_date || res?.dueDate || ''
+        setAssignmentDueDate(nextDueDate)
+      })
+      .catch(() => {})
+  }, [materialId, isAssignment])
+
   const typeIcon = type === 'assignment' ? assignmentIcon : type === 'material' ? bookIcon : announcementIcon
+  const dueDate = material?.due_date || material?.dueDate || assignmentDueDate
+  const isPastDue = dueDate ? new Date() > new Date(dueDate) : false
 
   const urls = (material?.material_urls || [])
     .map(u => safeUrl(typeof u === 'string' ? u : (u?.url || u?.file_url || u?.path || '')))
@@ -387,86 +790,120 @@ export default function MaterialDetailPage({ materialId, isInstructor, refreshKe
     onBack()
   }
 
+  const showSidebar  = isAssignment && isStudent
+  const [showSubmissions, setShowSubmissions] = useState(false)
+
+  if (showSubmissions) {
+    return (
+      <SubmissionsPage
+        materialId={materialId}
+        maxPoints={material?.points}
+        onBack={() => setShowSubmissions(false)}
+      />
+    )
+  }
+
   return (
     <div className="mdp-page">
-      <div className="mdp-layout">
-        {/* Main card */}
-        <div className="mdp-main-card">
-          {loading && <div className="mdp-loading" style={{ padding: 48 }}>Loading...</div>}
-          {error && <div className="mdp-error" style={{ padding: 24 }}>{error}</div>}
+      {loading && <div className="mdp-loading" style={{ padding: 48 }}>Loading...</div>}
+      {error && <div className="mdp-error" style={{ padding: 24 }}>{error}</div>}
 
-          {material && !loading && (
-            <>
-              {/* Header */}
-              <div className="mdp-card-header">
-                <div className="mdp-card-header-left">
-                  <button className="mdp-back-btn" onClick={onBack} aria-label="Back">
-                    <svg className="mdp-back-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                  <div className="mdp-icon-circle">
-                    <img src={typeIcon} alt={type} className="mdp-type-icon" />
-                  </div>
-                  <div className="mdp-header-text">
-                    <h1 className="mdp-title">{material.head_line}</h1>
-                    <div className="mdp-subtitle">
-                      {material.created_by && <span>{material.created_by}</span>}
-                      {material.created_at && <span> • {fmtDate(material.created_at)}</span>}
-                      {isEdited && <span> (Edited {fmtDate(material.updated_at)})</span>}
-                    </div>
-                  </div>
+      {material && !loading && (
+        <>
+          {!isInstructor && isStudent && isAssignment && isPastDue && (
+            <div className="mdp-deadline-warning">
+              <img src="/yellowwarning.png" alt="Warning" />
+              Teacher isn't accepting submissions anymore
+            </div>
+          )}
+
+          {/* Full-width header */}
+          <div className="mdp-card-header">
+            <div className="mdp-card-header-left">
+              <button className="mdp-back-btn" onClick={onBack} aria-label="Back">
+                <svg className="mdp-back-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <div className="mdp-icon-circle">
+                <img src={typeIcon} alt={type} className="mdp-type-icon" />
+              </div>
+              <div className="mdp-header-text">
+                <h1 className="mdp-title">{material.head_line}</h1>
+                <div className="mdp-subtitle">
+                  {material.created_by && <span>{material.created_by}</span>}
+                  {material.created_at && <span> • {fmtDate(material.created_at)}</span>}
+                  {isEdited && <span> (Edited {fmtDate(material.updated_at)})</span>}
                 </div>
+              </div>
+            </div>
 
-                {isInstructor && (
-                  <div className="mdp-menu-wrap">
-                    <button className="mdp-menu-btn" onClick={() => setShowMenu(s => !s)}>⋮</button>
-                    {showMenu && (
-                      <div className="mdp-menu-dropdown">
-                        <button className="mdp-menu-item" onClick={() => { setShowMenu(false); onEdit(material) }}>
-                          <span>✎</span> Edit
-                        </button>
-                        <button className="mdp-menu-item mdp-menu-delete" onClick={() => { setShowMenu(false); setShowDeleteConfirm(true) }}>
-                          <img src="/delete.png" alt="Delete" style={{ width: 16, height: 16 }} /> Delete
-                        </button>
-                      </div>
-                    )}
+            {isInstructor && isAssignment && (
+              <button className="mdp-submissions-btn" onClick={() => setShowSubmissions(true)}>
+                View submissions
+              </button>
+            )}
+
+            {isInstructor && (
+              <div className="mdp-menu-wrap">
+                <button className="mdp-menu-btn" onClick={() => setShowMenu(s => !s)}>⋮</button>
+                {showMenu && (
+                  <div className="mdp-menu-dropdown">
+                    <button className="mdp-menu-item" onClick={() => { setShowMenu(false); onEdit(material) }}>
+                      <span>✎</span> Edit
+                    </button>
+                    <button className="mdp-menu-item mdp-menu-delete" onClick={() => { setShowMenu(false); setShowDeleteConfirm(true) }}>
+                      <img src="/delete.png" alt="Delete" style={{ width: 16, height: 16 }} /> Delete
+                    </button>
                   </div>
                 )}
               </div>
-
-              <hr className="mdp-hr" />
-
-              {/* Attachments */}
-              {urls.length > 0 && <AttachmentGrid urls={urls} />}
-
-              {/* Description */}
-              <p className="mdp-description"><LinkifiedText text={material.description} /></p>
-
-              {/* Comments */}
-              <CommentSection
-                materialId={materialId}
-                isInstructor={isInstructor}
-                userEmail={userEmail}
-              />
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Delete confirm */}
-      {showDeleteConfirm && (
-        <div className="delete-confirm-overlay" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="delete-confirm-modal" onClick={e => e.stopPropagation()}>
-            <div className="delete-confirm-icon"><img src="/delete.png" alt="Delete" /></div>
-            <h3 className="delete-confirm-title">Delete Material</h3>
-            <p className="delete-confirm-message">Are you sure you want to delete <strong>"{material?.head_line}"</strong>? This action cannot be undone.</p>
-            <div className="delete-confirm-actions">
-              <button className="delete-confirm-cancel" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
-              <button className="delete-confirm-delete" onClick={handleDelete}>Delete</button>
-            </div>
+            )}
           </div>
-        </div>
+
+          <hr className="mdp-hr" />
+
+          {/* Middle: two-column (content + sidebar) or single column */}
+          <div className={`mdp-layout${showSidebar ? ' mdp-layout-two-col' : ''}`}>
+            <div className="mdp-main-card">
+              {urls.length > 0 && <AttachmentGrid urls={urls} />}
+              <p className="mdp-description"><LinkifiedText text={material.description} /></p>
+            </div>
+
+            {showSidebar && (
+              <div className="mdp-sidebar">
+                <SubmissionCard
+                  materialId={materialId}
+                  dueDate={dueDate}
+                />
+              </div>
+            )}
+          </div>
+
+          <hr className="mdp-hr" />
+
+          {/* Full-width comments */}
+          <CommentSection
+            materialId={materialId}
+            isInstructor={isInstructor}
+            userEmail={userEmail}
+          />
+
+          {/* Delete confirm */}
+          {showDeleteConfirm && (
+            <div className="delete-confirm-overlay" onClick={() => setShowDeleteConfirm(false)}>
+              <div className="delete-confirm-modal" onClick={e => e.stopPropagation()}>
+                <div className="delete-confirm-icon"><img src="/delete.png" alt="Delete" /></div>
+                <h3 className="delete-confirm-title">Delete Material</h3>
+                <p className="delete-confirm-message">Are you sure you want to delete <strong>"{material?.head_line}"</strong>? This action cannot be undone.</p>
+                <div className="delete-confirm-actions">
+                  <button className="delete-confirm-cancel" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+                  <button className="delete-confirm-delete" onClick={handleDelete}>Delete</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

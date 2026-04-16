@@ -432,6 +432,29 @@
   background-color: #f5f5f5;
 }
 
+.classroom-content-wrapper:has(.cal-root) {
+  padding: 0;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+/* Calendar tab full-height view inside classroom detail */
+.classroom-calendar-fullview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.classroom-content-main.calendar-active {
+  overflow: hidden;
+  background-color: #fff;
+  padding: 0;
+  border-radius: 0;
+}
+
 .classroom-content-main {
   flex: 1;
   overflow-y: auto;

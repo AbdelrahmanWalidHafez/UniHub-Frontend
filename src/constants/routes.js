@@ -16,4 +16,5 @@ export const ROUTES = {
   LUMOS_AI: '/lumos-ai',
   CLASSROOM: '/classroom/:id',
   CLASSROOM_MATERIAL: '/classroom/:id/material/:materialId',
+  CLASSROOM_CALENDAR: '/classroom/:id/calendar',
 }

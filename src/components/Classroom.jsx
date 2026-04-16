@@ -8,6 +8,7 @@ import { get, post, patch, deleteRequest } from '../utils/api'
 import ClassroomCard from './ClassroomCard'
 import ClassroomModal from './ClassroomModal'
 import JoinClassModal from './JoinClassModal'
+import ClassroomCalendar from './ClassroomCalendar'
 import './classroom.css'
 
 export default function Classroom() {
@@ -274,14 +275,6 @@ export default function Classroom() {
               <span>Home</span>
             </button>
 
-            <button
-              className={`nav-item ${activeTab === 'calendar' ? 'active' : ''}`}
-              onClick={() => setActiveTab('calendar')}
-            >
-              <img src="/calendar-icon.png" alt="Calendar" className="nav-icon" />
-              <span>Calendar</span>
-            </button>
-
             {/* Teaching Section */}
             {isInstructor && (
               <div className="nav-section">
@@ -506,12 +499,7 @@ export default function Classroom() {
           )}
 
           {activeTab === 'calendar' && (
-            <div className="classroom-section">
-              <div className="calendar-placeholder">
-                <img src="/calendar.png" alt="Calendar" className="calendar-icon" />
-                <p>Calendar view coming soon</p>
-              </div>
-            </div>
+            <ClassroomCalendar classrooms={[...teaching, ...enrolled, ...archived]} />
           )}
         </div>
       </div>

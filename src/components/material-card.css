@@ -38,11 +38,12 @@
 /* Card Header */
 .material-card-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
   background: white !important;
   overflow: visible !important;
+  gap: 8px;
 }
 
 .material-card-header-left {
@@ -209,12 +210,33 @@
 .material-points {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   background-color: #fff3e0;
   color: #e65100;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(230, 81, 0, 0.2);
+  letter-spacing: 0.2px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.material-due-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(26, 115, 232, 0.2);
+  letter-spacing: 0.2px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Announcement Attachments */

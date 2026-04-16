@@ -124,10 +124,25 @@ export default function MaterialCard({ material, isInstructor, onEdit, onDelete,
             })()}
           </div>
           <h3
-            className={`material-card-title${isMaterialType ? ' material-card-title-link material-card-title-material' : ''}`}
-            onClick={isMaterialType && onViewDetail ? () => onViewDetail(material) : undefined}
+            className={`material-card-title${onViewDetail ? ' material-card-title-link material-card-title-material' : ''}`}
+            onClick={onViewDetail ? () => onViewDetail(material) : undefined}
           >{material.head_line}</h3>
         </div>
+
+        {(material.material_type || '').toLowerCase() === 'assignment' && (
+          <>
+            {material.points && (
+              <span className="material-points">
+                {material.points} pts
+              </span>
+            )}
+            {material.due_date && (
+              <span className="material-due-date">
+                🗓 Due {new Date(material.due_date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+          </>
+        )}
 
         {isInstructor && (
           <div className="material-card-menu">
@@ -169,14 +184,6 @@ export default function MaterialCard({ material, isInstructor, onEdit, onDelete,
       <div className="material-card-content">
         <p className="material-card-description"><LinkifiedText text={material.description} /></p>
 
-        {/* Display points for assignments */}
-        {(material.material_type || '').toLowerCase() === 'assignment' && material.points && (
-          <div className="material-card-meta">
-            <span className="material-points">
-              <strong>{material.points}</strong> points
-            </span>
-          </div>
-        )}
 
         {/* File attachments — only for announcements */}
         {(material.material_type || '').toLowerCase() === 'announcement' && material.material_urls && material.material_urls.length > 0 && (() => {

@@ -463,6 +463,16 @@ export default function App() {
         )}
       />
       <Route
+        path={ROUTES.CLASSROOM_CALENDAR}
+        element={(
+          <ProtectedRoute allowedRoles={['ROLE_SECRETARY', 'ROLE_INSTRUCTOR', 'ROLE_STUDENT']}>
+            <PageTransition>
+              <ClassroomDetail forceTab="calendar" />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
         path="/classroom-list"
         element={(
           <ProtectedRoute allowedRoles={['ROLE_SECRETARY', 'ROLE_INSTRUCTOR', 'ROLE_STUDENT']}>

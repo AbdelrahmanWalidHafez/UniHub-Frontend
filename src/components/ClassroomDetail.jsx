@@ -7,9 +7,10 @@ import { get, deleteRequest } from '../utils/api'
 import AnnouncementModal from './AnnouncementModal'
 import MaterialCard from './MaterialCard'
 import MaterialDetailPage from './MaterialDetailPage'
+import ClassroomAssignmentCalendar from './ClassroomAssignmentCalendar'
 import './classroom.css'
 
-export default function ClassroomDetail() {
+export default function ClassroomDetail({ forceTab }) {
   const { id, materialId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -24,7 +25,7 @@ export default function ClassroomDetail() {
   const passedClassroom = location.state?.classroom
 
   const [classroom, setClassroom] = useState(passedClassroom || null)
-  const [activeTab, setActiveTab] = useState('stream')
+  const [activeTab, setActiveTab] = useState(forceTab || 'stream')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [teaching, setTeaching] = useState([])
@@ -199,11 +200,16 @@ export default function ClassroomDetail() {
     try {
       setLoadingAssignments(true)
       const response = await get(`classroom/api/v1/material/get-all-assignments/${id}?page_num=${pageNum}`)
-      // Keep raw list for pagination check, then filter to assignments only
-      const rawList = response?.materials || []
-      const list = rawList.filter(m => (m.material_type || '').toLowerCase() === 'assignment')
+      const rawList = response?.assignments || []
+      // Normalize: flatten nested material + assignment fields into one object for MaterialCard
+      const list = rawList.map(a => ({
+        ...a.material,
+        points: a.points,
+        due_date: a.due_date,
+        created_at: a.created_at ?? a.material?.created_at,
+        updated_at: a.updated_at ?? a.material?.updated_at,
+      }))
       setAssignments(prev => pageNum === 1 ? list : [...prev, ...list])
-      // Use raw count for pagination so filtering doesn't cut pages short
       setHasMoreAssignments(rawList.length === 5)
       setAssignmentsPage(pageNum)
     } catch (err) {
@@ -372,6 +378,9 @@ export default function ClassroomDetail() {
           <img src="/classroom-icon.png" alt="Classroom" className="navbar-icon" />
           <h1>Classroom</h1>
           {classroomName && <span className="navbar-separator">{' > '}{classroomName}</span>}
+          {activeTab === 'calendar' && !isMaterialDetailRoute && (
+            <span className="navbar-separator">{' > '}Calendar</span>
+          )}
           {isMaterialDetailRoute && materialTitle && (
             <span className="navbar-separator">{' > '}{materialTitle}</span>
           )}
@@ -418,7 +427,7 @@ export default function ClassroomDetail() {
 
             <button
               className={`nav-item ${activeTab === 'calendar' ? 'active' : ''}`}
-              onClick={() => navigate('/classroom-list', { state: { activeTab: 'calendar' } })}
+              onClick={() => navigate(`/classroom/${id}/calendar`, { state: { classroom } })}
             >
               <img src="/calendar-icon.png" alt="Calendar" className="nav-icon" />
               <span>Calendar</span>
@@ -530,7 +539,7 @@ export default function ClassroomDetail() {
         </div>
 
         {/* Main Content Wrapper */}
-        <div className={`classroom-content-main${isMaterialDetailRoute ? ' material-detail-full' : ''}`}>
+        <div className={`classroom-content-main${isMaterialDetailRoute ? ' material-detail-full' : ''}${activeTab === 'calendar' && !isMaterialDetailRoute ? ' calendar-active' : ''}`}>
           {isMaterialDetailRoute ? (
             <div className="classroom-material-detail-wrapper">
               <MaterialDetailPage
@@ -550,7 +559,7 @@ export default function ClassroomDetail() {
           ) : (
             <>
               {/* Classroom Header with Image and Tabs */}
-              <div className="classroom-detail-hero">
+              {activeTab !== 'calendar' && <div className="classroom-detail-hero">
                 <img
                   src={backgroundImageUrl}
                   alt={classroomName}
@@ -584,10 +593,21 @@ export default function ClassroomDetail() {
                     People
                   </button>
                 </div>
-              </div>
+              </div>}
+
+              {/* Calendar Tab — full-height, no code card */}
+              {activeTab === 'calendar' && (
+                <div className="classroom-calendar-fullview">
+                  <ClassroomAssignmentCalendar
+                    classroomId={id}
+                    onViewMaterial={handleViewMaterial}
+                    classroom={classroom}
+                  />
+                </div>
+              )}
 
               {/* Classroom Info Section - Code Card Only */}
-              {activeTab !== 'people' && (
+              {activeTab !== 'people' && activeTab !== 'calendar' && (
                 <div className="classroom-header-section">
                   {/* Left Side - Code Card and Announce Button */}
                   <div className="classroom-header-left">
@@ -692,7 +712,7 @@ export default function ClassroomDetail() {
               )}
 
               {/* Tab Content */}
-              <div className="classroom-tab-content">
+              {activeTab !== 'calendar' && <div className="classroom-tab-content">
                 {activeTab === 'stream' && (
                   <div className="tab-section">
                     {/* Materials now display in header section */}
@@ -771,7 +791,7 @@ export default function ClassroomDetail() {
                     </div>
                   </div>
                 )}
-              </div>
+              </div>}
             </>
           )}
         </div>
