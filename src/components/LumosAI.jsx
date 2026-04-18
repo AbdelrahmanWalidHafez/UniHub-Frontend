@@ -82,11 +82,15 @@ function makeMarkdownComponents(onCopy) {
 }
 
 const THINKING_PHRASES = [
-  'Thinking...',
-  'Analyzing your question...',
-  'Processing...',
-  'Searching knowledge base...',
-  'Generating response...',
+  'Cogitating...',
+  'Cerebrating...',
+  'Ruminating...',
+  'Philosophising...',
+  'Pondering...',
+  'Marinating...',
+  'Simmering...',
+  'Concocting...',
+  'Hustling...',
 ]
 
 function ThinkingDots() {
