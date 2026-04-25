@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { get, post, put, deleteRequest } from '../utils/api'
+import { get, post, put, deleteRequest, formPost, authGet } from '../utils/api'
 import { getUser, getAccessToken } from '../utils/auth'
 import { ROLES, getRoleName } from '../constants/roles'
 import ConfirmationModal from './ConfirmationModal'
 import { SkeletonRow, formatDate, getSortIcon } from './TableCommons'
+import './admin-table.css'
 
 export default function Users() {
   const [items, setItems] = useState([])
@@ -101,7 +102,6 @@ export default function Users() {
   // Fetch roles on mount
   useEffect(() => {
     fetchRoles()
-    fetchUsers(1, '')
   }, [])
 
   // Fetch first page only when dropdown opens and cache is empty
@@ -135,7 +135,7 @@ export default function Users() {
 
   const fetchRoles = async () => {
     try {
-      const data = await get('http://localhost:8083/api/v1/roles/get-roles')
+      const data = await get('http://localhost:3000/api/v1/roles/get-roles')
       let roleList = []
       if (Array.isArray(data)) roleList = data
       else if (Array.isArray(data?.roles)) roleList = data.roles
@@ -198,13 +198,11 @@ export default function Users() {
         const nextSearch = searchText.trim()
         setDebouncedSearch(nextSearch)
         setPage(1)
-        handleSearch(nextSearch)
       } else {
         setDebouncedSearch('')
         setSuggestions([])
         setShowSuggestions(false)
         setPage(1)
-        fetchUsers(1, '')
       }
     }, 300)
     return () => clearTimeout(timer)
@@ -258,7 +256,7 @@ export default function Users() {
       let endpoint = ''
       if (search) {
         const params = new URLSearchParams({ search_text: search.trim() })
-        endpoint = `http://localhost:8083/api/v1/account-management/search-user?${params.toString()}`
+        endpoint = `http://localhost:3000/api/v1/account-management/search-user?${params.toString()}`
       } else {
         const params = new URLSearchParams({ 
           page_num: pageNum, 
@@ -277,7 +275,7 @@ export default function Users() {
           params.append('cid', collegeFilter)
         }
         
-        endpoint = `http://localhost:8083/api/v1/account-management/get-users?${params.toString()}`
+        endpoint = `http://localhost:3000/api/v1/account-management/get-users?${params.toString()}`
       }
 
       const data = await get(endpoint)
@@ -322,20 +320,19 @@ export default function Users() {
   }, [page])
 
   useEffect(() => {
-    fetchUsers(1, debouncedSearch)
-  }, [sortField, sortDir])
-
-  // Fetch users when role filter changes
-  useEffect(() => {
+    setSearching(!!debouncedSearch)
+    fetchUsers(1, debouncedSearch).then(list => {
+      if (debouncedSearch) {
+        setSuggestions(list)
+        setShowSuggestions(list.length > 0)
+      } else {
+        setSuggestions([])
+        setShowSuggestions(false)
+      }
+      setSearching(false)
+    })
     setPage(1)
-    fetchUsers(1, debouncedSearch)
-  }, [roleFilter])
-
-  // Fetch users when college filter changes
-  useEffect(() => {
-    setPage(1)
-    fetchUsers(1, debouncedSearch)
-  }, [collegeFilter])
+  }, [sortField, sortDir, roleFilter, collegeFilter, debouncedSearch])
 
   const handleImportClick = () => {
     setShowNewMenu(false)
@@ -383,7 +380,7 @@ export default function Users() {
       const formData = new FormData()
       formData.append('file', importFile)
 
-      const response = await fetch('http://localhost:8083/api/v1/account-management/import', {
+      const response = await fetch(`http://localhost:3000/api/v1/account-management/import`, {
         method: 'POST',
         body: formData,
         headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {},
@@ -459,7 +456,7 @@ export default function Users() {
     try {
       const accessToken = getAccessToken()
       const userIds = Array.from(selectedUsers)
-      const response = await fetch('http://localhost:8083/api/v1/account-management/delete-batch', {
+      const response = await fetch(`http://localhost:3000/api/v1/account-management/delete-batch`, {
         method: 'DELETE',
         body: JSON.stringify(userIds),
         headers: {
@@ -654,7 +651,7 @@ export default function Users() {
   }
 
   return (
-    <div style={styles.container}>
+    <div className="admin-table-page">
       {/* Error Banner */}
       {error && (
         <div style={bannerStyle}>
@@ -665,12 +662,12 @@ export default function Users() {
       )}
 
       {/* Header with title and pagination info */}
-      <div style={styles.headerSection}>
-        <div style={styles.headerLeft}>
+      <div className="admin-table-header">
+        <div className="admin-table-header-left">
           <h1 style={styles.title}>Users</h1>
           <p style={styles.subtitle}>Manage and review users information</p>
         </div>
-        <div style={styles.headerRight}>
+        <div className="admin-table-header-right">
           <div style={{ position: 'relative' }} ref={newMenuRef}>
             <button style={styles.newButton} onClick={() => setShowNewMenu(!showNewMenu)}>+ New</button>
             
@@ -1132,7 +1129,7 @@ export default function Users() {
             </div>
           </div>
           
-          <div style={styles.searchContainer} ref={searchRef}>
+          <div className="admin-table-search" ref={searchRef}>
             <input
               type="text"
               placeholder="Search user"
@@ -1255,7 +1252,8 @@ export default function Users() {
       )}
 
       {/* Table */}
-      <section style={{ backgroundColor: 'white', borderRadius: '16px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 4px 16px rgba(58,74,82,0.08)' }}>
+      <div className="admin-table-scroll">
+      <section>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ backgroundColor: '#000' }}>
@@ -1404,6 +1402,7 @@ export default function Users() {
           </tbody>
         </table>
       </section>
+      </div>
 
       {/* CSV Import Notice */}
       <div style={{
@@ -1533,22 +1532,9 @@ const SectionCard = ({ title, children }) => (
 )
 
 const styles = {
-  container: {
-    padding: '36px 60px',
-    maxWidth: 'calc(100% - 120px)',
-    margin: '0 auto',
-    minHeight: 'auto'
-  },
-  headerSection: {
-    display: 'flex',
-    alignItems: 'flex-end',
-    marginBottom: '28px',
-    gap: 20,
-    justifyContent: 'space-between'
-  },
-  headerLeft: {
-    flex: '0 0 auto'
-  },
+  container: {},
+  headerSection: {},
+  headerLeft: {},
   title: {
     fontSize: '32px',
     fontWeight: '800',

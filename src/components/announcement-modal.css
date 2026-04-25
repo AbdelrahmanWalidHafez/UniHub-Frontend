@@ -1,0 +1,198 @@
+/* Announcement Modal - Uses shared modal styles from classroom.css */
+.announcement-modal {
+  max-width: 550px;
+  width: 100%;
+}
+
+/* Material Type Selector */
+.type-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border: 2px solid #D1D5DB;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 500;
+  color: #5f6368;
+}
+
+.type-btn:hover {
+  border-color: #10b981;
+  background-color: #ecfdf5;
+  color: #10b981;
+}
+
+.type-btn.active {
+  border-color: #10b981;
+  background-color: #10b981;
+  color: white;
+}
+
+.type-btn span {
+  display: block;
+}
+
+.type-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+/* File Upload Area */
+.file-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  border: 2px solid #D1D5DB;
+  border-radius: 8px;
+  background-color: #F9FAFB;
+  transition: all 0.2s ease;
+  text-align: center;
+  cursor: pointer;
+}
+
+.file-upload-area:hover {
+  border-color: #0b5fff;
+  background-color: #f0f7ff;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.upload-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: #9CA3AF;
+  margin-top: 4px;
+}
+
+.file-upload-label span:nth-child(2) {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111;
+}
+
+/* Files List */
+.files-list {
+  margin-top: 16px;
+}
+
+.files-list h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.file-item:hover {
+  background-color: #f0f7ff;
+  border-color: #0b5fff;
+}
+
+.file-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #111;
+}
+
+.file-remove-btn {
+  background: none;
+  border: none;
+  color: #DC2626;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-remove-btn:hover {
+  color: #ef4444;
+  transform: scale(1.2);
+}
+
+/* Form Input Error States */
+.input-error {
+  border-color: #DC2626 !important;
+}
+
+.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+/* Form Helper Text */
+.form-helper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.field-error {
+  display: block;
+  font-size: 12px;
+  color: #DC2626;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .type-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .file-upload-area {
+    padding: 24px 16px;
+  }
+}

@@ -21,12 +21,18 @@ const SubscriptionRequests = lazy(() => import('./components/SubscriptionRequest
 const InquiryDetails = lazy(() => import('./components/InquiryDetails'))
 const UniversityDetails = lazy(() => import('./components/UniversityDetails'))
 const UniversitySystemAdmin = lazy(() => import('./components/UniversitySystemAdmin'))
+const AdminLayout = lazy(() => import('./components/AdminLayout'))
+const Colleges = lazy(() => import('./components/Colleges'))
+const Users = lazy(() => import('./components/Users'))
+const Usage = lazy(() => import('./components/Usage'))
 const UniHubLayout = lazy(() => import('./components/UniHubLayout'))
 const UserDetail = lazy(() => import('./components/UserDetail'))
 const Account = lazy(() => import('./components/Account'))
 const CheckoutSuccess = lazy(() => import('./components/CheckoutSuccess'))
 const CheckoutFailure = lazy(() => import('./components/CheckoutFailure'))
 const LumosAI = lazy(() => import('./components/LumosAI'))
+const ClassroomDetail = lazy(() => import('./components/ClassroomDetail'))
+const Classroom = lazy(() => import('./components/Classroom'))
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
 import { logout } from './utils/auth'
@@ -47,6 +53,10 @@ export default function App() {
   const authenticated = !!accessToken
   const navigate = useNavigate()
   const showLumos = ['student', 'instructor'].some(r => String(getRoleName(user)).toLowerCase().includes(r))
+  const roleName = getRoleName(user)
+  const isSystemAdmin = roleName === ROLES.SYSTEM_ADMIN
+  const showDashboard = isSystemAdmin || ['student', 'instructor', 'secretary'].some(r => String(roleName).toLowerCase().includes(r))
+  const dashboardRoute = isSystemAdmin ? ROUTES.UNIVERSITY_ADMIN : ROUTES.DASHBOARD
 
   useEffect(() => {
     const sections = Array.from(document.querySelectorAll('main > section'))
@@ -223,6 +233,8 @@ export default function App() {
               onCartClick={goToSubscriptionRequest}
               isAuthenticated={authenticated}
               showLumos={showLumos}
+              showDashboard={showDashboard}
+              dashboardRoute={dashboardRoute}
             />
             <main>
               <About />
@@ -249,6 +261,8 @@ export default function App() {
               onCartClick={goToSubscriptionRequest}
               isAuthenticated={authenticated}
               showLumos={showLumos}
+              showDashboard={showDashboard}
+              dashboardRoute={dashboardRoute}
             />
             <main>
               <About />
@@ -317,12 +331,16 @@ export default function App() {
         path={ROUTES.UNIVERSITY_ADMIN}
         element={(
           <ProtectedRoute allowedRoles={[ROLES.SYSTEM_ADMIN]}>
-            <PageTransition>
-              <UniversitySystemAdmin />
-            </PageTransition>
+            <AdminLayout />
           </ProtectedRoute>
         )}
-      />
+      >
+        <Route index element={<Navigate to="university" replace />} />
+        <Route path="university" element={<PageTransition><UniversitySystemAdmin /></PageTransition>} />
+        <Route path="users" element={<PageTransition><Users /></PageTransition>} />
+        <Route path="colleges" element={<PageTransition><Colleges /></PageTransition>} />
+        <Route path="usage" element={<PageTransition><Usage /></PageTransition>} />
+      </Route>
       <Route
         path="/university-admin/users/new"
         element={(
@@ -436,6 +454,46 @@ export default function App() {
           <ProtectedRoute>
             <PageTransition>
               <Account />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path={ROUTES.CLASSROOM}
+        element={(
+          <ProtectedRoute allowedRoles={['ROLE_SECRETARY', 'ROLE_INSTRUCTOR', 'ROLE_STUDENT']}>
+            <PageTransition>
+              <ClassroomDetail />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path={ROUTES.CLASSROOM_MATERIAL}
+        element={(
+          <ProtectedRoute allowedRoles={['ROLE_SECRETARY', 'ROLE_INSTRUCTOR', 'ROLE_STUDENT']}>
+            <PageTransition>
+              <ClassroomDetail />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path={ROUTES.CLASSROOM_CALENDAR}
+        element={(
+          <ProtectedRoute allowedRoles={['ROLE_SECRETARY', 'ROLE_INSTRUCTOR', 'ROLE_STUDENT']}>
+            <PageTransition>
+              <ClassroomDetail forceTab="calendar" />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/classroom-list"
+        element={(
+          <ProtectedRoute allowedRoles={['ROLE_SECRETARY', 'ROLE_INSTRUCTOR', 'ROLE_STUDENT']}>
+            <PageTransition>
+              <Classroom />
             </PageTransition>
           </ProtectedRoute>
         )}

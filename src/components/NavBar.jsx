@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ROUTES } from '../constants/routes'
 import { getAccessToken } from '../utils/auth'
 
-export default function NavBar({ appName = 'App Name', logoSrc = '', onUserIconClick, onLogoClick, onCartClick, cartTo, isAuthenticated, showLumos = false }) {
+export default function NavBar({ appName = 'App Name', logoSrc = '', onUserIconClick, onLogoClick, onCartClick, cartTo, isAuthenticated, showLumos = false, showDashboard = false, dashboardRoute = '/' }) {
 	const authenticated = isAuthenticated !== undefined ? isAuthenticated : !!getAccessToken()
 	const navigate = useNavigate()
 	const [lumosOpen, setLumosOpen] = React.useState(false)
@@ -39,13 +39,16 @@ export default function NavBar({ appName = 'App Name', logoSrc = '', onUserIconC
 					<a href="#contact">Contact Us</a>
 					<a href="#contact">Our Location</a>
 
-					{/* Lumos AI tab with submenu — only for students/instructors */}
-				{showLumos && (
+					{showDashboard && (
+					<button className="lumos-toggle" onClick={() => navigate(dashboardRoute)}>
+						Dashboard
+					</button>
+				)}
+				{!showDashboard && showLumos && (
 					<div className="lumos-nav" style={{ position: 'relative' }}>
 						<button
 							className="lumos-toggle"
 							onClick={(e) => { e.preventDefault(); setLumosOpen(!lumosOpen) }}
-							style={{ background: 'transparent', border: 'none', padding: '0.35rem 0.5rem', cursor: 'pointer' }}
 						>
 							Lumos AI
 						</button>

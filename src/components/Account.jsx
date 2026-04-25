@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { get, getFileAsBlob, authPatch } from '../utils/api'
+import { getCached, getFileAsBlob, authPatch } from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
 import { ROUTES } from '../constants/routes'
 import { getRoleName } from '../constants/roles'
@@ -14,6 +14,7 @@ export default function Account() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const lastFetchRef = useRef({ tid: null, cid: null, tidPending: null, cidPending: null })
+  const loadedRef = useRef(false)
   const profileRef = useRef(null)
   const [profileHeight, setProfileHeight] = useState(null)
   
@@ -30,10 +31,12 @@ export default function Account() {
   const changePwVerticalOffset =16
 
   useEffect(() => {
+    if (loadedRef.current) return
+    if (!user) return
+    loadedRef.current = true
     async function loadRelated() {
       setError('')
       const u = user
-      if (!u) return
 
       const extractId = (v) => {
         if (v === null || v === undefined) return undefined
@@ -49,83 +52,45 @@ export default function Account() {
       const tid = extractId(rawTid)
       const cid = extractId(rawCid)
 
-      console.log('[Account] loadRelated - tid:', tid, 'cid:', cid, 'rawTid:', rawTid, 'rawCid:', rawCid)
-
       // determine user role early so we can skip college fetches for system admins
       const userRoleEarly = getRoleName(u) || u.roleName || (u.role && (u.role.rid || u.role.id)) || (u.role && u.role.name) || ''
-      console.log('[Account] detected role (early):', userRoleEarly)
-
-      console.log('[Account] pre-fetch state', { cidType: typeof cid, cidValue: cid, lastFetch: lastFetchRef.current })
-
-      console.log('[Account] user snapshot', { user: (typeof user === 'object' ? {...user} : user) })
 
       setLoading(true)
-      try {
-        if (tid) {
-          const tidKey = String(tid)
-          if (lastFetchRef.current.tid === tidKey) {
-            console.debug('[Account] skipping university fetch; already fetched for tid=', tidKey)
-          } else if (lastFetchRef.current.tidPending === tidKey) {
-            console.debug('[Account] skipping university fetch; fetch already in progress for tid=', tidKey)
-          } else {
-            lastFetchRef.current.tidPending = tidKey
-            try {
-              const data = await get(`universitymanagement/api/v1/get-university/${tidKey}`)
-              const udata = {
-                id: data?.university_id || data?.uniId || data?.id,
-                name: data?.university_name || data?.universityName || data?.name,
-                logo_key: data?.logo_key || data?.university_logo || data?.universityLogo || data?.logoKey,
-              }
-              setUniversity(udata)
-              lastFetchRef.current.tid = tidKey
+      let pending = (tid ? 1 : 0) + (cid && userRoleEarly !== 'ROLE_SYSTEM_ADMIN' ? 1 : 0)
+      if (pending === 0) { setLoading(false); return }
 
-              if (udata.logo_key) {
-                try {
-                  const blob = await getFileAsBlob(`s3/api/v1/get-file/${udata.logo_key}`)
-                  const url = URL.createObjectURL(blob)
-                  setLogoUrl(url)
-                } catch (err) {
-                  // ignore logo fetch errors
-                }
-              }
-            } catch (e) {
-              console.warn('[Account] failed to fetch university for tid=', tidKey, e)
-            } finally {
-              lastFetchRef.current.tidPending = null
-            }
-          }
-        }
+      const done = () => { pending--; if (pending === 0) setLoading(false) }
 
-        // skip college fetch for system admins (they don't belong to a college)
-        if (cid && userRoleEarly !== 'ROLE_SYSTEM_ADMIN') {
-          const cidKey = String(cid)
-          if (lastFetchRef.current.cid === cidKey) {
-            console.log('[Account] skipping college fetch; already fetched for cid=', cidKey)
-          } else if (lastFetchRef.current.cidPending === cidKey) {
-            console.log('[Account] skipping college fetch; fetch already in progress for cid=', cidKey)
-          } else {
-            lastFetchRef.current.cidPending = cidKey
-            console.log('[Account] fetching college for cid=', cidKey)
-            try {
-              const c = await get(`universitymanagement/api/v1/colleges/public/get-college/${cidKey}`)
-              const col = {
-                id: c?.college_id || c?.collegeId || c?.id,
-                name: c?.college_name || c?.collegeName || c?.name,
-                campus: c?.campus || c?.college_campus || c?.campus_name || '',
-              }
-              setCollege(col)
-              lastFetchRef.current.cid = cidKey
-            } catch (e) {
-              console.warn('[Account] failed to fetch college for cid=', cidKey, e)
-            } finally {
-              lastFetchRef.current.cidPending = null
+      if (tid) {
+        const tidKey = String(tid)
+        getCached(`universitymanagement/api/v1/get-university/${tidKey}`)
+          .then(async (data) => {
+            const udata = {
+              id: data?.university_id || data?.uniId || data?.id,
+              name: data?.university_name || data?.universityName || data?.name,
+              logo_key: data?.logo_key || data?.university_logo || data?.universityLogo || data?.logoKey,
             }
-          }
-        }
-      } catch (err) {
-        setError(err.message || 'Failed to load related data')
-      } finally {
-        setLoading(false)
+            setUniversity(udata)
+            if (udata.logo_key) {
+              getFileAsBlob(`s3/api/v1/get-file/${udata.logo_key}`)
+                .then(blob => setLogoUrl(URL.createObjectURL(blob)))
+                .catch(() => {})
+            }
+          })
+          .catch(() => {})
+          .finally(done)
+      }
+
+      if (cid && userRoleEarly !== 'ROLE_SYSTEM_ADMIN') {
+        const cidKey = String(cid)
+        getCached(`universitymanagement/api/v1/colleges/public/get-college/${cidKey}`)
+          .then(c => setCollege({
+            id: c?.college_id || c?.collegeId || c?.id,
+            name: c?.college_name || c?.collegeName || c?.name,
+            campus: c?.campus || c?.college_campus || c?.campus_name || '',
+          }))
+          .catch(() => {})
+          .finally(done)
       }
     }
 

@@ -1,6 +1,25 @@
 import { getAccessToken, refreshTokens, clearAuth, shouldRefreshToken } from './auth'
 import { REQUEST_TIMEOUT, API_GATEWAY_BASE_URL, ENABLE_LOGGING } from './config'
 
+const GET_CACHE = new Map()
+const GET_CACHE_TTL = 60000 // 60 seconds
+
+export function getCached(url, options = {}) {
+	const fullUrl = url.startsWith('http') ? url : `${API_GATEWAY_BASE_URL.replace(/\/$/, '')}/${url.replace(/^\//, '')}`
+	const cached = GET_CACHE.get(fullUrl)
+	if (cached && Date.now() - cached.ts < GET_CACHE_TTL) return Promise.resolve(cached.data)
+	return get(url, options).then(data => {
+		GET_CACHE.set(fullUrl, { data, ts: Date.now() })
+		return data
+	})
+}
+
+export function invalidateCache(urlPattern) {
+	for (const key of GET_CACHE.keys()) {
+		if (key.includes(urlPattern)) GET_CACHE.delete(key)
+	}
+}
+
 export async function apiCall(url, options = {}) {
 	const { public: isPublic = false, ...fetchOptions } = options
 
@@ -63,24 +82,27 @@ export async function apiCall(url, options = {}) {
 		if (response.status === 401 && !isPublic && getAccessToken()) {
 			try {
 				await refreshTokens()
-				const newAccessToken = getAccessToken()
-				if (newAccessToken) {
-					finalOptions.headers['Authorization'] = `Bearer ${newAccessToken}`
-					const retryController = new AbortController()
-					const retryTimeoutId = setTimeout(() => retryController.abort(), REQUEST_TIMEOUT)
-					try {
-						response = await fetch(fullUrl, {
-							...finalOptions,
-							credentials: 'include',
-							signal: retryController.signal,
-						})
-					} finally {
-						clearTimeout(retryTimeoutId)
-					}
-				}
 			} catch (err) {
-				clearAuth()
-				throw new Error('Session expired. Please login again.')
+				// Another concurrent request may have already refreshed — check before logging out
+				if (!getAccessToken()) {
+					clearAuth()
+					throw new Error('Session expired. Please login again.')
+				}
+			}
+			const newAccessToken = getAccessToken()
+			if (newAccessToken) {
+				finalOptions.headers['Authorization'] = `Bearer ${newAccessToken}`
+				const retryController = new AbortController()
+				const retryTimeoutId = setTimeout(() => retryController.abort(), REQUEST_TIMEOUT)
+				try {
+					response = await fetch(fullUrl, {
+						...finalOptions,
+						credentials: 'include',
+						signal: retryController.signal,
+					})
+				} finally {
+					clearTimeout(retryTimeoutId)
+				}
 			}
 		}
 
@@ -154,6 +176,15 @@ export async function formPost(url, formData, options = {}) {
 	return apiCall(url, {
 		...options,
 		method: 'POST',
+		body: formData,
+	})
+}
+
+// Use this helper for multipart/form-data puts (FormData)
+export async function formPut(url, formData, options = {}) {
+	return apiCall(url, {
+		...options,
+		method: 'PUT',
 		body: formData,
 	})
 }
@@ -290,6 +321,61 @@ export async function streamPost(url, body, { onChunk, signal } = {}) {
     }
   }
   // flush remaining buffer
+  if (buffer) {
+    for (const line of buffer.split('\n')) {
+      if (line.startsWith('data:')) {
+        const text = line.slice(5).replace(/\\n/g, '\n')
+        if (text.trim() !== '[DONE]' && onChunk) onChunk(text)
+      }
+    }
+  }
+}
+
+export async function streamPostEmpty(url, { onChunk, signal, headers: extraHeaders } = {}) {
+  const { getAccessToken, shouldRefreshToken, refreshTokens } = await import('./auth')
+  const { API_GATEWAY_BASE_URL } = await import('./config')
+
+  let fullUrl = url
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    const cleanPath = url.startsWith('/') ? url.slice(1) : url
+    const baseUrl = API_GATEWAY_BASE_URL.endsWith('/') ? API_GATEWAY_BASE_URL.slice(0, -1) : API_GATEWAY_BASE_URL
+    fullUrl = `${baseUrl}/${cleanPath}`
+  }
+
+  const headers = {}
+  let accessToken = getAccessToken()
+  if (accessToken && shouldRefreshToken()) {
+    try { await refreshTokens(); accessToken = getAccessToken() } catch (_) {}
+  }
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`
+  if (extraHeaders) Object.assign(headers, extraHeaders)
+
+  const response = await fetch(fullUrl, { method: 'POST', headers, credentials: 'include', signal })
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    throw new Error(text || `Error ${response.status}`)
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const events = buffer.split('\n\n')
+    buffer = events.pop()
+    for (const event of events) {
+      for (const line of event.split('\n')) {
+        if (line.startsWith('data:')) {
+          const text = line.slice(5).replace(/\\n/g, '\n')
+          if (text.trim() === '[DONE]') continue
+          if (onChunk) onChunk(text === '' ? '\n' : text)
+        }
+      }
+    }
+  }
   if (buffer) {
     for (const line of buffer.split('\n')) {
       if (line.startsWith('data:')) {

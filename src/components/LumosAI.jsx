@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { streamPost, get, deleteRequest } from '../utils/api'
+import { streamPost, get, deleteRequest, streamPostEmpty } from '../utils/api'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -82,11 +82,15 @@ function makeMarkdownComponents(onCopy) {
 }
 
 const THINKING_PHRASES = [
-  'Thinking...',
-  'Analyzing your question...',
-  'Processing...',
-  'Searching knowledge base...',
-  'Generating response...',
+  'Cogitating...',
+  'Cerebrating...',
+  'Ruminating...',
+  'Philosophising...',
+  'Pondering...',
+  'Marinating...',
+  'Simmering...',
+  'Concocting...',
+  'Hustling...',
 ]
 
 function ThinkingDots() {
@@ -140,10 +144,12 @@ function AiMessage({ text, streaming, onRetry, prevUserText, onCopy }) {
 }
 
 
-export default function LumosAI({ newChat: newChatProp }) {
+export default function LumosAI({ newChat: newChatProp, explainMaterialId: explainIdProp, explainMaterialTitle: explainTitleProp, onExplainConsumed }) {
   const { user } = useAuth()
   const location = useLocation()
   const newChat = newChatProp || location.state?.newChat
+  const explainMaterialId = explainIdProp || location.state?.explainMaterialId || null
+  const explainMaterialTitle = explainTitleProp || location.state?.explainMaterialTitle || 'this material'
   const userEmail = user?.email || ''
   const userInitial = (user?.first_name || user?.firstName || user?.name || userEmail || 'U')[0].toUpperCase()
 
@@ -213,10 +219,11 @@ export default function LumosAI({ newChat: newChatProp }) {
     'And more...'
   ]
 
-  // Load chat history on mount, but skip if this is a "new chat" navigation
+  // Load chat history on mount — skip for new chat or explain flows
   useEffect(() => {
     if (!userEmail) return
-    if (newChat) return  // new chat — history was/will be cleared, don't load old messages
+    if (newChat) return
+    if (explainMaterialId) return
     get('ai/api/v1/chat/history').then(data => {
       if (!Array.isArray(data) || data.length === 0) return
       const loaded = data
@@ -236,6 +243,27 @@ export default function LumosAI({ newChat: newChatProp }) {
     setMessages([])
     setInput('')
   }, [newChat])
+
+  // Handle "Explain with AI" — load history first, then append explain and stream
+  useEffect(() => {
+    if (!explainMaterialId || !userEmail) return
+    onExplainConsumed?.()
+    get('ai/api/v1/chat/history').then(data => {
+      const loaded = Array.isArray(data)
+        ? data
+            .filter(m => m.messageType === 'USER' || m.messageType === 'ASSISTANT')
+            .map(m => ({
+              from: m.messageType === 'USER' ? 'user' : 'ai',
+              text: (typeof m.text === 'string' ? m.text : (m.content || '')).replace(/\\n/g, '\n')
+            }))
+        : []
+      setMessages(loaded)
+      streamExplain(explainMaterialId, 'Explain this material')
+    }).catch(() => {
+      setMessages([])
+      streamExplain(explainMaterialId, 'Explain this material')
+    })
+  }, [explainMaterialId, userEmail])
 
   // Stream a text message to the AI
   async function streamMessage(text) {
@@ -282,6 +310,53 @@ export default function LumosAI({ newChat: newChatProp }) {
         if (last && last.from === 'ai') {
           copy[copy.length - 1] = { ...last, streaming: false }
         }
+        return copy
+      })
+      setStreaming(false)
+    }
+  }
+
+  async function streamExplain(materialId, userMessage) {
+    setStreaming(true)
+    typewriterQueueRef.current = ''
+    setMessages(m => [
+      ...m,
+      ...(userMessage ? [{ from: 'user', text: userMessage }] : []),
+      { from: 'ai', text: '', streaming: true }
+    ])
+    abortRef.current = new AbortController()
+    try {
+      await streamPostEmpty(`ai/api/v1/chat/explain/${materialId}`, {
+        signal: abortRef.current.signal,
+        headers: { 'X-User-Email': userEmail },
+        onChunk: chunk => {
+          typewriterQueueRef.current += chunk
+          startTypewriter()
+        }
+      })
+      await new Promise(resolve => {
+        const check = setInterval(() => {
+          if (typewriterQueueRef.current.length === 0) { clearInterval(check); resolve() }
+        }, 20)
+      })
+    } catch (err) {
+      stopTypewriter()
+      if (err.name !== 'AbortError') {
+        setMessages(m => {
+          const copy = [...m]
+          const last = copy[copy.length - 1]
+          if (last && last.from === 'ai' && last.text === '') {
+            copy[copy.length - 1] = { ...last, text: 'Something went wrong. Please try again.' }
+          }
+          return copy
+        })
+      }
+    } finally {
+      stopTypewriter()
+      setMessages(m => {
+        const copy = [...m]
+        const last = copy[copy.length - 1]
+        if (last && last.from === 'ai') copy[copy.length - 1] = { ...last, streaming: false }
         return copy
       })
       setStreaming(false)

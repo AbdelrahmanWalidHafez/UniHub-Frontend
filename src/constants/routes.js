@@ -7,6 +7,10 @@ export const ROUTES = {
   SUBSCRIPTION_PLAN_DETAILS: '/customer-service/subscription-plan/:id',
   DASHBOARD: '/dashboard',
   UNIVERSITY_ADMIN: '/university-admin',
+  UNIVERSITY_ADMIN_UNIVERSITY: '/university-admin/university',
+  UNIVERSITY_ADMIN_USERS: '/university-admin/users',
+  UNIVERSITY_ADMIN_COLLEGES: '/university-admin/colleges',
+  UNIVERSITY_ADMIN_USAGE: '/university-admin/usage',
   USER_DETAIL: '/university-admin/users/:id',
   USER_CREATE: '/university-admin/users/new',
   SUBSCRIPTION_REQUEST: '/subscription-request',
@@ -14,4 +18,7 @@ export const ROUTES = {
   ACTIVATE_ACCOUNT: '/activate-account',
   ACCOUNT: '/account',
   LUMOS_AI: '/lumos-ai',
+  CLASSROOM: '/classroom/:id',
+  CLASSROOM_MATERIAL: '/classroom/:id/material/:materialId',
+  CLASSROOM_CALENDAR: '/classroom/:id/calendar',
 }

@@ -1,5 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from 'react'
-import { initAuthFunctions } from '../utils/auth'
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react'
+import { initAuthFunctions, setSessionRestorePromise } from '../utils/auth'
 
 const AuthContext = createContext(null)
 
@@ -31,9 +31,29 @@ export function AuthProvider({ children }) {
 
   // Attempt to restore session on mount using refresh token cookie
   useEffect(() => {
+    let resolveSessionRestore
+    const promise = new Promise(resolve => { resolveSessionRestore = resolve })
+    setSessionRestorePromise(promise)
+
     async function restoreSession() {
       try {
         const { AUTH_API_BASE_URL } = await import('../utils/config')
+        const { getAccessToken } = await import('../utils/auth')
+
+        // Skip refresh if we already have a valid non-expired token
+        const existingToken = getAccessToken()
+        if (existingToken) {
+          try {
+            const parts = existingToken.split('.')
+            if (parts.length === 3) {
+              const payload = JSON.parse(atob(parts[1]))
+              if (payload.exp && Date.now() < payload.exp * 1000) {
+                return // token still valid, no need to refresh
+              }
+            }
+          } catch {}
+        }
+
         const response = await fetch(`${AUTH_API_BASE_URL}/refresh`, {
           method: 'POST',
           headers: {
@@ -69,6 +89,8 @@ export function AuthProvider({ children }) {
         console.debug('Session restoration failed:', error.message)
       } finally {
         setIsRestoringSession(false)
+        resolveSessionRestore()
+        setSessionRestorePromise(null)
       }
     }
 

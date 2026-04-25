@@ -32,6 +32,19 @@ function timeAgo(input) {
   return years === 1 ? '1 year ago' : `${years} years ago`
 }
 
+// S3 keys use literal + signs — encode them as %2B so the browser doesn't mangle them
+const safeUrl = (url) => {
+  try {
+    const [base, query] = url.split('?')
+    const parts = base.split('/')
+    const filename = parts.pop()
+    parts.push(filename.replace(/\+/g, '%2B'))
+    return parts.join('/') + (query ? '?' + query : '')
+  } catch {
+    return url
+  }
+}
+
 // Top-level memoized attachment renderer to keep a stable component identity
 const AttachmentRendererMemo = React.memo(function AttachmentRendererMemo({ url, type, name, openLightbox }) {
   const [decided, setDecided] = useState(() => {
@@ -93,7 +106,7 @@ const AttachmentRendererMemo = React.memo(function AttachmentRendererMemo({ url,
     const timeoutId = setTimeout(() => { try { ctrl.abort() } catch (e) {} }, 10000)
     ;(async () => {
       try {
-        const res = await fetch(url, { method: 'GET', mode: 'cors', signal: ctrl.signal })
+        const res = await fetch(safeUrl(url), { method: 'GET', mode: 'cors', credentials: 'omit', signal: ctrl.signal })
         if (!res.ok) throw new Error('Failed to fetch PDF: ' + res.status)
         const blob = await res.blob()
         const bUrl = URL.createObjectURL(blob)
@@ -161,7 +174,9 @@ const AttachmentRendererMemo = React.memo(function AttachmentRendererMemo({ url,
 
     return (
       <div style={{ margin: '24px 0' }}>
-        <FilePreviewCard title={name || url.split('/').pop() || 'PDF file'} fileUrl={url} />
+        <a href={safeUrl(url)} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block', cursor: 'pointer' }}>
+          <FilePreviewCard title={name || url.split('/').pop() || 'PDF file'} fileUrl={safeUrl(url)} cacheKey={safeUrl(url)} />
+        </a>
       </div>
     );
   }
@@ -422,7 +437,6 @@ export default function AnnouncementPage({ secretary = false }) {
         else if (typeof data?.page_num === 'number' && typeof data?.total_pages === 'number') setHasMore(Number(data.page_num) < Number(data.total_pages))
         else setHasMore(incoming.length > 0)
         if (page === 1) await fetchPostStatusAnalysis()
-        if (page === 1) await fetchPostStatusAnalysis()
       }
       setPageNum(page)
     } catch (err) {
@@ -496,21 +510,17 @@ export default function AnnouncementPage({ secretary = false }) {
   }, [])
 
   // initial posts load and reload when secretary prop/user or status filter changes
+  const userId = user?.id || user?.user_id || user?.userId || user?.email || ''
   useEffect(() => {
     setPosts([])
     setPageNum(1)
     fetchPosts(1)
-  }, [secretary, user, secretaryStatusFilter])
+  }, [secretary, userId, secretaryStatusFilter])
 
-  // ensure status analysis is loaded on mount
-    // stable lightbox opener to pass to memoized children
-    const openLightbox = useCallback((url) => {
-      setLightboxUrl(url)
-    }, [setLightboxUrl])
-
-  useEffect(() => {
-    fetchPostStatusAnalysis()
-  }, [])
+  // stable lightbox opener to pass to memoized children
+  const openLightbox = useCallback((url) => {
+    setLightboxUrl(url)
+  }, [setLightboxUrl])
 
   // close any open post/comment menus when clicking outside
   useEffect(() => {
@@ -1602,12 +1612,6 @@ export default function AnnouncementPage({ secretary = false }) {
               const rejected = Number(statusCounts['REJECTED'] ?? statusCounts['REJECT'] ?? 0)
               const drafts = Number(statusCounts['DRAFT'] ?? 0)
               const total = accepted + pending + rejected + drafts
-              if (typeof statusCounts === 'undefined' || statusCounts === null || Object.keys(statusCounts).length === 0) {
-                // Show skeleton or reserved space while loading
-                return (
-                  <div style={{ width: '100%', height: 24, background: 'linear-gradient(90deg, #f3f3f3 25%, #e0e0e0 50%, #f3f3f3 75%)', borderRadius: 8, margin: '12px 0', animation: 'pulse 1.2s infinite' }} />
-                )
-              }
               if (total === 0) {
                 return (
                   <>

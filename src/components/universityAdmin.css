@@ -193,3 +193,26 @@
 	/* ensure box sizing stays consistent after scaling */
 	.uni-admin-root *, .uni-admin-root *:before, .uni-admin-root *:after{box-sizing:border-box}
 }
+
+/* ── Responsive: Users & Colleges tables ───────────────── */
+@media (max-width: 1024px) {
+	.uni-admin-content table { font-size: 13px; }
+	.uni-admin-content th, .uni-admin-content td { padding: 8px 10px; }
+}
+
+@media (max-width: 768px) {
+	/* Make tables horizontally scrollable */
+	.uni-admin-content .page-transition-up { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+	.uni-admin-content table { min-width: 600px; }
+
+	/* Stack filter/search controls vertically */
+	.uni-admin-content .users-controls,
+	.uni-admin-content .colleges-controls { flex-direction: column; gap: 8px; }
+
+	.uni-admin-content .users-controls input,
+	.uni-admin-content .colleges-controls input { width: 100%; }
+
+	/* Cards row stacks vertically */
+	.cards-row { flex-direction: column; }
+	.info-card, .docs-card { width: 100%; }
+}
