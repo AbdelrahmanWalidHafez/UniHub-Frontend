@@ -649,6 +649,29 @@
 .mdp-submissions-btn:hover { opacity: 0.85; }
 .mdp-submissions-btn:active { opacity: 0.7; }
 
+.mdp-explain-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(29, 78, 216, 0.3);
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+.mdp-explain-btn:hover {
+  box-shadow: 0 4px 16px rgba(29, 78, 216, 0.45);
+  transform: translateY(-1px);
+}
+.mdp-explain-btn:active { transform: translateY(0); }
+.mdp-explain-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; transform: none; }
+
 /* Deadline passed badge */
 .mdp-deadline-badge {
   display: inline-flex;

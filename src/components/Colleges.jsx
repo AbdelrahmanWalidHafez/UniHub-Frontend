@@ -5,6 +5,7 @@ import { getUser } from '../utils/auth'
 import { ROLES, getRoleName } from '../constants/roles'
 import ConfirmationModal from './ConfirmationModal'
 import { SkeletonRow, formatDate, getSortIcon } from './TableCommons'
+import './admin-table.css'
 
 export default function Colleges() {
   const accessDeniedSubscriptionWarning = 'Access denied. Please renew or set a new subscription plan to use this feature.'
@@ -202,7 +203,11 @@ export default function Colleges() {
     return () => clearTimeout(debounceTimer)
   }, [searchText])
 
-  useEffect(() => { fetchColleges(1, debouncedSearch) }, [debouncedSearch])
+  const isFirstSearchRender = useRef(true)
+  useEffect(() => {
+    if (isFirstSearchRender.current) { isFirstSearchRender.current = false; return }
+    fetchColleges(1, debouncedSearch)
+  }, [debouncedSearch])
 
   useEffect(() => {
     setCanNext(hasMore && items.length >= itemsPerPage)
@@ -542,7 +547,7 @@ export default function Colleges() {
   const bannerStyle = _bannerIsForbidden && _bannerIsSysAdmin ? styles.warningBanner : styles.errorBanner
 
   return (
-    <div style={styles.container}>
+    <div className="admin-table-page">
       {/* Error Banner */}
       {error && (
         <div style={bannerStyle}>
@@ -553,15 +558,15 @@ export default function Colleges() {
       )}
 
       {/* Header with title and pagination info */}
-      <div style={styles.headerSection}>
-        <div style={styles.headerLeft}>
+      <div className="admin-table-header">
+        <div className="admin-table-header-left">
           <h1 style={styles.title}>Colleges</h1>
           <p style={styles.subtitle}>Manage and review colleges information</p>
         </div>
-        <div style={styles.headerRight}>
+        <div className="admin-table-header-right">
           <button style={styles.newButton} onClick={() => setShowModal(true)}>+ New</button>
-          
-          <div style={styles.searchContainer} ref={searchRef}>
+
+          <div className="admin-table-search" ref={searchRef}>
             <input
               type="text"
               placeholder="Search college"
@@ -653,7 +658,8 @@ export default function Colleges() {
       </div>
 
       {/* Table */}
-      <section style={{ backgroundColor: 'white', borderRadius: '16px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 4px 16px rgba(58,74,82,0.08)' }}>
+      <div className="admin-table-scroll">
+      <section>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ backgroundColor: '#000' }}>
@@ -768,6 +774,7 @@ export default function Colleges() {
           </tbody>
         </table>
       </section>
+      </div>
 
       <style>{`@keyframes shimmer { 0%,100%{opacity:1;}50%{opacity:0.4;} }`}</style>
       <style>{`
@@ -1023,22 +1030,6 @@ const maskId = (val) => {
 }
 
 const styles = {
-  container: {
-    padding: '36px 60px',
-    maxWidth: 'calc(100% - 120px)',
-    margin: '0 auto',
-    minHeight: 'auto'
-  },
-  headerSection: {
-    display: 'flex',
-    alignItems: 'flex-end',
-    marginBottom: '28px',
-    gap: 20,
-    justifyContent: 'space-between'
-  },
-  headerLeft: {
-    flex: '0 0 auto'
-  },
   title: {
     fontSize: '32px',
     fontWeight: '800',
@@ -1050,19 +1041,6 @@ const styles = {
     color: '#9CA3AF',
     margin: 0,
     fontWeight: '500'
-  },
-  headerRight: {
-    display: 'flex',
-    gap: '16px',
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'flex-end'
-  },
-  searchContainer: {
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    width: '380px'
   },
   searchInput: {
     width: '100%',

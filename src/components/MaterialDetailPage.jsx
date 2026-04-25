@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { get, post, put, deleteRequest, formPost, formPut } from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
 import { getRoleName } from '../constants/roles'
+import { ROUTES } from '../constants/routes'
 import bookIcon from '/book.png'
 import announcementIcon from '/announcement.png'
 import assignmentIcon from '/assignment.png'
@@ -374,7 +376,7 @@ function SubmissionCard({ materialId, dueDate: propDueDate }) {
     if (!materialId) { setLoadingSub(false); return }
     get(`classroom/api/v1/material/get-assignment/${materialId}`)
       .then(res => {
-        setAid(res?.assignment_id || res?.aid)
+        setAid(res?.assignment_id || res?.aid || res?.id)
         // If dueDate wasn't provided via props, try to get it from the assignment response
         if (!propDueDate && (res?.due_date || res?.dueDate)) {
           setDueDate(res?.due_date || res?.dueDate)
@@ -419,6 +421,7 @@ function SubmissionCard({ materialId, dueDate: propDueDate }) {
 
   // Called when user clicks "Submit your work" on the card (after staging)
   async function handleSubmit() {
+    if (!aid) { setError('Assignment not loaded yet. Please wait and try again.'); return }
     if (stagedFiles.length === 0 && !isEditing) { setError('Please add at least one file.'); return }
     if (isPastDue && !isEditing) { setError('Cannot submit: the deadline has passed.'); return }
     setSubmitting(true); setError('')
@@ -592,7 +595,7 @@ function SubmissionCard({ materialId, dueDate: propDueDate }) {
             {/* New submission — files staged */}
             {!hasSubmission && hasStagedFiles && (
               <>
-                <button className="sub-btn sub-btn-primary" onClick={handleSubmit} disabled={submitting}>
+                <button className="sub-btn sub-btn-primary" onClick={handleSubmit} disabled={submitting || !aid}>
                   {submitting ? 'Submitting…' : 'Submit your work'}
                 </button>
                 <button className="sub-btn sub-btn-outline" onClick={() => setShowAddModal(true)}>+ Add more</button>
@@ -730,6 +733,7 @@ function SubmissionCard({ materialId, dueDate: propDueDate }) {
 
 export default function MaterialDetailPage({ materialId, isInstructor, refreshKey, onBack, onEdit, onDelete }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const userEmail = user?.email || ''
   const roleName  = getRoleName(user)
   const isStudent = String(roleName || '').toLowerCase().includes('student')
@@ -837,6 +841,23 @@ export default function MaterialDetailPage({ materialId, isInstructor, refreshKe
                 </div>
               </div>
             </div>
+
+            {(type === 'material' || type === 'assignment') && (
+              <button
+                className="mdp-explain-btn"
+                disabled={!urls.length}
+                onClick={() => navigate(ROUTES.DASHBOARD, {
+                  state: {
+                    activateTab: 'lumos',
+                    explainMaterialId: materialId,
+                    explainMaterialTitle: material?.head_line || 'Material'
+                  }
+                })}
+              >
+                <img src="/generative .png" alt="" style={{ width: 16, height: 16, flexShrink: 0, filter: 'brightness(0) invert(1)' }} />
+                Explain with AI
+              </button>
+            )}
 
             {isInstructor && isAssignment && (
               <button className="mdp-submissions-btn" onClick={() => setShowSubmissions(true)}>

@@ -437,7 +437,6 @@ export default function AnnouncementPage({ secretary = false }) {
         else if (typeof data?.page_num === 'number' && typeof data?.total_pages === 'number') setHasMore(Number(data.page_num) < Number(data.total_pages))
         else setHasMore(incoming.length > 0)
         if (page === 1) await fetchPostStatusAnalysis()
-        if (page === 1) await fetchPostStatusAnalysis()
       }
       setPageNum(page)
     } catch (err) {
@@ -511,21 +510,17 @@ export default function AnnouncementPage({ secretary = false }) {
   }, [])
 
   // initial posts load and reload when secretary prop/user or status filter changes
+  const userId = user?.id || user?.user_id || user?.userId || user?.email || ''
   useEffect(() => {
     setPosts([])
     setPageNum(1)
     fetchPosts(1)
-  }, [secretary, user, secretaryStatusFilter])
+  }, [secretary, userId, secretaryStatusFilter])
 
-  // ensure status analysis is loaded on mount
-    // stable lightbox opener to pass to memoized children
-    const openLightbox = useCallback((url) => {
-      setLightboxUrl(url)
-    }, [setLightboxUrl])
-
-  useEffect(() => {
-    fetchPostStatusAnalysis()
-  }, [])
+  // stable lightbox opener to pass to memoized children
+  const openLightbox = useCallback((url) => {
+    setLightboxUrl(url)
+  }, [setLightboxUrl])
 
   // close any open post/comment menus when clicking outside
   useEffect(() => {
@@ -1617,12 +1612,6 @@ export default function AnnouncementPage({ secretary = false }) {
               const rejected = Number(statusCounts['REJECTED'] ?? statusCounts['REJECT'] ?? 0)
               const drafts = Number(statusCounts['DRAFT'] ?? 0)
               const total = accepted + pending + rejected + drafts
-              if (typeof statusCounts === 'undefined' || statusCounts === null || Object.keys(statusCounts).length === 0) {
-                // Show skeleton or reserved space while loading
-                return (
-                  <div style={{ width: '100%', height: 24, background: 'linear-gradient(90deg, #f3f3f3 25%, #e0e0e0 50%, #f3f3f3 75%)', borderRadius: 8, margin: '12px 0', animation: 'pulse 1.2s infinite' }} />
-                )
-              }
               if (total === 0) {
                 return (
                   <>

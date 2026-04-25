@@ -247,7 +247,7 @@ export default function SubmissionsPage({ materialId: materialIdProp, onBack, ma
     if (!materialId) return
     get(`classroom/api/v1/material/get-assignment/${materialId}`)
       .then(res => {
-        setAid(res?.assignment_id || res?.aid)
+        setAid(res?.assignment_id || res?.aid || res?.id)
         // pick up points from the assignment lookup if not already known
         if (!assignmentPoints && res?.points) setAssignmentPoints(res.points)
       })

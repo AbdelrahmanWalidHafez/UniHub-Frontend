@@ -79,7 +79,7 @@ export default function Usage() {
       setLoading(true)
       setError('')
       try {
-        const response = await get('http://localhost:8082/unihub/usage/api/v1/usage')
+        const response = await get('usage/api/v1/usage')
         if (!mounted) return
 
         setData({

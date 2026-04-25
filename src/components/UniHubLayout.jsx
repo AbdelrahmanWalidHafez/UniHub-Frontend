@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { logout } from '../utils/auth'
 import { getRoleName, ROLES } from '../constants/roles'
 import { ROUTES } from '../constants/routes'
-import { get, getFileAsBlob } from '../utils/api'
+import { getCached, getFileAsBlob } from '../utils/api'
 import AnnouncementPage from './AnnouncementPage'
 import './universityAdmin.css'
 import './unihub.css'
@@ -33,36 +33,35 @@ export default function UniHubLayout() {
   const [universityName, setUniversityName] = useState('')
 
   // Fetch university logo for secretary/instructor/student
+  const universityId = user?.university_id || user?.universityId
+    || user?.tid || user?.uid
+    || (user?.university && (user.university.tid || user.university.uid || user.university.id || user.university.university_id))
+
+  const uniLogoFetchedRef = useRef(false)
   useEffect(() => {
+    if (!universityId || uniLogoFetchedRef.current) return
+    const roleName = getRoleName(user)
+    const isRelevantRole = ['secretary', 'instructor', 'student'].some(r => String(roleName).toLowerCase().includes(r))
+    if (!isRelevantRole) return
+    uniLogoFetchedRef.current = true
     let isMounted = true
     async function fetchUniversityLogo() {
-      if (!user) return
-      // Only for secretary, instructor, student
-      const roleName = getRoleName(user)
-      const allowedRoles = ['secretary', 'instructor', 'student']
-      const isRelevantRole = allowedRoles.some(r => String(roleName).toLowerCase().includes(r))
-      if (!isRelevantRole) return
-      // Get university id
-      const universityId = user.university_id || user.universityId || (user.university && (user.university.tid || user.university.uid || user.universityId))
-      if (!universityId) return
       try {
-        const data = await get(`universitymanagement/api/v1/get-university/${universityId}`)
+        const data = await getCached(`universitymanagement/api/v1/get-university/${universityId}`)
         const logoKey = data?.logo_key || data?.universityLogo || data?.university_logo || data?.logoKey
         if (isMounted && (data?.university_name || data?.universityName)) {
           setUniversityName(data.university_name || data.universityName)
         }
-        if (logoKey) {
+        if (logoKey && isMounted) {
           const blob = await getFileAsBlob(`s3/api/v1/get-file/${logoKey}`)
           const url = URL.createObjectURL(blob)
           if (isMounted) setUniversityLogoUrl(url)
         }
-      } catch (err) {
-        // ignore logo errors
-      }
+      } catch (err) {}
     }
     fetchUniversityLogo()
     return () => { isMounted = false }
-  }, [user])
+  }, [universityId])
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [lumosMenuClosing, setLumosMenuClosing] = useState(false)
@@ -70,6 +69,22 @@ export default function UniHubLayout() {
   const [sidenavHidden, setSidenavHidden] = useState(false)
   const [lumosMenuOpen, setLumosMenuOpen] = useState(false)
   const [lumosNewChat, setLumosNewChat] = useState(false)
+  const [lumosExplainId, setLumosExplainId] = useState(null)
+  const [lumosExplainTitle, setLumosExplainTitle] = useState(null)
+  const location = useLocation()
+
+  useEffect(() => {
+    const state = location.state
+    if (state?.activateTab === 'lumos') {
+      setActiveNav('lumos')
+      setLumosNewChat(false)
+      if (state.explainMaterialId) {
+        setLumosExplainId(state.explainMaterialId)
+        setLumosExplainTitle(state.explainMaterialTitle || null)
+      }
+      window.history.replaceState({}, '')
+    }
+  }, [location.state])
   const roleName = getRoleName(user)
   const isSystemAdmin = roleName === ROLES.SYSTEM_ADMIN
   const isSecretary = String(roleName || '').toLowerCase().includes('secretary') || roleName === 'ROLE_SECRETARY'
@@ -142,7 +157,6 @@ export default function UniHubLayout() {
               <button onClick={() => setActiveNav('colleges')} className={`snav-item ${activeNav === 'colleges' ? 'active' : ''}`}>Colleges</button>
               <button onClick={() => setActiveNav('usage')} className={`snav-item ${activeNav === 'usage' ? 'active' : ''}`}>Usage</button>
               <button onClick={() => setActiveNav('task-manager')} className={`snav-item ${activeNav === 'task-manager' ? 'active' : ''}`}>Task Manager</button>
-              <button onClick={() => setActiveNav('calendar')} className={`snav-item ${activeNav === 'calendar' ? 'active' : ''}`}>Calendar</button>
               <button onClick={() => setActiveNav('chats')} className={`snav-item ${activeNav === 'chats' ? 'active' : ''}`}>Chats</button>
               <button onClick={() => setActiveNav('video-chats')} className={`snav-item ${activeNav === 'video-chats' ? 'active' : ''}`}>Video Chats</button>
               <button onClick={() => setActiveNav('announcements')} className={`snav-item ${activeNav === 'announcements' ? 'active' : ''}`}>Announcements</button>
@@ -185,7 +199,6 @@ export default function UniHubLayout() {
                 </div>
               )}
               <button onClick={() => setActiveNav('task-manager')} className={`snav-item ${activeNav === 'task-manager' ? 'active' : ''}`}>Task Manager</button>
-              <button onClick={() => setActiveNav('calendar')} className={`snav-item ${activeNav === 'calendar' ? 'active' : ''}`}>Calendar</button>
               <button onClick={() => setActiveNav('chats')} className={`snav-item ${activeNav === 'chats' ? 'active' : ''}`}>Chats</button>
               <button onClick={() => setActiveNav('video-chats')} className={`snav-item ${activeNav === 'video-chats' ? 'active' : ''}`}>Video Chats</button>
             </>
@@ -270,7 +283,12 @@ export default function UniHubLayout() {
               </div>
             ) : activeNav === 'lumos' ? (
               <div className="lumos-inline-wrapper">
-                <LumosAI newChat={lumosNewChat} />
+                <LumosAI
+                  newChat={lumosNewChat}
+                  explainMaterialId={lumosExplainId}
+                  explainMaterialTitle={lumosExplainTitle}
+                  onExplainConsumed={() => { setLumosExplainId(null); setLumosExplainTitle(null) }}
+                />
               </div>
             ) : (
               <div className="card" style={{ minHeight: 140 }}>

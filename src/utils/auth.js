@@ -2,6 +2,12 @@ import { AUTH_API_BASE_URL, AUTH_REQUEST_TIMEOUT, LOGOUT_TIMEOUT, TOKEN_REFRESH_
 
 let refreshPromise = null
 let isRefreshing = false
+let lastRefreshedAt = 0
+let sessionRestorePromise = null
+
+export function setSessionRestorePromise(p) {
+	sessionRestorePromise = p
+}
 
 // Module-level storage for auth context functions (injected by AuthProvider)
 let getAccessTokenFn = null
@@ -131,7 +137,8 @@ export async function login(email, password) {
 			} catch {
 				errorData = { message: `HTTP ${response.status}: ${response.statusText}` }
 			}
-			throw new Error(errorData.message || errorData.error || 'Login failed')
+			const firstError = Array.isArray(errorData?.errors) && errorData.errors.length > 0 ? errorData.errors[0] : null
+			throw new Error(firstError || errorData.message || errorData.error || 'Login failed')
 		}
 
 		const data = await response.json()
@@ -171,8 +178,18 @@ export async function login(email, password) {
 }
 
 export async function refreshTokens() {
+	// Wait for session restore to finish first — prevents racing with restoreSession()
+	if (sessionRestorePromise) {
+		await sessionRestorePromise
+	}
+
 	if (isRefreshing && refreshPromise) {
 		return refreshPromise
+	}
+
+	// If a refresh completed in the last 10 seconds, skip — token is already fresh
+	if (Date.now() - lastRefreshedAt < 10000) {
+		return { accessToken: getAccessToken() }
 	}
 
 	isRefreshing = true
@@ -222,7 +239,8 @@ export async function refreshTokens() {
 
 			// Store new access token (refresh token is updated in HttpOnly cookie by backend)
 			setAccessToken(newAccessToken)
-			
+			lastRefreshedAt = Date.now()
+
 			if (data.user) {
 				setUser(data.user)
 			}

@@ -112,7 +112,6 @@ export default function Login({ onLoginSuccess }) {
 										type={showPassword ? 'text' : 'password'}
 										value={form.password}
 										onChange={handleChange}
-										onClick={() => setShowPassword((v) => !v)}
 										placeholder="password"
 										aria-invalid={form.password.trim() === ''}
 										style={{ paddingRight: 44, width: '100%', boxSizing: 'border-box', minHeight: 44, lineHeight: 'normal', display: 'block' }}
