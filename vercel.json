@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/v1/auth/:path*",
-      "destination": "http://34.136.140.99:8083/api/v1/auth/:path*"
+      "destination": "http://34.58.11.82:8083/api/v1/auth/:path*"
     },
     {
       "source": "/unihub/:path*",
-      "destination": "http://34.136.140.99:8082/unihub/:path*"
+      "destination": "http://34.58.11.82:8082/unihub/:path*"
     },
     {
       "source": "/(.*)",
