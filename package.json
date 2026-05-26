@@ -1,0 +1,33 @@
+{
+  "name": "Unihub",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite --port 3000",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@stomp/stompjs": "^7.3.0",
+    "country-state-city": "^3.2.1",
+    "pdfjs-dist": "^5.4.296",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-international-phone": "^4.7.0",
+    "react-markdown": "^10.1.0",
+    "react-pdf": "^10.4.1",
+    "react-phone-input-2": "^2.15.1",
+    "react-router-dom": "^7.13.0",
+    "react-select": "^5.10.2",
+    "react-select-country-list": "^2.2.3",
+    "react-syntax-highlighter": "^16.1.1",
+    "remark-gfm": "^4.0.1",
+    "sockjs-client": "^1.6.1",
+    "world-countries": "^5.1.0"
+  },
+  "devDependencies": {
+    "glob": "^13.0.3",
+    "strip-comments": "^2.0.1",
+    "vite": "^5.0.0"
+  }
+}
