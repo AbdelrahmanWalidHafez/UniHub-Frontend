@@ -10,6 +10,7 @@ import './universityAdmin.css'
 import './unihub.css'
 
 const LumosAI = lazy(() => import('./LumosAI'))
+const TaskManager = lazy(() => import('./TaskManager'))
 
 function stringToColor(str) {
   let hash = 0
