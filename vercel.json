@@ -7,6 +7,10 @@
     {
       "source": "/unihub/:path*",
       "destination": "http://34.58.11.82:8082/unihub/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
