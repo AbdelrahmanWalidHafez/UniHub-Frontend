@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { get, post, put, deleteRequest, formPost, authGet } from '../utils/api'
 import { getUser, getAccessToken } from '../utils/auth'
 import { ROLES, getRoleName } from '../constants/roles'
@@ -8,6 +8,8 @@ import { SkeletonRow, formatDate, getSortIcon } from './TableCommons'
 import './admin-table.css'
 
 export default function Users() {
+  const location = useLocation()
+  const [successMessage, setSuccessMessage] = useState(location.state?.successMessage || '')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -77,6 +79,13 @@ export default function Users() {
   const [batchDeleteLoading, setBatchDeleteLoading] = useState(false)
 
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!successMessage) return
+    window.history.replaceState({}, '')
+    const t = setTimeout(() => setSuccessMessage(''), 4000)
+    return () => clearTimeout(t)
+  }, [successMessage])
 
   const truncate = (s, n = 36) => {
     if (!s) return ''
@@ -470,10 +479,12 @@ export default function Users() {
         throw new Error(`Delete failed: ${response.status}`)
       }
 
+      const count = selectedUsers.size
       setSelectedUsers(new Set())
       setError('')
       setPage(1)
       await fetchUsers(1, debouncedSearch)
+      setSuccessMessage(`${count} user${count !== 1 ? 's' : ''} deleted successfully.`)
     } catch (err) {
       setError(err.message || 'Failed to delete users')
     } finally {
@@ -652,6 +663,14 @@ export default function Users() {
 
   return (
     <div className="admin-table-page">
+      {/* Success Banner */}
+      {successMessage && (
+        <div style={{ background: '#F0FFF4', border: '1.5px solid #B9FF66', borderRadius: 10, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 14, color: '#166534', fontWeight: 600 }}>
+          <span>✓ {successMessage}</span>
+          <button onClick={() => setSuccessMessage('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#166534', fontSize: 18, lineHeight: 1, padding: '0 4px' }}>×</button>
+        </div>
+      )}
+
       {/* Error Banner */}
       {error && (
         <div style={bannerStyle}>

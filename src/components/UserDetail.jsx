@@ -1071,7 +1071,7 @@ export default function UserDetail() {
     setError('')
     try {
       await deleteRequest(`/api/v1/account-management/delete/${user.uid}`)
-      navigate('/')
+      navigate(ROUTES.UNIVERSITY_ADMIN_USERS, { state: { successMessage: `User "${user.first_name || user.email}" was deleted successfully.` } })
     } catch (err) {
       setError(err.message || 'Failed to delete user')
       setShowDeleteModal(false)
