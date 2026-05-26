@@ -1,6 +1,11 @@
-export const AUTH_API_BASE_URL = import.meta.env.VITE_AUTH_API_BASE_URL || 'http://localhost:8083/api/v1/auth'
+// In dev, prefer same-origin relative URLs so Vite proxy can forward to backend.
+export const AUTH_API_BASE_URL =
+  import.meta.env.VITE_AUTH_API_BASE_URL ||
+  (import.meta.env.DEV ? '/api/v1/auth' : 'http://localhost:8083/api/v1/auth')
 
-export const API_GATEWAY_BASE_URL = import.meta.env.VITE_API_GATEWAY_BASE_URL || 'http://localhost:8082/unihub'
+export const API_GATEWAY_BASE_URL =
+  import.meta.env.VITE_API_GATEWAY_BASE_URL ||
+  (import.meta.env.DEV ? '/unihub' : 'http://localhost:8082/unihub')
 
 export const REQUEST_TIMEOUT = parseInt(import.meta.env.VITE_REQUEST_TIMEOUT_MS || '30000', 10)
 

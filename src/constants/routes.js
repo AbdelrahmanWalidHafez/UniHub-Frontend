@@ -18,6 +18,8 @@ export const ROUTES = {
   ACTIVATE_ACCOUNT: '/activate-account',
   ACCOUNT: '/account',
   LUMOS_AI: '/lumos-ai',
+  CHATS: '/chats',
+  VIDEO_CHAT: '/video-chat',
   CLASSROOM: '/classroom/:id',
   CLASSROOM_MATERIAL: '/classroom/:id/material/:materialId',
   CLASSROOM_CALENDAR: '/classroom/:id/calendar',

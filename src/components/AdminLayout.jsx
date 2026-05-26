@@ -20,8 +20,6 @@ const NAV_ITEMS = [
   { label: 'Users',      route: ROUTES.UNIVERSITY_ADMIN_USERS },
   { label: 'Colleges',   route: ROUTES.UNIVERSITY_ADMIN_COLLEGES },
   { label: 'Usage',      route: ROUTES.UNIVERSITY_ADMIN_USAGE },
-  { label: 'Chats',      route: null },
-  { label: 'Video Chats',route: null },
 ]
 
 export default function AdminLayout() {
@@ -116,11 +114,11 @@ export default function AdminLayout() {
       <div className="uni-admin-main">
         <header className="uni-admin-header">
           <div className="header-left" />
-          <div className="header-center">UniHub</div>
+          <div className="header-center"><img src="/logo.png" alt="UniHub" style={{ width: 28, height: 28, objectFit: 'contain', verticalAlign: 'middle', marginRight: 8 }} />UniHub</div>
           <div className="header-right">
             <div
               className="user-avatar"
-              style={{ backgroundColor: avatarColor, color: '#fff', cursor: 'pointer' }}
+              style={{ backgroundColor: '#1E3A5F', color: '#fff', cursor: 'pointer' }}
               title={firstName}
               onClick={() => setMenuOpen(s => !s)}
               ref={avatarRef}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../utils/auth'
 import { authGet } from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
@@ -12,6 +12,11 @@ export default function Login({ onLoginSuccess }) {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
 	const [showPassword, setShowPassword] = useState(false)
+	const navigate = useNavigate()
+
+	function handleNavTo(path) {
+		setTimeout(() => navigate(path), 380)
+	}
 
 	function handleChange(e) {
 		const { name, value } = e.target
@@ -68,17 +73,73 @@ export default function Login({ onLoginSuccess }) {
 		<div className="login-page-wrapper">
 			<div className="login-page">
 				<div className="login-left">
-					<div className="login-logo-container">
-						<img src="/logo.png" alt="UniHub Logo" className="login-logo" />
-					</div>
-					<div className="login-branding">
-						<h1>UniHub</h1>
-						<p>Connecting Knowledge, Empowering Minds.</p>
+					{/* floating orbs */}
+					<div className="ll-orb ll-orb-1" />
+					<div className="ll-orb ll-orb-2" />
+					<div className="ll-orb ll-orb-3" />
+
+					<div className="ll-content">
+						{/* logo badge */}
+						<div className="ll-badge">
+							<img src="/logo.png" alt="UniHub" className="ll-badge-img" />
+							<span className="ll-badge-name">UniHub Platform</span>
+						</div>
+
+						{/* headline */}
+						<div className="ll-headline">
+							<div className="ll-headline-line">Your campus,</div>
+							<div className="ll-headline-line ll-headline-lime">reimagined.</div>
+						</div>
+
+						<p className="ll-tagline">One platform. Every tool your university needs — from classrooms to conversations.</p>
+
+						{/* feature grid */}
+						<div className="ll-features">
+							<div className="ll-feat">
+								<div className="ll-feat-dot" />
+								<span>Messages that hit different — rooms, threads &amp; vibes</span>
+							</div>
+							<div className="ll-feat">
+								<div className="ll-feat-dot" />
+								<span>See your professor's face, not just their slides</span>
+							</div>
+							<div className="ll-feat">
+								<div className="ll-feat-dot" />
+								<span>Lumos knows the answer before you finish typing</span>
+							</div>
+							<div className="ll-feat">
+								<div className="ll-feat-dot" />
+								<span>Deadlines don't stand a chance against this dashboard</span>
+							</div>
+						</div>
+
+						{/* stats */}
+						<div className="ll-stats">
+							<div className="ll-stat">
+								<div className="ll-stat-val">50K+</div>
+								<div className="ll-stat-lbl">Students</div>
+							</div>
+							<div className="ll-stat-div" />
+							<div className="ll-stat">
+								<div className="ll-stat-val">200+</div>
+								<div className="ll-stat-lbl">Universities</div>
+							</div>
+							<div className="ll-stat-div" />
+							<div className="ll-stat">
+								<div className="ll-stat-val">99%</div>
+								<div className="ll-stat-lbl">Uptime</div>
+							</div>
+						</div>
 					</div>
 				</div>
 
 				<div className="login-right">
+					<div className="ll-right-orb ll-right-orb-1" />
+					<div className="ll-right-orb ll-right-orb-2" />
 					<div className="login-form-container">
+						<div className="ll-right-logo-wrap">
+							<img src="/logo.png" alt="UniHub" className="ll-right-logo" />
+						</div>
 						<h2>Welcome Back</h2>
 						<p className="login-subtitle">Sign in to your UniHub account</p>
 

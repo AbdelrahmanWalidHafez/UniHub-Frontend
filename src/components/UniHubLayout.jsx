@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react'
+import React, { useState, useRef, useEffect, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { logout } from '../utils/auth'
@@ -8,7 +8,8 @@ import { getCached, getFileAsBlob } from '../utils/api'
 import AnnouncementPage from './AnnouncementPage'
 import './universityAdmin.css'
 import './unihub.css'
-import LumosAI from './LumosAI'
+
+const LumosAI = lazy(() => import('./LumosAI'))
 
 function stringToColor(str) {
   let hash = 0
@@ -156,9 +157,6 @@ export default function UniHubLayout() {
               <button onClick={() => setActiveNav('users')} className={`snav-item ${activeNav === 'users' ? 'active' : ''}`}>Users</button>
               <button onClick={() => setActiveNav('colleges')} className={`snav-item ${activeNav === 'colleges' ? 'active' : ''}`}>Colleges</button>
               <button onClick={() => setActiveNav('usage')} className={`snav-item ${activeNav === 'usage' ? 'active' : ''}`}>Usage</button>
-              <button onClick={() => setActiveNav('task-manager')} className={`snav-item ${activeNav === 'task-manager' ? 'active' : ''}`}>Task Manager</button>
-              <button onClick={() => setActiveNav('chats')} className={`snav-item ${activeNav === 'chats' ? 'active' : ''}`}>Chats</button>
-              <button onClick={() => setActiveNav('video-chats')} className={`snav-item ${activeNav === 'video-chats' ? 'active' : ''}`}>Video Chats</button>
               <button onClick={() => setActiveNav('announcements')} className={`snav-item ${activeNav === 'announcements' ? 'active' : ''}`}>Announcements</button>
             </>
           ) : (
@@ -198,9 +196,13 @@ export default function UniHubLayout() {
                   </div>
                 </div>
               )}
-              <button onClick={() => setActiveNav('task-manager')} className={`snav-item ${activeNav === 'task-manager' ? 'active' : ''}`}>Task Manager</button>
-              <button onClick={() => setActiveNav('chats')} className={`snav-item ${activeNav === 'chats' ? 'active' : ''}`}>Chats</button>
-              <button onClick={() => setActiveNav('video-chats')} className={`snav-item ${activeNav === 'video-chats' ? 'active' : ''}`}>Video Chats</button>
+              {(isInstructor || isStudent) && (
+                <button onClick={() => setActiveNav('task-manager')} className={`snav-item ${activeNav === 'task-manager' ? 'active' : ''}`}>Task Manager</button>
+              )}
+              <button onClick={() => navigate('/chats')} className="snav-item">Chats</button>
+              {(isInstructor || isStudent) && (
+                <button onClick={() => window.open('/video-chat', '_blank')} className="snav-item">Video Chats</button>
+              )}
             </>
           )}
         </nav>
@@ -215,13 +217,13 @@ export default function UniHubLayout() {
                     alt="University logo"
                     className="header-univ-logo"
                     onClick={() => setSidenavHidden(false)}
-                    style={{ cursor: 'pointer', width: 40, height: 40, borderRadius: '50%' }}
+                    style={{ cursor: 'pointer', width: 54, height: 54, borderRadius: '50%' }}
                     aria-label="Show navigation"
                   />
                 ) : (
                   <div
                     className="sidenav-logo-placeholder"
-                    style={{ backgroundColor: '#9CA3AF', color: '#fff', cursor: 'pointer', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 800 }}
+                    style={{ backgroundColor: '#9CA3AF', color: '#fff', cursor: 'pointer', width: 54, height: 54, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800 }}
                     onClick={() => setSidenavHidden(false)}
                     aria-label="Show navigation"
                   >
@@ -230,31 +232,16 @@ export default function UniHubLayout() {
                 )}
                   <div className="active-page-label">{activeNav.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</div>
                 </div>
-                <div className="header-center">UniHub</div>
+                <div className="header-center"><img src="/logo.png" alt="UniHub" style={{ width: 28, height: 28, objectFit: 'contain', verticalAlign: 'middle', marginRight: 8 }} />UniHub</div>
               <div className="header-right" style={{ alignItems: 'center', gap: 12, display: 'flex' }}>
                 <div
                   className="user-avatar"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: '#fff', 
-                    cursor: 'pointer',
-                    width: 56,
-                    height: 56,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 600,
-                    fontSize: 18,
-                    transition: 'transform 0.2s ease'
-                  }}
+                  style={{ backgroundColor: '#1E3A5F', color: '#fff', cursor: 'pointer' }}
                   title={firstName}
                   onClick={() => setMenuOpen((s) => !s)}
                   ref={avatarRef}
                   aria-haspopup="true"
                   aria-expanded={menuOpen}
-                  onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-                  onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
                 >
                   {initial.toUpperCase()}
                 </div>
@@ -282,14 +269,16 @@ export default function UniHubLayout() {
                 <AnnouncementPage secretary={activeNav === 'activity-management'} />
               </div>
             ) : activeNav === 'lumos' ? (
-              <div className="lumos-inline-wrapper">
-                <LumosAI
-                  newChat={lumosNewChat}
-                  explainMaterialId={lumosExplainId}
-                  explainMaterialTitle={lumosExplainTitle}
-                  onExplainConsumed={() => { setLumosExplainId(null); setLumosExplainTitle(null) }}
-                />
-              </div>
+              <Suspense fallback={null}>
+                <div className="lumos-inline-wrapper">
+                  <LumosAI
+                    newChat={lumosNewChat}
+                    explainMaterialId={lumosExplainId}
+                    explainMaterialTitle={lumosExplainTitle}
+                    onExplainConsumed={() => { setLumosExplainId(null); setLumosExplainTitle(null) }}
+                  />
+                </div>
+              </Suspense>
             ) : (
               <div className="card" style={{ minHeight: 140 }}>
                 <h2 style={{ margin: 0, fontWeight: 800, fontSize: 18, marginBottom: 8 }}>{activeNav.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</h2>
