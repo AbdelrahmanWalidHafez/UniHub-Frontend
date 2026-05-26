@@ -25,9 +25,13 @@ export async function apiCall(url, options = {}) {
 
 	let fullUrl = url
 	if (!url.startsWith('http://') && !url.startsWith('https://')) {
-		const cleanPath = url.startsWith('/') ? url.slice(1) : url
-		const baseUrl = API_GATEWAY_BASE_URL.endsWith('/') ? API_GATEWAY_BASE_URL.slice(0, -1) : API_GATEWAY_BASE_URL
-		fullUrl = `${baseUrl}/${cleanPath}`
+		const isAbsolutePath = url.startsWith('/')
+		if (isAbsolutePath) {
+			fullUrl = `${window.location.origin}${url}`
+		} else {
+			const baseUrl = API_GATEWAY_BASE_URL.endsWith('/') ? API_GATEWAY_BASE_URL.slice(0, -1) : API_GATEWAY_BASE_URL
+			fullUrl = `${baseUrl}/${url}`
+		}
 	}
 
 	const defaultHeaders = {}
@@ -253,6 +257,7 @@ export async function authPost(endpoint, data, options = {}) {
 		body: JSON.stringify(data),
 	})
 }
+
 export async function authPatch(endpoint, data, options = {}) {
   const { AUTH_API_BASE_URL } = await import('./config.js')
   const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint

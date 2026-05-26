@@ -128,7 +128,7 @@ export default function Solutions() {
       
       e.preventDefault()
       scroller.scrollBy({ top: e.deltaY, behavior: 'auto' })
-      updateThumb()
+      scheduleUpdate()
     }
 
     
