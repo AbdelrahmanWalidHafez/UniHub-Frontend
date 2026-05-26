@@ -166,20 +166,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background-color: #1E3A5F;
+  color: #fff;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 800;
   flex-shrink: 0;
   cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.user-avatar:hover {
-  transform: scale(1.05);
 }
 
 .navbar-actions {

@@ -1401,7 +1401,7 @@ export default function AnnouncementPage({ secretary = false }) {
                       ) : null}
                     </div>
                   ) : null}
-                  <div style={{ width: 44, height: 44, borderRadius: 22, background: '#F87171', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{p.author ? p.author.charAt(0).toUpperCase() : 'U'}</div>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#F87171', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>{p.author ? p.author.charAt(0).toUpperCase() : 'U'}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ fontWeight: 800 }}>{p.author}</div>

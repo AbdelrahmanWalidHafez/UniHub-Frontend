@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom'
 import NavBar from './components/NavBar'
-import About from './components/About'
-import Solutions from './components/Solutions'
-import Contact from './components/Contact'
-import SuccessPartners from './components/SuccessPartners'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
+
+const About = lazy(() => import('./components/About'))
+const Solutions = lazy(() => import('./components/Solutions'))
+const Contact = lazy(() => import('./components/Contact'))
+const SuccessPartners = lazy(() => import('./components/SuccessPartners'))
 
 const Pricing = lazy(() => import('./components/Pricing'))
 const Login = lazy(() => import('./components/Login'))
@@ -33,6 +34,8 @@ const CheckoutFailure = lazy(() => import('./components/CheckoutFailure'))
 const LumosAI = lazy(() => import('./components/LumosAI'))
 const ClassroomDetail = lazy(() => import('./components/ClassroomDetail'))
 const Classroom = lazy(() => import('./components/Classroom'))
+const ChatsPage = lazy(() => import('./components/ChatsPage'))
+const VideoChats = lazy(() => import('./components/VideoChats'))
 import { ROUTES } from './constants/routes'
 import { ROLES, getRoleName } from './constants/roles'
 import { logout } from './utils/auth'
@@ -192,16 +195,22 @@ export default function App() {
     }
   }
 
+  const [loginSplash, setLoginSplash] = useState(false)
+
   const handleLoginSuccess = (userData) => {
-    setUser(userData)
-    const roleName = getRoleName(userData)
-    if (roleName === ROLES.CUSTOMER_SERVICE) {
-      navigate(ROUTES.CUSTOMER_SERVICE)
-    } else if (roleName === ROLES.SYSTEM_ADMIN) {
-      navigate(ROUTES.UNIVERSITY_ADMIN)
-    } else {
-      navigate(ROUTES.DASHBOARD)
-    }
+    setLoginSplash(true)
+    setTimeout(() => {
+      setUser(userData)
+      const roleName = getRoleName(userData)
+      if (roleName === ROLES.CUSTOMER_SERVICE) {
+        navigate(ROUTES.CUSTOMER_SERVICE)
+      } else if (roleName === ROLES.SYSTEM_ADMIN) {
+        navigate(ROUTES.UNIVERSITY_ADMIN)
+      } else {
+        navigate(ROUTES.DASHBOARD)
+      }
+      setTimeout(() => setLoginSplash(false), 400)
+    }, 600)
   }
 
   const handleLogout = () => {
@@ -219,6 +228,11 @@ export default function App() {
 
   return (
     <Suspense fallback={null}>
+    {loginSplash && (
+      <div className="login-splash-cover">
+        <img src="/logo.png" alt="UniHub" className="login-splash-logo" />
+      </div>
+    )}
     <Routes>
       <Route
         path={ROUTES.HOME}
@@ -495,6 +509,24 @@ export default function App() {
             <PageTransition>
               <Classroom />
             </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path={ROUTES.CHATS}
+        element={(
+          <ProtectedRoute allowedRoles={['ROLE_STUDENT', 'ROLE_INSTRUCTOR', 'ROLE_SECRETARY']}>
+            <PageTransition>
+              <ChatsPage fullPage />
+            </PageTransition>
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path={ROUTES.VIDEO_CHAT}
+        element={(
+          <ProtectedRoute allowedRoles={['ROLE_STUDENT', 'ROLE_INSTRUCTOR']}>
+            <VideoChats />
           </ProtectedRoute>
         )}
       />

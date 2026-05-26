@@ -8,25 +8,30 @@
   <body>
     <div id="splash" class="splash" aria-hidden="true">
       <div class="splash-inner">
-        <img src="/logo.png" alt="unihub" class="splash-logo" />
+        <img id="splash-logo" src="/logo.png" alt="" class="splash-logo" style="opacity:0" />
       </div>
     </div>
     <script>
       (function(){
         const splash = document.getElementById('splash')
+        const logo = document.getElementById('splash-logo')
         if (!splash) return
-        // prevent scroll while splash is visible
         const prevOverflow = document.body.style.overflow
         document.body.style.overflow = 'hidden'
+        function showLogo() {
+          if (logo) { logo.style.opacity = ''; logo.style.animation = 'splashLogoPop .4s cubic-bezier(.34,1.56,.64,1) both'; }
+        }
         function hide() {
           if (!splash) return
           splash.classList.add('splash--hide')
-          // restore scrolling after fade
-          setTimeout(() => { try { splash.remove() } catch(e){}; document.body.style.overflow = prevOverflow }, 600)
+          setTimeout(() => { try { splash.remove() } catch(e){}; document.body.style.overflow = prevOverflow }, 500)
+        }
+        if (logo) {
+          if (logo.complete) { showLogo(); }
+          else { logo.onload = showLogo; logo.onerror = showLogo; }
         }
         if (document.readyState === 'complete') hide()
         else window.addEventListener('load', hide)
-        // safety: hide after 4s even if load didn't fire
         setTimeout(hide, 4000)
       })()
     </script>

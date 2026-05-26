@@ -493,7 +493,7 @@ export default function LumosAI({ newChat: newChatProp, explainMaterialId: expla
         {!hasMessages ? (
           <div className={`lumos-empty${fading ? ' lumos-fade-out' : ''}`}>
             <div className="lumos-brand">
-              <img src="/lumosAi.png" alt="lumos" className="lumos-logo" />
+              <img src="/lumosAI.png" alt="lumos" className="lumos-logo" />
               <div className="lumos-slogan">Connecting Knowledge, Empowering Minds.</div>
             </div>
             <div className="lumos-capabilities">
