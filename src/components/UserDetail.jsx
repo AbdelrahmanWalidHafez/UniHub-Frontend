@@ -811,7 +811,7 @@ export default function UserDetail() {
   const fetchRoles = async () => {
     setRolesLoading(true)
     try {
-      const data = await get('http://localhost:3000/api/v1/roles/get-roles')
+      const data = await get('/api/v1/roles/get-roles')
       const rolesList = data.roles || []
       setRoles(rolesList)
     } catch (err) {
@@ -869,7 +869,7 @@ export default function UserDetail() {
     setIsGpaQuickEdit(false)
     setQuickGpaError('')
     try {
-      const data = await get(`http://localhost:3000/api/v1/account-management/get-user/${id}`)
+      const data = await get(`/api/v1/account-management/get-user/${id}`)
       setUser({
         uid: data.user_id || data.uid || '',
         email: data.email || '',
@@ -998,7 +998,7 @@ export default function UserDetail() {
           payload.gpa = parseFloat(user.gpa)
         }
 
-        await post('http://localhost:3000/api/v1/account-management/create', payload)
+        await post('/api/v1/account-management/create', payload)
         setSuccess('User created successfully!')
         setTimeout(() => {
           navigate('/university-admin')
@@ -1018,7 +1018,7 @@ export default function UserDetail() {
           payload.college_id = user.collegeId
         }
 
-        await put(`http://localhost:3000/api/v1/account-management/update-user/${user.uid}`, payload)
+        await put(`/api/v1/account-management/update-user/${user.uid}`, payload)
         setSuccess('User updated successfully!')
         setIsEditing(false)
         setTimeout(() => {
@@ -1052,7 +1052,7 @@ export default function UserDetail() {
     setSuccess('')
 
     try {
-      await patch(`http://localhost:3000/api/v1/account-management/update-user-gpa/${user.uid}`, parsedGpa)
+      await patch(`/api/v1/account-management/update-user-gpa/${user.uid}`, parsedGpa)
       setSuccess('GPA updated successfully!')
       setIsGpaQuickEdit(false)
       setUser((prev) => ({ ...prev, gpa: String(parsedGpa) }))
@@ -1070,7 +1070,7 @@ export default function UserDetail() {
     setDeleting(true)
     setError('')
     try {
-      await deleteRequest(`http://localhost:3000/api/v1/account-management/delete/${user.uid}`)
+      await deleteRequest(`/api/v1/account-management/delete/${user.uid}`)
       navigate('/')
     } catch (err) {
       setError(err.message || 'Failed to delete user')

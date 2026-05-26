@@ -135,7 +135,7 @@ export default function Users() {
 
   const fetchRoles = async () => {
     try {
-      const data = await get('http://localhost:3000/api/v1/roles/get-roles')
+      const data = await get('/api/v1/roles/get-roles')
       let roleList = []
       if (Array.isArray(data)) roleList = data
       else if (Array.isArray(data?.roles)) roleList = data.roles
@@ -256,7 +256,7 @@ export default function Users() {
       let endpoint = ''
       if (search) {
         const params = new URLSearchParams({ search_text: search.trim() })
-        endpoint = `http://localhost:3000/api/v1/account-management/search-user?${params.toString()}`
+        endpoint = `/api/v1/account-management/search-user?${params.toString()}`
       } else {
         const params = new URLSearchParams({ 
           page_num: pageNum, 
@@ -275,7 +275,7 @@ export default function Users() {
           params.append('cid', collegeFilter)
         }
         
-        endpoint = `http://localhost:3000/api/v1/account-management/get-users?${params.toString()}`
+        endpoint = `/api/v1/account-management/get-users?${params.toString()}`
       }
 
       const data = await get(endpoint)
@@ -380,7 +380,7 @@ export default function Users() {
       const formData = new FormData()
       formData.append('file', importFile)
 
-      const response = await fetch(`http://localhost:3000/api/v1/account-management/import`, {
+      const response = await fetch(`/api/v1/account-management/import`, {
         method: 'POST',
         body: formData,
         headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {},
@@ -456,7 +456,7 @@ export default function Users() {
     try {
       const accessToken = getAccessToken()
       const userIds = Array.from(selectedUsers)
-      const response = await fetch(`http://localhost:3000/api/v1/account-management/delete-batch`, {
+      const response = await fetch(`/api/v1/account-management/delete-batch`, {
         method: 'DELETE',
         body: JSON.stringify(userIds),
         headers: {

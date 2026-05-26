@@ -372,7 +372,7 @@ export default function Classroom() {
 
             <button
               className="nav-item"
-              onClick={() => { window.location.href = 'http://localhost:3000/dashboard' }}
+              onClick={() => { window.location.href = '/dashboard' }}
             >
               <img src="/dashboard.png" alt="Dashboard" className="nav-icon" />
               <span>Dashboard</span>
