@@ -1,16 +1,16 @@
 {
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/v1/auth/:path*",
-      "destination": "http://34.136.140.99:8083/api/v1/auth/:path*"
+      "src": "/api/v1/auth/(.*)",
+      "dest": "http://34.136.140.99:8083/api/v1/auth/$1"
     },
     {
-      "source": "/unihub/:path*",
-      "destination": "http://34.58.11.82:8082/unihub/:path*"
+      "src": "/unihub/(.*)",
+      "dest": "http://34.58.11.82:8082/unihub/$1"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
