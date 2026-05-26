@@ -280,6 +280,10 @@ export default function UniHubLayout() {
                   />
                 </div>
               </Suspense>
+            ) : activeNav === 'task-manager' ? (
+              <Suspense fallback={null}>
+                <TaskManager />
+              </Suspense>
             ) : (
               <div className="card" style={{ minHeight: 140 }}>
                 <h2 style={{ margin: 0, fontWeight: 800, fontSize: 18, marginBottom: 8 }}>{activeNav.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</h2>
