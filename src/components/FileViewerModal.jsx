@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { getFileAsBlob } from '../utils/api'
 
 export default function FileViewerModal({ fileKey, onClose, title }) {
@@ -60,7 +61,7 @@ export default function FileViewerModal({ fileKey, onClose, title }) {
     return false
   }
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
@@ -69,10 +70,12 @@ export default function FileViewerModal({ fileKey, onClose, title }) {
         right: 0,
         bottom: 0,
         backgroundColor: 'rgba(0,0,0,0.8)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000,
+        zIndex: 9999,
         padding: '20px'
       }}
       onClick={onClose}
@@ -352,6 +355,7 @@ export default function FileViewerModal({ fileKey, onClose, title }) {
           100% { transform: rotate(360deg); }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   )
 }
