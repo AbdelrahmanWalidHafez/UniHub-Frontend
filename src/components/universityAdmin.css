@@ -117,8 +117,8 @@
 .user-menu-item:hover{background:rgba(0,0,0,0.04);transform:none}
 .user-menu-icon{width:34px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
 .user-menu-icon img{width:20px;height:20px;display:block}
-.uni-admin-content{padding:24px 32px;background:#efefef;flex:1;min-height:0;display:flex;flex-direction:column;border-top-left-radius:87px;border-top-right-radius:87px;border-bottom-left-radius:0;border-bottom-right-radius:0;margin:12px 0 0 18px;overflow:hidden}
-.univ-details-card{background:transparent;padding:20px 12px 40px 12px;overflow-y:auto;max-height:calc(100vh - 220px)}
+.uni-admin-content{padding:24px 32px;background:#efefef;flex:1;min-height:0;display:flex;flex-direction:column;border-top-left-radius:87px;border-top-right-radius:87px;border-bottom-left-radius:0;border-bottom-right-radius:0;margin:12px 0 0 18px;overflow-y:auto}
+.univ-details-card{background:transparent;padding:20px 12px 40px 12px;overflow-y:visible;}
 .univ-details-card{
 	/* promote to own layer to reduce repaint during scroll */
 	-webkit-transform: translateZ(0);

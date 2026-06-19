@@ -141,7 +141,7 @@
 
 /* Attachment visuals */
 .attachment-wrapper{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;text-align:center}
-.attachment-img{display:block;border-radius:12px;cursor:zoom-in;width:100%;max-width:680px;object-fit:contain;margin:12px auto;transform:translateX(-6%)}
+.attachment-img{display:block;border-radius:12px;cursor:zoom-in;width:100%;max-width:680px;object-fit:cover;margin:12px auto;}
 .attachment-chip{display:inline-block}
 
 /* Lightbox */

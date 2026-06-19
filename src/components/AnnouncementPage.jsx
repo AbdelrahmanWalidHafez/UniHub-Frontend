@@ -135,7 +135,7 @@ const AttachmentRendererMemo = React.memo(function AttachmentRendererMemo({ url,
 
   const containerStyle = { display: 'flex', justifyContent: 'center', marginTop: 12 }
   const innerStyle = { width: '100%', maxWidth: 680, display: 'flex', justifyContent: 'center', paddingLeft: 0 }
-  const mediaCommon = { width: '100%', maxWidth: 680, maxHeight: '70vh', borderRadius: 12, objectFit: 'contain', display: 'block', margin: '0 auto' }
+  const mediaCommon = { width: '100%', maxWidth: 680, maxHeight: '70vh', borderRadius: 12, objectFit: 'cover', display: 'block', margin: '0 auto' }
 
   if (decided === 'image' || (decided === 'unknown' && fallbackToImage)) {
     return (

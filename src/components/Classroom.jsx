@@ -268,11 +268,19 @@ export default function Classroom() {
         <div className={`classroom-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
           <nav className="sidebar-nav">
             <button
-              className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
-              onClick={() => setActiveTab('home')}
+              className="nav-item"
+              onClick={() => { window.location.href = '/dashboard' }}
             >
               <img src="/house.png" alt="Home" className="nav-icon" />
               <span>Home</span>
+            </button>
+
+            <button
+              className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
+              onClick={() => setActiveTab('home')}
+            >
+              <img src="/classroom-icon.png" alt="Courses" className="nav-icon" />
+              <span>Courses</span>
             </button>
 
             {/* Teaching Section */}
@@ -370,13 +378,6 @@ export default function Classroom() {
                 )}
               </div>
 
-            <button
-              className="nav-item"
-              onClick={() => { window.location.href = '/dashboard' }}
-            >
-              <img src="/dashboard.png" alt="Dashboard" className="nav-icon" />
-              <span>Dashboard</span>
-            </button>
           </nav>
         </div>
 
