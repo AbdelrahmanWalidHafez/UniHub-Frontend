@@ -835,7 +835,7 @@
   padding: 60px 0;
   color: #6B7280;
 }
-.tm-empty-icon { font-size: 40px; margin-bottom: 12px; }
+.tm-empty-icon { width: 64px; height: 64px; margin-bottom: 12px; object-fit: contain; }
 .tm-empty p { font-size: 14px; margin: 0; }
 
 /* Filter divider */

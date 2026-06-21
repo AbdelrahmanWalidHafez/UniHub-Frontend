@@ -150,7 +150,8 @@ function TaskForm({ initial, onSave, onCancel, loading }) {
     const e = {}
     if (!form.title.trim()) e.title = 'Title is required'
     else if (form.title.length > 60) e.title = 'Max 60 characters'
-    if (form.description && form.description.length > 1000) e.description = 'Max 1000 characters'
+    if (!form.description.trim()) e.description = 'Description is required'
+    else if (form.description.length > 1000) e.description = 'Max 1000 characters'
     if (!form.priority) e.priority = 'Priority is required'
     if (!form.due_date) e.due_date = 'Due date is required'
     else if (!isEdit && new Date(form.due_date) < new Date(new Date().toDateString())) e.due_date = 'Due date must be today or later'
@@ -190,7 +191,7 @@ function TaskForm({ initial, onSave, onCancel, loading }) {
           className={`tm-textarea${errors.description ? ' error' : ''}`}
           value={form.description}
           onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-          placeholder="Optional description..."
+          placeholder="Description (required)"
           maxLength={1000}
           rows={3}
         />
@@ -396,7 +397,7 @@ export default function TaskManager() {
       setFormLoading(true)
       const body = {
         title: form.title,
-        description: form.description || undefined,
+        description: form.description,
         priority: form.priority,
         due_date: `${form.due_date}T23:59:59`,
       }
@@ -415,7 +416,7 @@ export default function TaskManager() {
       setFormLoading(true)
       const body = {
         title: form.title,
-        description: form.description || undefined,
+        description: form.description,
         priority: form.priority,
         due_date: `${form.due_date}T23:59:59`,
       }
@@ -613,7 +614,7 @@ export default function TaskManager() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="tm-empty">
-          <div className="tm-empty-icon">📋</div>
+          <img src="/task.png" alt="No tasks" className="tm-empty-icon" />
           <p>{tasks.length === 0 ? 'No tasks yet. Create your first task!' : 'No tasks match the current filters.'}</p>
         </div>
       ) : (
