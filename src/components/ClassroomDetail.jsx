@@ -117,17 +117,17 @@ export default function ClassroomDetail({ forceTab }) {
         }
       }
 
+      try {
+        const response = await get('classroom/api/v1/classroom/get-enrolled-classes')
+        enrolledData = response?.class_rooms || []
+      } catch (err) {
+        console.error('Error fetching enrolled classes:', err)
+      }
+
       if (isStudent) {
         try {
-          const response = await get('classroom/api/v1/classroom/get-enrolled-classes')
-          enrolledData = response?.class_rooms || []
-        } catch (err) {
-          console.error('Error fetching enrolled classes:', err)
-        }
-
-        try {
           const archivedResponse = await get('classroom/api/v1/classroom/fetch-archived-classes')
-          archivedData = archivedResponse?.class_rooms || []
+          archivedData = [...archivedData, ...(archivedResponse?.class_rooms || [])]
         } catch (err) {
           console.error('Error fetching archived classes:', err)
         }
