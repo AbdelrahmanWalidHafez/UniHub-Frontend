@@ -756,7 +756,7 @@ export default function UserDetail() {
     const fetchCollegeDetails = async () => {
       if (user?.cid) {
         try {
-          const data = await get(`universitymanagement/api/v1/colleges/system-admin/get-college/${user.cid}`)
+          const data = await get(`universitymanagement/api/v1/colleges/public/get-college/${user.cid}`)
           setCollegeDetails(data)
         } catch (err) {
           console.error('Failed to fetch college details:', err)
