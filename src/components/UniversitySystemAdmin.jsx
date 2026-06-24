@@ -157,7 +157,7 @@ export default function UniversitySystemAdmin() {
                       const pid = plan.subscription_plan_id
                       if (pid) navigate(`/system-admin/subscription-plan/${pid}`)
                     }
-                    return <Pricing hideHeader={true} buyButtonText={buyText} onSelectPlan={handleSelectPlan} subscribedPlanId={university?.subscriptionPlanNormalized?.plan_id} />
+                    return <Pricing hideHeader={true} buyButtonText={buyText} onSelectPlan={handleSelectPlan} subscribedPlanId={university?.subscriptionPlanNormalized?.plan_id} subscribedPlanPrice={planDetails?.subscription_plan_price} />
                   })()}
                 </div>
               </div>

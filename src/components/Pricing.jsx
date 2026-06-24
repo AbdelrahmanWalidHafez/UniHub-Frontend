@@ -5,14 +5,15 @@ import { getUser } from '../utils/auth'
 import { getRoleName, ROLES } from '../constants/roles'
 import { MOUNT_ANIMATION_DELAY } from '../utils/config'
 
-export default function Pricing({ 
+export default function Pricing({
 	buyButtonText = 'Buy',
 	onAddNewPlan = null,
 	showAddPlanButton = false,
 	sectionId = 'pricing',
 	hideHeader = false,
 	onSelectPlan = null,
-	subscribedPlanId = null
+	subscribedPlanId = null,
+	subscribedPlanPrice = null
 }) {
 	const [plans, setPlans] = useState([])
 	const [selectedPlan, setSelectedPlan] = useState(null)
@@ -178,7 +179,12 @@ export default function Pricing({
 									onClick={() => {}}
 								>
 									<div className="card-body">
-										<h4 className="card-title">{plan.subscription_plan_name}</h4>
+										<div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+											<h4 className="card-title" style={{ margin: 0 }}>{plan.subscription_plan_name}</h4>
+											{plan.subscription_plan_id === subscribedPlanId && (
+												<span style={{ fontSize: 11, fontWeight: 700, background: '#B9FF66', color: '#1a1a1a', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>Current</span>
+											)}
+										</div>
 										<p className="card-blurb">{plan.subscription_plan_description}</p>
 										<div className="card-supports">
 											<span className="supports-arrow">➤</span>
@@ -211,7 +217,9 @@ export default function Pricing({
 													type="button"
 													onClick={() => onSelectPlan && onSelectPlan(plan)}
 												>
-													{buyButtonText}
+													{subscribedPlanPrice != null
+														? plan.subscription_plan_price > subscribedPlanPrice ? 'Upgrade' : 'Downgrade'
+														: buyButtonText}
 												</button>
 											)
 										)}
